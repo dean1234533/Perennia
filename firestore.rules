@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Curated discovery profiles: readable by any signed-in member.
+    // NOTE: this prototype seeds `profiles` from the client on first load,
+    // so writes are left open to authenticated users. Before shipping this
+    // to real users, lock writes down to the Admin SDK / a Cloud Function
+    // and remove the `allow write` line below.
+    match /profiles/{profileId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Each member's own account doc: onboarding data, likes/passes/matches.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Conversations are namespaced as `{uid}_{profileId}` and only the
+    // owning member can read or write their own messages.
+    match /conversations/{conversationId}/messages/{messageId} {
+      allow read, write: if request.auth != null
+        && conversationId.split('_')[0] == request.auth.uid;
+    }
+  }
+}

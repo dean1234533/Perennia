@@ -1,0 +1,132 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import {
+  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin,
+} from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
+import { firebaseConfigured } from '@/lib/firebase'
+
+function Row({
+  icon: Icon,
+  label,
+  description,
+  right,
+}: {
+  icon: React.ElementType
+  label: string
+  description?: string
+  right?: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-4">
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5">
+          <Icon className="h-4 w-4 text-champagne" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-white">{label}</p>
+          {description && <p className="text-xs text-white/40">{description}</p>}
+        </div>
+      </div>
+      {right ?? <ChevronRight className="h-4 w-4 text-white/25" />}
+    </div>
+  )
+}
+
+export function Settings() {
+  const navigate = useNavigate()
+  const { setAuthenticated, onboarding } = useApp()
+  const { logOut } = useAuth()
+  const [notifications, setNotifications] = useState(true)
+  const [showDistance, setShowDistance] = useState(true)
+  const [incognito, setIncognito] = useState(false)
+  const [darkCosmic, setDarkCosmic] = useState(true)
+
+  const logout = async () => {
+    if (firebaseConfigured) {
+      await logOut()
+    } else {
+      setAuthenticated(false)
+    }
+    navigate('/')
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-6 pt-8 pb-10 md:pt-12">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-gold/80">Preferences</p>
+        <h1 className="font-serif-display text-3xl md:text-4xl">Settings</h1>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-6 flex items-center gap-4 rounded-3xl glass p-5">
+        <img src="https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=300&q=80&auto=format&fit=crop" alt="You" className="h-16 w-16 rounded-full object-cover ring-2 ring-gold/40" />
+        <div className="flex-1">
+          <p className="font-serif-display text-xl text-champagne">{onboarding.name || 'Eleanor Ashworth'}</p>
+          <p className="text-sm text-white/45">{onboarding.sunSign || 'Libra'} • London, UK</p>
+        </div>
+        <Button variant="glass" size="sm" onClick={() => navigate('/cosmic-profile')}>
+          Edit
+        </Button>
+      </motion.div>
+
+      {[
+        {
+          title: 'Account',
+          delay: 0.1,
+          content: (
+            <>
+              <Row icon={User} label="Personal Information" description="Name, email, phone number" />
+              <div className="h-px bg-white/5" />
+              <Row icon={Sparkles} label="Cosmic Profile" description="Birth details & astrology" />
+              <div className="h-px bg-white/5" />
+              <Row icon={Shield} label="Verification" description="Identity verified" right={<span className="text-xs text-emerald-400">Verified</span>} />
+            </>
+          ),
+        },
+        {
+          title: 'Privacy',
+          delay: 0.16,
+          content: (
+            <>
+              <Row icon={Eye} label="Incognito Mode" description="Browse without being seen" right={<Switch checked={incognito} onCheckedChange={setIncognito} />} />
+              <div className="h-px bg-white/5" />
+              <Row icon={MapPin} label="Show Distance" description="Display your location to matches" right={<Switch checked={showDistance} onCheckedChange={setShowDistance} />} />
+            </>
+          ),
+        },
+        {
+          title: 'Notifications',
+          delay: 0.22,
+          content: (
+            <Row icon={Bell} label="Push Notifications" description="New matches & messages" right={<Switch checked={notifications} onCheckedChange={setNotifications} />} />
+          ),
+        },
+        {
+          title: 'Appearance',
+          delay: 0.28,
+          content: (
+            <Row icon={Moon} label="Cosmic Dark Mode" description="Deep midnight theme" right={<Switch checked={darkCosmic} onCheckedChange={setDarkCosmic} />} />
+          ),
+        },
+      ].map((section) => (
+        <motion.div key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.delay }}>
+          <p className="mb-2 mt-6 text-xs font-medium uppercase tracking-widest text-white/35">{section.title}</p>
+          <Card>
+            <CardContent className="divide-y divide-transparent px-5 py-1">{section.content}</CardContent>
+          </Card>
+        </motion.div>
+      ))}
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }} className="mt-8">
+        <Button variant="outline" className="w-full text-rose-300 border-rose-400/30 hover:bg-rose-500/10" onClick={logout}>
+          <LogOut className="h-4 w-4" /> Log Out
+        </Button>
+      </motion.div>
+    </div>
+  )
+}
