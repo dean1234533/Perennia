@@ -30,7 +30,7 @@ export function Verify() {
   }
 
   return (
-    <OnboardingShell step={2} totalSteps={5}>
+    <OnboardingShell step={2} totalSteps={6}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

@@ -8,10 +8,14 @@ import { Button } from '@/components/ui/button'
 
 export function Discovery() {
   const navigate = useNavigate()
-  const { passedIds, profiles } = useApp()
+  const { passedIds, profiles, onboarding } = useApp()
   const [filter, setFilter] = useState<'all' | 'nearby'>('all')
 
-  const visible = profiles.filter((p) => !passedIds.includes(p.id))
+  const interestedIn = onboarding.gender === 'male' ? 'female' : onboarding.gender === 'female' ? 'male' : null
+
+  const visible = profiles.filter(
+    (p) => !passedIds.includes(p.id) && (!interestedIn || p.gender === interestedIn)
+  )
 
   return (
     <div className="px-6 pt-8 pb-10 md:px-10 md:pt-12 lg:px-14">

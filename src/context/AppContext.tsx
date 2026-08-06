@@ -22,6 +22,7 @@ export interface OnboardingData {
   birthTime: string
   birthPlace: string
   sunSign: string
+  gender: 'male' | 'female' | ''
 }
 
 interface AppContextValue {
@@ -50,6 +51,7 @@ const defaultOnboarding: OnboardingData = {
   birthTime: '',
   birthPlace: '',
   sunSign: '',
+  gender: '',
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -88,6 +90,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         birthTime: data.birthTime,
         birthPlace: data.birthPlace,
         sunSign: data.sunSign,
+        gender: data.gender ?? '',
       }))
       setLikedIds(data.likedIds ?? [])
       setPassedIds(data.passedIds ?? [])

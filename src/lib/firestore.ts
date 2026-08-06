@@ -25,6 +25,7 @@ export interface UserDoc {
   birthTime: string
   birthPlace: string
   sunSign: string
+  gender: 'male' | 'female' | ''
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
@@ -37,6 +38,7 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   birthTime: '',
   birthPlace: '',
   sunSign: '',
+  gender: '',
   likedIds: [],
   passedIds: [],
   matchedIds: [],
@@ -81,11 +83,11 @@ export async function passProfileRemote(uid: string, profileId: string) {
   await updateDoc(doc(db, 'users', uid), { passedIds: arrayUnion(profileId) })
 }
 
-/** Seeds the curated `profiles` collection once, if empty. Prototype-only convenience —
- *  in production this would be done via the Admin SDK, not open client writes. */
+/** Upserts the curated `profiles` collection with the bundled mock data on every
+ *  load, so schema/content changes here always propagate. Prototype-only
+ *  convenience — in production this would be done via the Admin SDK, not open
+ *  client writes. */
 export async function seedProfilesIfNeeded() {
-  const snap = await getDocs(collection(db, 'profiles'))
-  if (!snap.empty) return
   const batch = writeBatch(db)
   for (const p of seedProfiles) {
     batch.set(doc(db, 'profiles', p.id), p)

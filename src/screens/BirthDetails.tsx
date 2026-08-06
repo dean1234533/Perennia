@@ -34,13 +34,13 @@ export function BirthDetails() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     updateOnboarding({ birthDate: date, birthTime: time, birthPlace: place, sunSign })
-    navigate('/cosmic-profile')
+    navigate('/preferences')
   }
 
   const isValid = date && time && place.length > 1
 
   return (
-    <OnboardingShell step={3} totalSteps={5}>
+    <OnboardingShell step={3} totalSteps={6}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -91,7 +91,7 @@ export function BirthDetails() {
           )}
 
           <Button type="submit" size="lg" className="mt-2 w-full" disabled={!isValid}>
-            Reveal My Cosmic Profile <ArrowRight className="h-4 w-4" />
+            Continue <ArrowRight className="h-4 w-4" />
           </Button>
         </form>
       </motion.div>

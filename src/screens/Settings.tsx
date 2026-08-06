@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin,
+  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin, Heart,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -40,7 +40,7 @@ function Row({
 
 export function Settings() {
   const navigate = useNavigate()
-  const { setAuthenticated, onboarding } = useApp()
+  const { setAuthenticated, onboarding, updateOnboarding } = useApp()
   const { logOut } = useAuth()
   const [notifications, setNotifications] = useState(true)
   const [showDistance, setShowDistance] = useState(true)
@@ -85,6 +85,27 @@ export function Settings() {
               <Row icon={Sparkles} label="Cosmic Profile" description="Birth details & astrology" />
               <div className="h-px bg-white/5" />
               <Row icon={Shield} label="Verification" description="Identity verified" right={<span className="text-xs text-emerald-400">Verified</span>} />
+              <div className="h-px bg-white/5" />
+              <Row
+                icon={Heart}
+                label="I Am"
+                description="We'll show you the opposite in Discovery"
+                right={
+                  <div className="flex items-center gap-1 rounded-full glass p-1">
+                    {(['male', 'female'] as const).map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => updateOnboarding({ gender: g })}
+                        className={`rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-wide transition-colors cursor-pointer ${
+                          onboarding.gender === g ? 'bg-gold/20 text-champagne border border-gold/30' : 'text-white/45'
+                        }`}
+                      >
+                        {g === 'male' ? 'Male' : 'Female'}
+                      </button>
+                    ))}
+                  </div>
+                }
+              />
             </>
           ),
         },

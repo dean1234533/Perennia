@@ -9,6 +9,7 @@ export interface CompatibilitySection {
 export interface Profile {
   id: string
   name: string
+  gender: 'male' | 'female'
   age: number
   location: string
   profession: string
@@ -82,6 +83,7 @@ export const profiles: Profile[] = [
   {
     id: 'amara',
     name: 'Amara Whitfield',
+    gender: 'female',
     age: 29,
     location: 'London, UK',
     profession: 'Architect',
@@ -118,6 +120,7 @@ export const profiles: Profile[] = [
   {
     id: 'julian',
     name: 'Julian Kane',
+    gender: 'male',
     age: 32,
     location: 'Edinburgh, UK',
     profession: 'Novelist',
@@ -154,6 +157,7 @@ export const profiles: Profile[] = [
   {
     id: 'sienna',
     name: 'Sienna Marchetti',
+    gender: 'female',
     age: 27,
     location: 'Bath, UK',
     profession: 'Physician',
@@ -190,6 +194,7 @@ export const profiles: Profile[] = [
   {
     id: 'theo',
     name: 'Theo Bergström',
+    gender: 'male',
     age: 31,
     location: 'Bristol, UK',
     profession: 'Product Designer',
@@ -226,6 +231,7 @@ export const profiles: Profile[] = [
   {
     id: 'isabelle',
     name: 'Isabelle Rousseau',
+    gender: 'female',
     age: 28,
     location: 'Oxford, UK',
     profession: 'Curator',
@@ -262,6 +268,7 @@ export const profiles: Profile[] = [
   {
     id: 'marcus',
     name: 'Marcus Chen',
+    gender: 'male',
     age: 33,
     location: 'Manchester, UK',
     profession: 'Investment Director',

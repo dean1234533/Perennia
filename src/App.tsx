@@ -7,6 +7,7 @@ import { SignUp } from '@/screens/SignUp'
 import { Login } from '@/screens/Login'
 import { Verify } from '@/screens/Verify'
 import { BirthDetails } from '@/screens/BirthDetails'
+import { Preferences } from '@/screens/Preferences'
 import { CosmicProfile } from '@/screens/CosmicProfile'
 import { Discovery } from '@/screens/Discovery'
 import { ProfileDetail } from '@/screens/ProfileDetail'
@@ -28,6 +29,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/birth-details" element={<BirthDetails />} />
+            <Route path="/preferences" element={<Preferences />} />
             <Route path="/cosmic-profile" element={<CosmicProfile />} />
 
             <Route path="/discovery" element={<AppShell><Discovery /></AppShell>} />
