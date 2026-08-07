@@ -118,7 +118,7 @@ defaults (or override them, see below).
 Same as before:
 
 1. In [Google Cloud Console](https://console.cloud.google.com/iam-admin/serviceaccounts)
-   for project `perennia-43763`, create a service account (e.g.
+   for project `perennia-982a6`, create a service account (e.g.
    `perennia-sheets-sync`), no IAM roles needed.
 2. Create + download a JSON key. You need `client_email` and `private_key`.
 3. Enable the [Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com).
@@ -141,7 +141,7 @@ firebase functions:secrets:set GOOGLE_SHEET_ID
 
 ### 5. Override ranges/tab names if they don't match the defaults
 
-Create `functions/.env.perennia-43763` (this file IS deployed — it's for
+Create `functions/.env.perennia-982a6` (this file IS deployed — it's for
 non-secret config, not credentials) with any of the `RANGE_*` vars from
 `config/env.ts`, e.g.:
 

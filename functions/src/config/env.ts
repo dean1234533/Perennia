@@ -8,7 +8,7 @@
  * Sheet RANGES are declared with `defineString` and sane defaults inferred
  * from screenshots of the real sheet — they are NOT guaranteed to be
  * exactly right on the first try. Override any of them without touching
- * code by creating `functions/.env.perennia-43763` (see README.md) and
+ * code by creating `functions/.env.perennia-982a6` (see README.md) and
  * redeploying — no code change needed.
  */
 import { defineSecret, defineString } from 'firebase-functions/params'
