@@ -24,5 +24,23 @@ service cloud.firestore {
       allow read, write: if request.auth != null
         && conversationId.split('_')[0] == request.auth.uid;
     }
+
+    // --- Perennia Compatibility Fusion System -------------------------
+    // Proprietary data. The client SDK must NEVER read or write these
+    // collections under any condition — every access goes through the
+    // getCompatibility / sync Cloud Functions, which use the Admin SDK
+    // and bypass these rules entirely. The explicit `allow ... if false`
+    // is intentional belt-and-braces: even if a future rule change above
+    // adds a broad catch-all match, these stay locked.
+
+    match /compatibilityMatrix/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /rateLimits/{uid} {
+      allow read: if false;
+      allow write: if false;
+    }
   }
 }
