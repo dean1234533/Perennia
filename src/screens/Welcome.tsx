@@ -2,7 +2,8 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Sparkles, Heart, Shield, Star, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Starfield } from '@/components/shared/Starfield'
+import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
+import { PremiumShowcase } from '@/components/shared/PremiumShowcase'
 import { Card } from '@/components/ui/card'
 
 const features = [
@@ -34,8 +35,8 @@ export function Welcome() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-midnight text-white">
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-[#0a0c1e] via-midnight to-black">
-        <Starfield density={160} />
+      <div className="fixed inset-0 z-0">
+        <AtmosphericBackground />
       </div>
 
       {/* Nav */}
@@ -60,9 +61,9 @@ export function Welcome() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-champagne/80"
+          className="mb-6 inline-flex items-center gap-2 rounded-full glass border-lavender/20 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-champagne/80"
         >
-          <Moon className="h-3.5 w-3.5" />
+          <Moon className="h-3.5 w-3.5 text-lavender" />
           Compatibility-First Dating
         </motion.div>
 
@@ -120,33 +121,9 @@ export function Welcome() {
         </motion.div>
       </section>
 
-      {/* Floating preview card */}
+      {/* Premium showcase panel */}
       <section className="relative z-10 mx-auto -mt-4 mb-24 flex max-w-5xl justify-center px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 60, rotateX: 8 }}
-          whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="glass-strong glow-purple w-full max-w-3xl rounded-[2rem] p-3"
-        >
-          <div className="relative overflow-hidden rounded-[1.6rem]">
-            <img
-              src="https://picsum.photos/seed/perennia-hero/1400/700"
-              alt=""
-              className="h-[280px] w-full object-cover md:h-[420px]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-6">
-              <div className="text-left">
-                <p className="font-serif-display text-2xl">Amara &amp; Julian</p>
-                <p className="text-sm text-white/60">94% Rare Alignment</p>
-              </div>
-              <div className="glass rounded-2xl px-4 py-2 text-right">
-                <p className="text-2xl font-serif-display text-gradient-gold">94%</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <PremiumShowcase />
       </section>
 
       {/* Features */}

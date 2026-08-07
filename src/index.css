@@ -5,20 +5,26 @@
   --font-serif: 'Cormorant Garamond', serif;
   --font-sans: 'Inter', system-ui, sans-serif;
 
-  --color-midnight: #060714;
-  --color-midnight-2: #0a0c1e;
-  --color-midnight-3: #0f1229;
+  --color-midnight: #060b1d;
+  --color-midnight-2: #0a0f24;
+  --color-midnight-3: #0c1433;
+  --color-navy: #0c1433;
+  --color-royal-purple: #36235f;
+  --color-lavender: #8e6cf6;
   --color-nebula-purple: #6b4fd6;
   --color-nebula-blue: #3b5bdb;
-  --color-gold: #d4af6a;
-  --color-champagne: #f0dfc0;
+  --color-gold: #e5c07b;
+  --color-champagne: #f3e2ba;
+  --color-ivory: #f8f5f0;
   --color-rose: #d68fa0;
 
   --animate-twinkle: twinkle 4s ease-in-out infinite;
   --animate-drift: drift 60s linear infinite;
+  --animate-drift-slow: drift 140s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shimmer: shimmer 2.5s linear infinite;
   --animate-pulse-glow: pulse-glow 3s ease-in-out infinite;
+  --animate-haze: haze 24s ease-in-out infinite;
 }
 
 @keyframes twinkle {
@@ -41,6 +47,10 @@
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+@keyframes haze {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+  50% { transform: translate(2%, -2%) scale(1.06); opacity: 1; }
+}
 
 * {
   box-sizing: border-box;
@@ -61,7 +71,7 @@ body {
 }
 
 ::selection {
-  background: rgba(212, 175, 106, 0.3);
+  background: rgba(229, 192, 123, 0.3);
   color: #fff;
 }
 
@@ -73,11 +83,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 106, 0.25);
+  background: rgba(229, 192, 123, 0.25);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 106, 0.45);
+  background: rgba(229, 192, 123, 0.45);
 }
 
 .font-serif-display {
@@ -85,7 +95,7 @@ body {
 }
 
 .text-gradient-gold {
-  background: linear-gradient(120deg, #f0dfc0 0%, #d4af6a 45%, #f7e9c9 65%, #d4af6a 100%);
+  background: linear-gradient(120deg, #f3e2ba 0%, #e5c07b 45%, #f8f5f0 65%, #e5c07b 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -107,10 +117,10 @@ body {
 }
 
 .glow-purple {
-  box-shadow: 0 0 60px -12px rgba(107, 79, 214, 0.55);
+  box-shadow: 0 0 60px -12px rgba(142, 108, 246, 0.5);
 }
 .glow-gold {
-  box-shadow: 0 0 40px -8px rgba(212, 175, 106, 0.45);
+  box-shadow: 0 0 40px -8px rgba(229, 192, 123, 0.4);
 }
 
 input, textarea, select {
