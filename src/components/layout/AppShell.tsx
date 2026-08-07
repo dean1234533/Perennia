@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import { Compass, Heart, MessageCircle, Settings, Sparkles } from 'lucide-react'
 import { Starfield } from '@/components/shared/Starfield'
 import { cn } from '@/lib/utils'
+import { useApp } from '@/context/AppContext'
+import { selfAvatarUrl } from '@/lib/avatar'
 
 const navItems = [
   { to: '/discovery', label: 'Discovery', icon: Compass },
@@ -14,6 +16,7 @@ const navItems = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
+  const { onboarding } = useApp()
 
   return (
     <div className="relative min-h-screen bg-midnight text-white">
@@ -65,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="flex items-center gap-3 rounded-2xl border border-white/10 p-2 xl:px-3 xl:py-2"
         >
           <img
-            src="https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=300&q=80&auto=format&fit=crop"
+            src={selfAvatarUrl(onboarding.gender)}
             alt="Your profile"
             className="h-9 w-9 rounded-full object-cover ring-2 ring-gold/40"
           />

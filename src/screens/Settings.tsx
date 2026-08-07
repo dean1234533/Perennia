@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
+import { selfAvatarUrl } from '@/lib/avatar'
 
 function Row({
   icon: Icon,
@@ -64,7 +65,7 @@ export function Settings() {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-6 flex items-center gap-4 rounded-3xl glass p-5">
-        <img src="https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=300&q=80&auto=format&fit=crop" alt="You" className="h-16 w-16 rounded-full object-cover ring-2 ring-gold/40" />
+        <img src={selfAvatarUrl(onboarding.gender)} alt="You" className="h-16 w-16 rounded-full object-cover ring-2 ring-gold/40" />
         <div className="flex-1">
           <p className="font-serif-display text-xl text-champagne">{onboarding.name || 'Eleanor Ashworth'}</p>
           <p className="text-sm text-white/45">{onboarding.sunSign || 'Libra'} • London, UK</p>
