@@ -91,7 +91,7 @@ export const profiles: Profile[] = [
     compatibility: 94,
     compatibilityLabel: 'Rare Alignment',
     images: [
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&q=80&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&q=80&auto=format&fit=crop',
       'https://picsum.photos/seed/amara-travel/900/1100',
       'https://picsum.photos/seed/amara-life/900/1100',
@@ -129,7 +129,7 @@ export const profiles: Profile[] = [
     compatibilityLabel: 'Exceptional Match',
     images: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?w=900&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=900&q=80&auto=format&fit=crop',
       'https://picsum.photos/seed/julian-books/900/1100',
       'https://picsum.photos/seed/julian-coast/900/1100',
     ],
@@ -166,7 +166,7 @@ export const profiles: Profile[] = [
     compatibilityLabel: 'Strong Alignment',
     images: [
       'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=900&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=900&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1541823709867-1b206113eafd?w=900&q=80&auto=format&fit=crop',
       'https://picsum.photos/seed/sienna-run/900/1100',
       'https://picsum.photos/seed/sienna-garden/900/1100',
     ],
@@ -203,7 +203,7 @@ export const profiles: Profile[] = [
     compatibilityLabel: 'Strong Alignment',
     images: [
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=900&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=900&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=900&q=80&auto=format&fit=crop',
       'https://picsum.photos/seed/theo-studio/900/1100',
       'https://picsum.photos/seed/theo-surf/900/1100',
     ],
@@ -277,7 +277,7 @@ export const profiles: Profile[] = [
     compatibilityLabel: 'Promising Match',
     images: [
       'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=900&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=900&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=900&q=80&auto=format&fit=crop',
       'https://picsum.photos/seed/marcus-city/900/1100',
       'https://picsum.photos/seed/marcus-golf/900/1100',
     ],
