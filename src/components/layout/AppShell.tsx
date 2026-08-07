@@ -20,12 +20,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-screen bg-midnight text-white">
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-[#0a0c1e] via-midnight to-black">
-        <Starfield density={90} />
+      <div
+        className="fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(120% 90% at 50% -10%, #1a1140 0%, #0c1433 42%, #060b1d 78%)' }}
+      >
+        <Starfield density={40} />
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 z-40 hidden h-full w-24 flex-col items-center gap-8 border-r border-white/5 py-8 lg:flex xl:w-64 xl:items-stretch xl:px-6">
+      <aside className="glass-strong fixed left-0 top-0 z-40 hidden h-full w-24 flex-col items-center gap-8 border-r border-white/5 py-8 lg:flex xl:w-64 xl:items-stretch xl:px-6">
         <button
           onClick={() => navigate('/discovery')}
           className="mb-6 flex items-center gap-2 xl:px-2 cursor-pointer"
@@ -65,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <NavLink
           to="/cosmic-profile"
-          className="flex items-center gap-3 rounded-2xl border border-white/10 p-2 xl:px-3 xl:py-2"
+          className="glow-gold flex items-center gap-3 rounded-2xl border border-gold/15 bg-white/[0.02] p-2 transition-colors hover:border-gold/30 xl:px-3 xl:py-2"
         >
           <img
             src={selfAvatarUrl(onboarding.gender)}

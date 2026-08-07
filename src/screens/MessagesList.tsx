@@ -12,8 +12,8 @@ export function MessagesList() {
   return (
     <div className="px-6 pt-8 pb-10 md:px-10 md:pt-12 lg:px-14">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-gold/80">Conversations</p>
-        <h1 className="font-serif-display text-3xl md:text-4xl">Messages</h1>
+        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Conversations</p>
+        <h1 className="font-serif-display text-4xl md:text-5xl">Messages</h1>
       </motion.div>
 
       {matched.length === 0 ? (

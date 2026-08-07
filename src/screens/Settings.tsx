@@ -60,17 +60,31 @@ export function Settings() {
   return (
     <div className="mx-auto max-w-2xl px-6 pt-8 pb-10 md:pt-12">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-gold/80">Preferences</p>
-        <h1 className="font-serif-display text-3xl md:text-4xl">Settings</h1>
+        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Preferences</p>
+        <h1 className="font-serif-display text-4xl md:text-5xl">Settings</h1>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-6 flex items-center gap-4 rounded-3xl glass p-5">
-        <img src={selfAvatarUrl(onboarding.gender)} alt="You" className="h-16 w-16 rounded-full object-cover ring-2 ring-gold/40" />
-        <div className="flex-1">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="relative mb-6 flex items-center gap-4 overflow-hidden rounded-3xl glass p-5"
+      >
+        <img
+          src={selfAvatarUrl(onboarding.gender)}
+          alt=""
+          className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-15 blur-2xl"
+        />
+        <img
+          src={selfAvatarUrl(onboarding.gender)}
+          alt="You"
+          className="relative h-16 w-16 rounded-full object-cover ring-2 ring-gold/40"
+        />
+        <div className="relative flex-1">
           <p className="font-serif-display text-xl text-champagne">{onboarding.name || 'Eleanor Ashworth'}</p>
           <p className="text-sm text-white/45">{onboarding.sunSign || 'Libra'} • London, UK</p>
         </div>
-        <Button variant="glass" size="sm" onClick={() => navigate('/cosmic-profile')}>
+        <Button variant="glass" size="sm" className="relative" onClick={() => navigate('/cosmic-profile')}>
           Edit
         </Button>
       </motion.div>

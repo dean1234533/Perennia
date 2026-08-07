@@ -53,9 +53,23 @@ export function ProgressRing({
           transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {label && <span className="font-serif-display text-gradient-gold text-5xl font-medium">{label}</span>}
-        {sublabel && <span className="mt-1 text-[11px] uppercase tracking-[0.2em] text-white/50">{sublabel}</span>}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+        {label && (
+          <span
+            className="font-serif-display text-gradient-gold font-medium leading-none"
+            style={{ fontSize: Math.max(size * 0.19, 15) }}
+          >
+            {label}
+          </span>
+        )}
+        {sublabel && (
+          <span
+            className="mt-1.5 uppercase leading-tight text-white/50"
+            style={{ fontSize: Math.max(size * 0.042, 8), letterSpacing: size < 160 ? '0.08em' : '0.2em' }}
+          >
+            {sublabel}
+          </span>
+        )}
       </div>
     </div>
   )

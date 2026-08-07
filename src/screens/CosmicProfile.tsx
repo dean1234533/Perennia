@@ -28,11 +28,10 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-2xl"
     >
-      <div className="mb-8 text-center">
-        <h1 className="font-serif-display mb-2 text-3xl md:text-4xl">
-          {isOnboarding ? 'Your Cosmic Profile' : 'Your Cosmic Profile'}
-        </h1>
-        <p className="mx-auto max-w-md text-sm text-white/55">
+      <div className="mb-10 text-center">
+        <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Your Astrological Foundation</p>
+        <h1 className="font-serif-display mb-3 text-4xl md:text-5xl">Your Cosmic Profile</h1>
+        <p className="mx-auto max-w-md text-white/55">
           {isOnboarding
             ? 'Drawn from your birth details — this shapes how we calculate compatibility with others.'
             : 'The astrological foundation behind every match we make for you.'}
@@ -40,7 +39,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       </div>
 
       <Card className="glow-purple mb-6 overflow-visible">
-        <CardContent className="flex flex-col items-center gap-6 p-8 md:flex-row md:justify-between">
+        <CardContent className="flex flex-col items-center gap-8 p-8 md:flex-row md:justify-between md:p-10">
           <ZodiacWheel size={200} />
           <div className="flex flex-1 flex-col gap-4">
             <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
@@ -72,10 +71,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
             </div>
           </div>
         </CardContent>
-      </Card>
-
-      <Card className="mb-6">
-        <CardContent className="p-8">
+        <div className="border-t border-white/5 p-8 md:p-10">
           <div className="mb-4 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-gold" />
             <h3 className="font-serif-display text-xl text-champagne">Your Traits</h3>
@@ -87,12 +83,12 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
               </Badge>
             ))}
           </div>
-          <p className="mt-5 text-sm leading-relaxed text-white/55">
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/55">
             As a {sunSign} Sun with Pisces Moon, you lead with charm and diplomacy while feeling
             things deeply beneath the surface. You're drawn to partners who can match your emotional
             intuition with steady, grounded presence.
           </p>
-        </CardContent>
+        </div>
       </Card>
 
       {isOnboarding ? (

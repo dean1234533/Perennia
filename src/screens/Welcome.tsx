@@ -1,40 +1,51 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Heart, Shield, Star, Moon } from 'lucide-react'
+import { Sparkles, Moon, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
-import { PremiumShowcase } from '@/components/shared/PremiumShowcase'
-import { Card } from '@/components/ui/card'
+import { editorial } from '@/data/editorial-images'
+import {
+  CosmicProfileMockup, CompatibilityMockup, MessagingMockup,
+  VerificationMockup, ProfileMockup, MatchesMockup,
+} from '@/components/shared/ProductMockups'
 
-const features = [
+const testimonials = [
   {
-    icon: Star,
-    title: 'Astrological Depth',
-    text: 'Your birth chart informs a compatibility model far richer than swipes and filters — grounded in who you actually are.',
+    quote: 'I had given up on dating apps entirely. Perennia felt like the first one that actually understood what I was looking for — not just who.',
+    name: 'Charlotte, 31',
+    role: 'Married her match in 2025',
   },
   {
-    icon: Shield,
-    title: 'Verified, Always',
-    text: 'Every member is identity-verified. No bots, no catfish — just real people ready for something real.',
+    quote: 'The compatibility report before our first date told me more than three months of messaging on other apps ever did.',
+    name: 'Daniel, 34',
+    role: 'In a relationship since 2024',
   },
   {
-    icon: Heart,
-    title: 'Curated, Not Endless',
-    text: 'We surface a handful of exceptional matches, not an infinite feed. Quality over quantity, always.',
+    quote: 'It felt less like swiping and more like being introduced by someone who actually knew us both.',
+    name: 'Priya, 29',
+    role: 'Engaged, 2026',
   },
 ]
 
-const steps = [
-  { n: '01', title: 'Share Your Story', text: 'Build a cosmic profile shaped by your birth details, values, and vision for love.' },
-  { n: '02', title: 'We Calculate Compatibility', text: 'Our engine studies emotional, intellectual, and astrological alignment across six dimensions.' },
-  { n: '03', title: 'Meet With Intention', text: 'Explore curated matches with full compatibility reports — no guesswork, no wasted time.' },
-]
+function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
 
 export function Welcome() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-midnight text-white">
+    <div className="relative overflow-hidden bg-midnight text-white">
       <div className="fixed inset-0 z-0">
         <AtmosphericBackground />
       </div>
@@ -55,8 +66,8 @@ export function Welcome() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative z-10 flex flex-col items-center px-6 pb-24 pt-16 text-center md:pt-24">
+      {/* ============ HERO ============ */}
+      <section className="relative z-10 flex flex-col items-center px-6 pb-20 pt-16 text-center md:pt-24">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -106,115 +117,201 @@ export function Welcome() {
             I Already Have an Account
           </Button>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.7 }}
-          className="mt-16 flex items-center gap-6 text-xs uppercase tracking-widest text-white/40"
-        >
-          <span>12,000+ Verified Members</span>
-          <span className="h-1 w-1 rounded-full bg-white/30" />
-          <span>Featured in Condé Nast</span>
-          <span className="h-1 w-1 rounded-full bg-white/30" />
-          <span>94% Report Compatibility</span>
-        </motion.div>
       </section>
 
-      {/* Premium showcase panel */}
-      <section className="relative z-10 mx-auto -mt-4 mb-24 flex max-w-5xl justify-center px-6">
-        <PremiumShowcase />
-      </section>
-
-      {/* Features */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 py-16 md:py-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+      {/* ============ EDGE-TO-EDGE CINEMATIC COUPLE IMAGE ============ */}
+      <section className="relative z-10 h-[80vh] min-h-[560px] w-full overflow-hidden">
+        <motion.img
+          initial={{ scale: 1.08 }}
+          whileInView={{ scale: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="mb-16 text-center"
-        >
-          <h2 className="font-serif-display text-3xl md:text-5xl">
-            A Different Kind of <span className="text-gradient-gold italic">Introduction</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-white/55">
-            We built Perennia for people who want intention, not infinite scroll.
-          </p>
-        </motion.div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {features.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.12 }}
-            >
-              <Card className="h-full p-2 transition-transform duration-500 hover:-translate-y-2 hover:border-gold/30">
-                <div className="p-6">
-                  <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-nebula-purple/30 to-nebula-blue/20">
-                    <f.icon className="h-5 w-5 text-gold" />
-                  </div>
-                  <h3 className="font-serif-display mb-2 text-xl text-champagne">{f.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/55">{f.text}</p>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+          transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
+          src={editorial.coupleGoldenLight}
+          alt="Two people at golden hour"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/25 to-midnight/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-midnight/70 via-transparent to-transparent" />
+        <div className="absolute inset-0 flex items-center">
+          <div className="max-w-xl px-6 md:px-16">
+            <FadeUp>
+              <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/80">A Different Kind of Beginning</p>
+              <h2 className="font-serif-display text-4xl leading-[1.1] md:text-6xl">
+                Some connections aren't <span className="text-gradient-gold italic">found</span>.
+                <br />
+                They're recognized.
+              </h2>
+            </FadeUp>
+          </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 py-16 md:py-24">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="mb-16 text-center font-serif-display text-3xl md:text-5xl"
-        >
-          How <span className="text-gradient-gold italic">Perennia</span> Works
-        </motion.h2>
-
-        <div className="grid gap-10 md:grid-cols-3">
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.n}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
-              className="relative"
-            >
-              <span className="font-serif-display text-6xl text-white/10">{s.n}</span>
-              <h3 className="font-serif-display -mt-4 mb-2 text-2xl text-champagne">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-white/55">{s.text}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="relative z-10 px-6 pb-28 pt-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="glass-strong glow-gold mx-auto flex max-w-3xl flex-col items-center rounded-[2rem] px-8 py-16 text-center"
-        >
-          <h2 className="font-serif-display mb-4 text-3xl md:text-4xl">
-            Your Story Deserves a <span className="text-gradient-gold italic">Beautiful Beginning</span>
+      {/* ============ HOW COMPATIBILITY WORKS — split, text left ============ */}
+      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 md:py-32 lg:grid-cols-2 lg:gap-20">
+        <FadeUp>
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Your Cosmic Profile</p>
+          <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
+            Compatibility begins with <span className="text-gradient-gold italic">who you are</span>
           </h2>
-          <p className="mb-8 max-w-md text-white/60">
-            Join thousands who have found a love that truly fits — written in the stars, grounded in reality.
+          <p className="mb-8 max-w-md text-white/55 leading-relaxed">
+            Your birth details, values, and story shape a profile far richer than a list of
+            hobbies — the foundation every introduction we make is built on.
           </p>
-          <Button size="lg" onClick={() => navigate('/signup')}>
-            Begin Your Story
+          <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
+            Build Your Profile <ArrowRight className="h-4 w-4" />
           </Button>
-        </motion.div>
+        </FadeUp>
+        <FadeUp delay={0.15}>
+          <CosmicProfileMockup />
+        </FadeUp>
+      </section>
+
+      {/* ============ COMPATIBILITY REPORT — full-width showcase ============ */}
+      <section className="relative z-10 px-6 py-24 md:py-32">
+        <FadeUp className="mx-auto mb-14 max-w-2xl text-center">
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">The Compatibility Report</p>
+          <h2 className="font-serif-display text-4xl leading-tight md:text-5xl">
+            Not a guess. <span className="text-gradient-gold italic">A calculation.</span>
+          </h2>
+          <p className="mt-5 text-white/55 leading-relaxed">
+            Six dimensions of alignment — emotional, intellectual, and astrological — distilled
+            into a single, honest number before you ever say hello.
+          </p>
+        </FadeUp>
+        <FadeUp delay={0.1} className="mx-auto max-w-2xl">
+          <CompatibilityMockup />
+        </FadeUp>
+      </section>
+
+      {/* ============ PROFILE SHOWCASE — split, image left ============ */}
+      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 md:py-32 lg:grid-cols-2 lg:gap-20">
+        <FadeUp className="order-2 lg:order-1">
+          <ProfileMockup />
+        </FadeUp>
+        <FadeUp delay={0.15} className="order-1 lg:order-2">
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Discovery, Reimagined</p>
+          <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
+            Explore someone's world, <span className="text-gradient-gold italic">not their résumé</span>
+          </h2>
+          <p className="mb-8 max-w-md text-white/55 leading-relaxed">
+            Full-screen galleries, rich profiles, and a curated collection instead of an endless
+            feed — a handful of people worth actually getting to know.
+          </p>
+          <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
+            See How It Works <ArrowRight className="h-4 w-4" />
+          </Button>
+        </FadeUp>
+      </section>
+
+      {/* ============ HANDS TOUCHING — full bleed emotional beat ============ */}
+      <section className="relative z-10 h-[60vh] min-h-[420px] w-full overflow-hidden">
+        <img src={editorial.handsTouching} alt="Two hands touching" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-midnight/30" />
+        <div className="absolute inset-0 flex items-end justify-center pb-16">
+          <FadeUp className="text-center">
+            <p className="font-serif-display text-2xl italic text-champagne md:text-3xl">
+              "Rare alignment isn't a feature. It's a feeling."
+            </p>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* ============ MESSAGING — split, text left ============ */}
+      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 md:py-32 lg:grid-cols-2 lg:gap-20">
+        <FadeUp>
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Conversation, Elevated</p>
+          <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
+            Say something <span className="text-gradient-gold italic">worth reading</span>
+          </h2>
+          <p className="mb-8 max-w-md text-white/55 leading-relaxed">
+            A messaging experience built for intention — read receipts, voice notes, and reactions
+            that feel like a conversation, not a transaction.
+          </p>
+          <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
+            Start Talking <ArrowRight className="h-4 w-4" />
+          </Button>
+        </FadeUp>
+        <FadeUp delay={0.15}>
+          <MessagingMockup />
+        </FadeUp>
+      </section>
+
+      {/* ============ VERIFICATION + MATCHES — asymmetric two-up ============ */}
+      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 py-24 md:py-32 md:grid-cols-5">
+        <FadeUp className="md:col-span-3">
+          <VerificationMockup />
+        </FadeUp>
+        <FadeUp delay={0.12} className="md:col-span-2">
+          <MatchesMockup />
+        </FadeUp>
+      </section>
+
+      {/* ============ LUXURY CITY — relationship insights, oversized stats ============ */}
+      <section className="relative z-10 w-full overflow-hidden">
+        <div className="relative min-h-[70vh]">
+          <img src={editorial.citySkyline} alt="City at golden hour" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-midnight/80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/70 to-midnight/40" />
+          <div className="relative flex min-h-[70vh] flex-col items-center justify-center px-6 py-24 text-center">
+            <FadeUp>
+              <p className="mb-6 text-xs uppercase tracking-[0.3em] text-gold/80">Built On Intention</p>
+            </FadeUp>
+            <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-16">
+              {[
+                { n: '12,000+', l: 'Verified Members' },
+                { n: '94%', l: 'Report Genuine Compatibility' },
+                { n: '6', l: 'Dimensions Analyzed Per Match' },
+              ].map((stat, i) => (
+                <FadeUp key={stat.l} delay={i * 0.12}>
+                  <p className="font-serif-display text-gradient-gold text-5xl md:text-6xl">{stat.n}</p>
+                  <p className="mt-3 text-xs uppercase tracking-widest text-white/50">{stat.l}</p>
+                </FadeUp>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TESTIMONIALS — magazine pull-quotes ============ */}
+      <section className="relative z-10 mx-auto max-w-6xl px-6 py-24 md:py-32">
+        <FadeUp className="mb-16 text-center">
+          <h2 className="font-serif-display text-4xl md:text-5xl">
+            Stories, Not <span className="text-gradient-gold italic">Statistics</span>
+          </h2>
+        </FadeUp>
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+          {testimonials.map((t, i) => (
+            <FadeUp key={t.name} delay={i * 0.12}>
+              <Sparkles className="mb-5 h-5 w-5 text-gold/60" />
+              <p className="font-serif-display mb-6 text-xl italic leading-snug text-white/90">
+                "{t.quote}"
+              </p>
+              <p className="text-sm text-champagne">{t.name}</p>
+              <p className="text-xs text-white/40">{t.role}</p>
+            </FadeUp>
+          ))}
+        </div>
+      </section>
+
+      {/* ============ FINAL CTA — cinematic sunset, full bleed ============ */}
+      <section className="relative z-10 h-[70vh] min-h-[480px] w-full overflow-hidden">
+        <img src={editorial.cinematicSunset} alt="Cinematic sunset" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-midnight/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-transparent" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+          <FadeUp>
+            <h2 className="font-serif-display mb-5 max-w-2xl text-4xl leading-tight md:text-6xl">
+              Your Story Deserves a <span className="text-gradient-gold italic">Beautiful Beginning</span>
+            </h2>
+            <p className="mx-auto mb-10 max-w-md text-white/65">
+              Join thousands who have found a love that truly fits — written in the stars,
+              grounded in reality.
+            </p>
+            <Button size="lg" onClick={() => navigate('/signup')}>
+              Begin Your Story
+            </Button>
+          </FadeUp>
+        </div>
       </section>
 
       <footer className="relative z-10 border-t border-white/5 px-6 py-8 text-center text-xs text-white/30">

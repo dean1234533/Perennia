@@ -8,7 +8,6 @@ import {
 import { useApp } from '@/context/AppContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 
 export function ProfileDetail() {
   const { id } = useParams<{ id: string }>()
@@ -103,93 +102,81 @@ export function ProfileDetail() {
         </div>
       </motion.div>
 
-      <div className="mx-auto max-w-3xl px-6 py-10 md:px-0">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <h2 className="font-serif-display mb-3 text-2xl text-champagne">About</h2>
-              <p className="leading-relaxed text-white/65">{profile.about}</p>
-            </CardContent>
-          </Card>
+      <div className="mx-auto max-w-4xl px-6 py-16 md:px-0">
+        {/* About + Cosmic Snapshot — editorial split, no card chrome */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-20 grid grid-cols-1 gap-12 md:grid-cols-5"
+        >
+          <div className="md:col-span-3">
+            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About {profile.name.split(' ')[0]}</p>
+            <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">
+              {profile.about}
+            </p>
+          </div>
+          <div className="flex flex-col justify-center gap-4 md:col-span-2 md:border-l md:border-white/8 md:pl-10">
+            {[
+              { icon: Sun, label: 'Sun', value: profile.sunSign },
+              { icon: Moon, label: 'Moon', value: profile.moonSign },
+              { icon: ArrowUpCircle, label: 'Rising', value: profile.risingSign },
+            ].map((r) => (
+              <div key={r.label} className="flex items-center gap-3">
+                <r.icon className="h-4 w-4 shrink-0 text-gold" />
+                <p className="text-[11px] uppercase tracking-widest text-white/40">{r.label}</p>
+                <p className="font-serif-display text-lg text-champagne">{r.value}</p>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <div className="mb-4 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-gold" />
-                <h2 className="font-serif-display text-2xl text-champagne">Cosmic Snapshot</h2>
+        {/* Interests + Lifestyle — flowing, no boxes */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="mb-20"
+        >
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
+          <div className="mb-10 flex flex-wrap gap-2">
+            {profile.interests.map((interest) => (
+              <Badge key={interest} variant="glass">
+                {interest}
+              </Badge>
+            ))}
+          </div>
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+            {profile.lifestyle.map((item) => (
+              <div key={item.label}>
+                <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
+                <p className="text-sm text-white/80">{item.value}</p>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-center">
-                  <Sun className="mx-auto mb-2 h-4 w-4 text-gold" />
-                  <p className="text-[10px] uppercase tracking-widest text-white/40">Sun</p>
-                  <p className="font-serif-display text-champagne">{profile.sunSign}</p>
-                </div>
-                <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-center">
-                  <Moon className="mx-auto mb-2 h-4 w-4 text-white/70" />
-                  <p className="text-[10px] uppercase tracking-widest text-white/40">Moon</p>
-                  <p className="font-serif-display text-champagne">{profile.moonSign}</p>
-                </div>
-                <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-center">
-                  <ArrowUpCircle className="mx-auto mb-2 h-4 w-4 text-white/70" />
-                  <p className="text-[10px] uppercase tracking-widest text-white/40">Rising</p>
-                  <p className="font-serif-display text-champagne">{profile.risingSign}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <h2 className="font-serif-display mb-4 text-2xl text-champagne">Interests</h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest) => (
-                  <Badge key={interest} variant="glass">
-                    {interest}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Prompts — large pull-quotes, no card chrome */}
+        <div className="mb-20 flex flex-col gap-14">
+          {profile.prompts.map((prompt, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.08 }}
+            >
+              <p className="mb-3 text-xs uppercase tracking-widest text-gold/70">{prompt.question}</p>
+              <p className="font-serif-display text-3xl italic leading-snug text-white/95 md:text-4xl">
+                "{prompt.answer}"
+              </p>
+            </motion.div>
+          ))}
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }}>
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <h2 className="font-serif-display mb-4 text-2xl text-champagne">Lifestyle</h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {profile.lifestyle.map((item) => (
-                  <div key={item.label}>
-                    <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
-                    <p className="text-sm text-white/80">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {profile.prompts.map((prompt, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.06 }}>
-            <Card className="mb-6">
-              <CardContent className="p-8">
-                <p className="mb-2 text-xs uppercase tracking-widest text-gold/80">{prompt.question}</p>
-                <p className="font-serif-display text-xl leading-snug text-white/90">"{prompt.answer}"</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <h2 className="font-serif-display mb-3 text-2xl text-champagne">Looking For</h2>
-              <p className="leading-relaxed text-white/65">{profile.goals}</p>
-            </CardContent>
-          </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-16">
+          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Looking For</p>
+          <p className="max-w-2xl text-xl leading-relaxed text-white/70">{profile.goals}</p>
         </motion.div>
 
         <Button variant="link" onClick={() => navigate(`/compatibility/${profile.id}`)} className="mx-auto flex text-sm">

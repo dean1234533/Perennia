@@ -23,6 +23,8 @@ export function CompatibilityReport() {
     )
   }
 
+  const [topSection, ...otherSections] = [...profile.sections].sort((a, b) => b.score - a.score)
+
   return (
     <div className="relative pb-24">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[500px] overflow-hidden">
@@ -75,8 +77,38 @@ export function CompatibilityReport() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-4xl px-6">
+        {/* Strongest dimension — featured, full-width */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6 }}
+          className="glass glow-gold mb-6 overflow-hidden rounded-[1.75rem]"
+        >
+          <div className="p-8 md:p-10">
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-gold/70">
+              <Sparkles className="h-3 w-3" /> Strongest Dimension
+            </div>
+            <div className="mb-4 flex items-end justify-between">
+              <h3 className="font-serif-display text-3xl text-champagne md:text-4xl">{topSection.label}</h3>
+              <span className="font-serif-display text-gradient-gold text-4xl md:text-5xl">{topSection.score}%</span>
+            </div>
+            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: `${topSection.score}%` }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+                className="h-full rounded-full bg-gradient-to-r from-gold to-champagne"
+              />
+            </div>
+            <p className="mb-2 text-base font-medium text-white/85">{topSection.summary}</p>
+            <p className="max-w-2xl text-white/55 leading-relaxed">{topSection.detail}</p>
+          </div>
+        </motion.div>
+
         <div className="grid gap-6 md:grid-cols-2">
-          {profile.sections.map((section, i) => (
+          {otherSections.map((section, i) => (
             <motion.div
               key={section.key}
               initial={{ opacity: 0, y: 40 }}

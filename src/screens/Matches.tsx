@@ -12,9 +12,9 @@ export function Matches() {
   return (
     <div className="px-6 pt-8 pb-10 md:px-10 md:pt-12 lg:px-14">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-gold/80">Mutual Alignment</p>
-        <h1 className="font-serif-display text-3xl md:text-4xl">Your Matches</h1>
-        <p className="mt-2 max-w-lg text-sm text-white/50">
+        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Mutual Alignment</p>
+        <h1 className="font-serif-display text-4xl md:text-5xl">Your Matches</h1>
+        <p className="mt-3 max-w-lg text-white/50">
           {matched.length} people you've connected with. Reach out and start a story.
         </p>
       </motion.div>

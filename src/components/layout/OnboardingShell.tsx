@@ -14,8 +14,11 @@ export function OnboardingShell({
 }) {
   return (
     <div className="relative flex min-h-screen flex-col items-center bg-midnight text-white">
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-[#0a0c1e] via-midnight to-black">
-        <Starfield density={110} />
+      <div
+        className="fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(120% 90% at 50% -10%, #1a1140 0%, #0c1433 42%, #060b1d 78%)' }}
+      >
+        <Starfield density={45} />
       </div>
 
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-6 py-10">
