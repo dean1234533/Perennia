@@ -7,13 +7,13 @@
  * serialized whole into a function response.
  */
 
-/** A single personality type code, e.g. "ENTJ". Validated shape only — see validation/. */
+/** A single Western zodiac sign, e.g. "ARIES". Validated shape only — see validation/. */
 export type PersonalityCode = string
 
 /**
- * The canonical, order-independent key for a pair of personality types.
+ * The canonical, order-independent key for a pair of zodiac signs.
  * Always the two codes sorted alphabetically and joined with "_", e.g.
- * "ENTJ_INTP" regardless of which was passed as A or B.
+ * "ARIES_LEO" regardless of which was passed as A or B.
  */
 export type PairKey = string
 

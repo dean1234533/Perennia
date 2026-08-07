@@ -56,11 +56,15 @@ columns, one header row, then data from row 2:
 | A            | B            | C             |
 |--------------|--------------|---------------|
 | personalityA | personalityB | compatibility |
-| ENTJ         | INTP         | 92            |
+| Aries        | Leo          | 92            |
 | ...          | ...          | ...           |
 
-You only need one row per pair — lookups are order-independent (`ENTJ`/`INTP`
-resolves the same as `INTP`/`ENTJ`), so don't duplicate both directions.
+Valid values for personalityA/personalityB are the 12 Western zodiac signs
+(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius,
+Capricorn, Aquarius, Pisces) — case-insensitive, normalized to uppercase
+on import. You only need one row per pair — lookups are order-independent
+(`Aries`/`Leo` resolves the same as `Leo`/`Aries`), so don't duplicate
+both directions.
 
 ### 2. Create a Google Service Account
 
@@ -136,8 +140,8 @@ deployment does not touch security rules.
 import { getCompatibility } from '@/lib/compatibilityApi'
 
 const { compatibility } = await getCompatibility({
-  personalityA: 'ENTJ',
-  personalityB: 'INTP',
+  personalityA: 'Aries',
+  personalityB: 'Leo',
 })
 // compatibility === 92 — nothing else is available from this call.
 ```
@@ -154,8 +158,8 @@ loop in multiple pairs, never forward anything from Firestore directly:
 
 ```ts
 const aiInput = {
-  personalityA: 'ENTJ',
-  personalityB: 'INTP',
+  personalityA: 'Aries',
+  personalityB: 'Leo',
   compatibility: result.compatibility, // just the number
 }
 ```

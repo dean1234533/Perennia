@@ -1,19 +1,22 @@
 import { z } from 'zod'
 
 /**
- * A personality type code: four letters, one from each axis pair.
- * Adjust this pattern if the Fusion System's typing scheme differs from
- * standard 16-type codes (e.g. to allow x/X wildcards) — it's the single
- * source of truth for "is this a valid code" everywhere in the backend.
+ * The 12 Western zodiac signs. This is the single source of truth for
+ * "is this a valid personality code" everywhere in the backend — update
+ * this set if the Fusion System's typing scheme changes (e.g. to add
+ * Chinese zodiac or a combined fusion code).
  */
-const PERSONALITY_CODE_PATTERN = /^[EI][NS][TF][JP]$/
+const ZODIAC_SIGNS = new Set([
+  'ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO',
+  'LIBRA', 'SCORPIO', 'SAGITTARIUS', 'CAPRICORN', 'AQUARIUS', 'PISCES',
+])
 
 export const personalityCodeSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .refine((v) => PERSONALITY_CODE_PATTERN.test(v), {
-    message: 'Must be a 4-letter personality code, e.g. "ENTJ".',
+  .refine((v) => ZODIAC_SIGNS.has(v), {
+    message: 'Must be a valid Western zodiac sign, e.g. "Aries".',
   })
 
 /** Input contract for the getCompatibility callable. */
