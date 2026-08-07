@@ -1,6 +1,6 @@
 import type { ZodTypeAny } from 'zod'
 import * as repo from '../repositories/compatibility.repository'
-import { fetchPairTable, fetchInsightsTable, fetchFactorInsightTable } from './googleSheets.service'
+import { fetchPairTable, fetchInsightsTable, fetchFactorInsightsGrid } from './googleSheets.service'
 import { cacheGet, cacheSet } from './cache.service'
 import { buildPairKey } from '../utils/pairKey'
 import {
@@ -149,7 +149,7 @@ const FACTOR_INSIGHT_KIND: Record<FusionTable, 'score' | 'yinYang'> = {
 export async function syncCompatibilityFromSheet(params: {
   auth: SheetAuthParams
   scoreRanges: Record<FusionTable, string>
-  factorInsightRanges: Record<FusionTable, string>
+  factorInsightsRange: string
   insightsLibraryRange: string
 }): Promise<SyncSummary> {
   const startedAt = Date.now()
@@ -174,9 +174,12 @@ export async function syncCompatibilityFromSheet(params: {
       errors.push(`[${table}] fetch/sync failed: ${err instanceof Error ? err.message : String(err)}`)
       tables[table] = { rowsRead: 0, rowsImported: 0 }
     }
+  }
 
-    try {
-      const raw = await fetchFactorInsightTable(params.auth, params.factorInsightRanges[table])
+  try {
+    const grid = await fetchFactorInsightsGrid(params.auth, params.factorInsightsRange)
+    for (const table of FUSION_TABLES) {
+      const raw = grid[table] ?? []
       const schema = factorInsightRowSchema(FACTOR_INSIGHT_KIND[table])
       const valid: { tier: string; text: string }[] = []
       raw.forEach((row, i) => {
@@ -186,8 +189,11 @@ export async function syncCompatibilityFromSheet(params: {
       })
       const rowsImported = valid.length > 0 ? await repo.upsertFactorInsights(table, valid) : 0
       factorInsights[table] = { rowsRead: raw.length, rowsImported }
-    } catch (err) {
-      errors.push(`[${table} insights] fetch/sync failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    for (const table of FUSION_TABLES) {
+      errors.push(`[${table} insights] fetch/sync failed: ${message}`)
       factorInsights[table] = { rowsRead: 0, rowsImported: 0 }
     }
   }

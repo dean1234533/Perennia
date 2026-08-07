@@ -48,25 +48,12 @@ export const rangeInsightsLibrary = defineString('RANGE_INSIGHTS_LIBRARY', {
 })
 
 // --- Per-factor tiered insights ------------------------------------------
-// ASSUMPTION: each lives on its own tab, named to match the factor. If
-// your tab names differ, override these — no code change needed.
-export const rangeSunInsights = defineString('RANGE_SUN_INSIGHTS', {
-  default: 'Sun Sign Insights!A1:B10',
-})
-export const rangeMoonInsights = defineString('RANGE_MOON_INSIGHTS', {
-  default: 'Moon Sign Insights!A1:B10',
-})
-export const rangeRisingInsights = defineString('RANGE_RISING_INSIGHTS', {
-  default: 'Rising Sign Insights!A1:B10',
-})
-export const rangeAnimalInsights = defineString('RANGE_ANIMAL_INSIGHTS', {
-  default: 'Animal Insights!A1:B10',
-})
-export const rangeElementInsights = defineString('RANGE_ELEMENT_INSIGHTS', {
-  default: 'Heavenly Stem Insights!A1:B10',
-})
-export const rangeYinYangInsights = defineString('RANGE_YIN_YANG_INSIGHTS', {
-  default: 'Yin Yang Insights!A1:B10',
+// All six factors' tiered blurbs live on ONE tab, as six columns side by
+// side (Animal / Heavenly stem / Yin-Yang / Sun / Moon / Rising Insights),
+// each column a repeating "tier label row, then text row" pattern. See
+// googleSheets.service.ts fetchFactorInsightsGrid for how that's parsed.
+export const rangeFactorInsights = defineString('RANGE_FACTOR_INSIGHTS', {
+  default: 'Compatibility Insights!A1:F60',
 })
 
 // --- Operational config --------------------------------------------------

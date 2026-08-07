@@ -1,6 +1,7 @@
 import { google, sheets_v4 } from 'googleapis'
 import { normalizePrivateKey } from '../config/env'
 import { log } from '../utils/logger'
+import type { FusionTable } from '../types/compatibility'
 
 /**
  * Reads the private Google Sheet via a service account (read-only scope).
@@ -194,33 +195,97 @@ export interface RawFactorInsightRow {
   text: string
 }
 
+/** Column header text -> which fusion table it belongs to. Matched loosely
+ *  (substring, case-insensitive) since exact wording varies. */
+const FACTOR_COLUMN_HINTS: [string, FusionTable][] = [
+  ['animal', 'animal'],
+  ['heavenly', 'element'],
+  ['stem', 'element'],
+  ['yin', 'yinYang'],
+  ['sun', 'sun'],
+  ['moon', 'moon'],
+  ['rising', 'rising'],
+]
+
+const SCORE_TIER_WORDS = new Set(['LOW', 'MEDIUM', 'HIGH'])
+const YIN_YANG_TIER_WORDS = new Set(['COMPLEMENTARY', 'SIMILAR'])
+
 /**
- * Reads a per-factor tiered insight table — a small sheet shaped
- * "tier label" | "text", e.g.:
- *   Low    | "This pairing may need extra patience..."
- *   Medium | "There's a workable foundation here..."
- *   High   | "This is a naturally strong match..."
- * (or Complementary / Similar for the Yin/Yang table). Column 0 = tier,
- * column 1 = text — any row whose column 0 doesn't look like a tier
- * label (e.g. a header row) is skipped by the caller's zod validation
- * rather than here, so we return everything non-empty and let
- * validation do the filtering + reporting.
+ * Reads the per-factor insights grid: six factor columns side by side on
+ * one tab (e.g. "Compatibility Insights"), each shaped as repeating
+ * vertical pairs of [tier label row] then [narrative text row directly
+ * below it], e.g.:
+ *
+ *   Animal Insights | Heavenly stem Insights | Yin/Yang Insights | ...
+ *   High             | High                    | Complementary     | ...
+ *   "Your energies…" | "You share…"            | "Your energies…"  | ...
+ *   Medium           | Medium                  | Similar           | ...
+ *   "There's a…"     | "There's a…"            | "Shared traits…"  | ...
+ *
+ * The header row is found dynamically (matching known factor-name
+ * fragments), then each column is scanned top-to-bottom independently:
+ * whenever a cell's text matches a valid tier keyword for that column's
+ * kind, the very next row's cell in the same column is taken as that
+ * tier's narrative. This doesn't care about blank spacer rows between
+ * tier blocks, or how many tiers each column has.
  */
-export async function fetchFactorInsightTable(
+export async function fetchFactorInsightsGrid(
   authParams: SheetAuthParams,
   range: string
-): Promise<RawFactorInsightRow[]> {
+): Promise<Partial<Record<FusionTable, RawFactorInsightRow[]>>> {
   const client = buildSheetsClient(authParams)
   const rows = await getRawValues(client, authParams.sheetId, range)
 
-  const results: RawFactorInsightRow[] = []
-  for (const row of rows) {
-    const tier = row[0]
-    const text = row[1]
-    if (!tier || !text) continue
-    results.push({ tier, text })
+  // Find the header row: the first row where at least 3 cells match a known factor hint.
+  let headerRowIndex = -1
+  let columnTables: (FusionTable | undefined)[] = []
+
+  for (let r = 0; r < rows.length; r++) {
+    const candidate = rows[r].map((cell) => {
+      const lower = cell.trim().toLowerCase()
+      const hit = FACTOR_COLUMN_HINTS.find(([hint]) => lower.includes(hint))
+      return hit?.[1]
+    })
+    const matchCount = candidate.filter(Boolean).length
+    if (matchCount >= 3) {
+      headerRowIndex = r
+      columnTables = candidate
+      break
+    }
   }
 
-  log.info('sheet_factor_insight_table_scanned', { range, rowsFound: results.length })
+  if (headerRowIndex === -1) {
+    log.error('factor_insights_header_not_found', { range })
+    return {}
+  }
+
+  const results: Partial<Record<FusionTable, RawFactorInsightRow[]>> = {}
+
+  for (let col = 0; col < columnTables.length; col++) {
+    const table = columnTables[col]
+    if (!table) continue
+
+    const validTiers = table === 'yinYang' ? YIN_YANG_TIER_WORDS : SCORE_TIER_WORDS
+    const found: RawFactorInsightRow[] = []
+
+    for (let r = headerRowIndex + 1; r < rows.length - 1; r++) {
+      const cell = (rows[r]?.[col] ?? '').trim()
+      if (!cell) continue
+      const upper = cell.toUpperCase()
+      if (!validTiers.has(upper)) continue
+
+      const text = (rows[r + 1]?.[col] ?? '').trim()
+      if (!text) continue
+
+      found.push({ tier: cell, text })
+    }
+
+    results[table] = found
+  }
+
+  log.info('factor_insights_grid_scanned', {
+    range,
+    perTable: Object.fromEntries(Object.entries(results).map(([k, v]) => [k, v.length])),
+  })
   return results
 }

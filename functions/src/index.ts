@@ -24,12 +24,7 @@ import {
   rangeChineseElement,
   rangeChineseYinYang,
   rangeInsightsLibrary,
-  rangeSunInsights,
-  rangeMoonInsights,
-  rangeRisingInsights,
-  rangeAnimalInsights,
-  rangeElementInsights,
-  rangeYinYangInsights,
+  rangeFactorInsights,
   rateLimitMaxRequests,
   rateLimitWindowSeconds,
   cacheTtlSeconds,
@@ -59,15 +54,12 @@ function buildSyncParams() {
     element: rangeChineseElement.value(),
     yinYang: rangeChineseYinYang.value(),
   }
-  const factorInsightRanges: Record<FusionTable, string> = {
-    sun: rangeSunInsights.value(),
-    moon: rangeMoonInsights.value(),
-    rising: rangeRisingInsights.value(),
-    animal: rangeAnimalInsights.value(),
-    element: rangeElementInsights.value(),
-    yinYang: rangeYinYangInsights.value(),
+  return {
+    auth,
+    scoreRanges,
+    factorInsightsRange: rangeFactorInsights.value(),
+    insightsLibraryRange: rangeInsightsLibrary.value(),
   }
-  return { auth, scoreRanges, factorInsightRanges, insightsLibraryRange: rangeInsightsLibrary.value() }
 }
 
 // ---------------------------------------------------------------------------
