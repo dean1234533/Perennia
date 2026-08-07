@@ -1,83 +1,128 @@
 # Perennia Compatibility Fusion System — Backend
 
-Secure Cloud Functions backend that keeps the proprietary compatibility
-matrix in a private Google Sheet, mirrors it into a server-only Firestore
-collection, and exposes exactly one narrow read path to the frontend: a
-single `{ compatibility }` number for a given pair. Nothing else — not the
-matrix, not other pairs, not the sheet — is ever reachable from the client
-or from an AI model.
+Secure Cloud Functions backend for the real Fusion System: a weighted
+combination of six independent zodiac factors, reduced to one score, with
+narrative text attached both per-factor and overall. The proprietary
+tables live in a private Google Sheet, synced into server-only Firestore
+collections that Firestore Security Rules deny to the client SDK
+entirely — every access goes through Cloud Functions using the Admin SDK.
+
+## The formula
+
+```
+final = sun×0.20 + moon×0.20 + rising×0.10 + animal×0.20 + element×0.15 + yinYang×0.15
+```
+
+Each of the six factors is its own pairwise lookup (e.g. Sun sign A + Sun
+sign B → a 0-100 score), read from its own table in the sheet. The final
+score also gets a qualitative band (Excellent / Very Good / Good /
+Challenging / Difficult — a fixed legend, not sheet-driven) and selects a
+row of six narrative paragraphs (Understanding, Emotional Connection,
+Communication, Relationship Growth, Challenges, Long Term Potential) from
+a score-range "insights library". Each individual factor also gets its
+own short blurb, chosen from a tiered table for that factor (Low/Medium/
+High for the five score-based factors, or Complementary/Similar for
+Yin/Yang, since that one is inherently binary).
+
+### ⚠️ Assumptions that need verifying against your real sheet
+
+I built this from screenshots, not the live sheet, so treat these as a
+first draft to test and correct, not ground truth:
+
+- **Column ranges** for the six score tables (`Western Zodiac!B:D`,
+  `F:H`, `J:L` for Sun/Moon/Rising; `Chinese Zodiac!B:D`, `F:H`, `J:L`
+  for Animal/Element/Yin-Yang) — read directly off screenshots, but
+  double-check against the live sheet.
+- **Tab names** for the six per-factor insight tables (`Sun Sign
+  Insights`, `Moon Sign Insights`, `Rising Sign Insights`, `Animal
+  Insights`, `Heavenly Stem Insights`, `Yin Yang Insights`) — guessed
+  from your description, not confirmed.
+- **Low/Medium/High thresholds** (currently 0-49 / 50-79 / 80-100 on that
+  factor's own score) — not read from the sheet at all; this is a
+  hardcoded guess in `types/compatibility.ts` (`SCORE_TIER_THRESHOLDS`).
+- **Complementary/Similar** for Yin-Yang is inferred structurally
+  (same polarity = Similar, opposite = Complementary), not from a
+  threshold — should be correct regardless of the above.
+
+All of these are overridable via env vars (ranges) or a one-line constant
+change (thresholds) — no architectural changes needed once we test
+against the real sheet. See "Local development" below for how to run a
+sync against the emulator and see exactly what got parsed.
 
 ## Architecture
 
 ```
 Google Sheet (private, service-account access only)
+  ├─ Western Zodiac   (Sun / Moon / Rising pair tables)
+  ├─ Chinese Zodiac    (Animal / Element / Yin-Yang pair tables)
+  ├─ Compatibility Insights Library   (score-bucket → 6 narrative texts)
+  ├─ Sun/Moon/Rising/Animal/Heavenly Stem/Yin Yang Insights  (tier → blurb)
         │
-        │  syncCompatibilityScheduled (every 6h)
-        │  syncCompatibilityManual (admin-only, on-demand)
+        │  syncCompatibilityScheduled (every 6h) / syncCompatibilityManual (admin)
         ▼
-Firestore: compatibilityMatrix/{pairKey}      ← client reads/writes: DENIED
+Firestore (13 server-only collections, client read/write DENIED):
+  fusionSunScores, fusionMoonScores, fusionRisingScores,
+  fusionAnimalScores, fusionElementScores, fusionYinYangScores,
+  fusionInsightsLibrary, fusionFactorInsights
         │
-        │  getCompatibility(personalityA, personalityB)
+        │  getCompatibility({ personA, personB })
         ▼
-{ compatibility: 92 }                          ← the only thing the client ever sees
-        │
-        ▼
-React app  →  (optional) AI explanation call, given ONLY the resolved score
+{ compatibility, band, factors: {...6}, insights: {...6} }   ← the only thing the client ever sees
 ```
 
 ### Module layout
 
 ```
 functions/src/
-  config/env.ts                    typed config + Secret Manager params
-  types/compatibility.ts           shared domain types
-  validation/compatibility.validation.ts   zod schemas (input + sheet rows)
+  config/env.ts                     secrets + all sheet ranges (overridable)
+  types/compatibility.ts            fusion weights, tiers, bands, result shapes
+  validation/compatibility.validation.ts   zod schemas for every input/row shape
   services/
-    googleSheets.service.ts        reads the sheet via a service account
-    compatibility.service.ts       orchestrates lookup / sync, owns the
-                                    "only return { compatibility }" boundary
-    rateLimit.service.ts           Firestore-backed fixed-window limiter
-    cache.service.ts               best-effort in-memory cache
+    googleSheets.service.ts         pattern-based sheet parsing (see below)
+    compatibility.service.ts        fusion math + sync orchestration
+    rateLimit.service.ts            Firestore-backed fixed-window limiter
+    cache.service.ts                best-effort in-memory cache
   repositories/
-    compatibility.repository.ts    the ONLY module allowed to touch
-                                    the compatibilityMatrix collection
-  utils/
-    pairKey.ts, errors.ts, logger.ts
-  index.ts                         the 3 exported Cloud Functions
+    compatibility.repository.ts     the ONLY module allowed to touch
+                                     any fusion* Firestore collection
+  utils/  pairKey.ts, errors.ts, logger.ts
+  index.ts                          the 3 exported Cloud Functions
 ```
+
+### How the sheet gets parsed
+
+The Western/Chinese Zodiac tabs are human-formatted (repeating blocks of
+a header row + ~12 data rows + a blank separator, one block per base
+sign/animal) rather than a clean one-row-per-record table. Instead of
+assuming exact row offsets — fragile if a row gets inserted — the parser
+scans every row in a given column range and pulls out only rows shaped
+`"SignA + SignB"` | `score` where **both** captured tokens are known-valid
+values. Header rows (`"Aries + Signs = Sun"` — "Signs" isn't a valid
+sign) and blank rows are simply skipped because they don't match. This
+was verified against the actual block layout from your screenshots — see
+the test in the PR/commit history if you want to see it directly.
+
+The Insights Library's header row is found dynamically by searching for
+the six known category names (rather than assuming fixed columns), so
+column order/spacing in that tab doesn't matter.
 
 ## One-time setup
 
-### 1. Create the Google Sheet
+### 1. Google Sheet
 
-Create a sheet with a tab (default name `CompatibilityMatrix`) with these
-columns, one header row, then data from row 2:
+You already have this — just confirm tab names match `config/env.ts`
+defaults (or override them, see below).
 
-| A            | B            | C             |
-|--------------|--------------|---------------|
-| personalityA | personalityB | compatibility |
-| Aries        | Leo          | 92            |
-| ...          | ...          | ...           |
+### 2. Google Service Account
 
-Valid values for personalityA/personalityB are the 12 Western zodiac signs
-(Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius,
-Capricorn, Aquarius, Pisces) — case-insensitive, normalized to uppercase
-on import. You only need one row per pair — lookups are order-independent
-(`Aries`/`Leo` resolves the same as `Leo`/`Aries`), so don't duplicate
-both directions.
+Same as before:
 
-### 2. Create a Google Service Account
-
-1. In the [Google Cloud Console](https://console.cloud.google.com/iam-admin/serviceaccounts)
-   for the **same project as Firebase** (`perennia-43763`), create a service
-   account, e.g. `perennia-sheets-sync`.
-2. Grant it no project-level roles — it only needs Sheet-level access (next step).
-3. Create a JSON key for it and download it. You'll need `client_email` and
-   `private_key` from that file.
-4. Enable the **Google Sheets API** for the project if not already enabled.
-5. Open the Sheet, click **Share**, and add the service account's email as a
-   **Viewer**. This is what actually grants read access — the IAM role in
-   step 2 is irrelevant to Sheets sharing.
+1. In [Google Cloud Console](https://console.cloud.google.com/iam-admin/serviceaccounts)
+   for project `perennia-43763`, create a service account (e.g.
+   `perennia-sheets-sync`), no IAM roles needed.
+2. Create + download a JSON key. You need `client_email` and `private_key`.
+3. Enable the [Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com).
+4. Share the Google Sheet with the service account's email as **Viewer**.
 
 ### 3. Install dependencies
 
@@ -94,35 +139,41 @@ firebase functions:secrets:set GOOGLE_SHEETS_PRIVATE_KEY
 firebase functions:secrets:set GOOGLE_SHEET_ID
 ```
 
-Paste the values when prompted. For the private key, paste it with literal
-`\n` sequences intact (that's how it comes out of the downloaded JSON) —
-`normalizePrivateKey()` converts them back to real newlines at runtime.
+### 5. Override ranges/tab names if they don't match the defaults
 
-### 5. Grant yourself admin access (for manual sync)
+Create `functions/.env.perennia-43763` (this file IS deployed — it's for
+non-secret config, not credentials) with any of the `RANGE_*` vars from
+`config/env.ts`, e.g.:
 
-`syncCompatibilityManual` requires a custom claim `admin: true` on the
-caller's Firebase Auth token. Grant it with the included script (never
-deployed — local use only):
+```
+RANGE_SUN_INSIGHTS=Sun Insights!A2:B5
+```
+
+Only include the ones that differ from the defaults.
+
+### 6. Grant yourself admin access (for manual sync)
 
 ```bash
 cd functions
 node scripts/grant-admin.js <firebase-auth-uid>
 ```
 
-The user must sign out/in (or force-refresh their ID token) for the new
-claim to take effect client-side. Revoke with `--revoke`.
+Sign out/in afterward for the claim to take effect. Revoke with `--revoke`.
 
 ## Local development
 
 ```bash
 cd functions
-cp .env.example .env.local   # fill in the same three secret values
+cp .env.example .env.local   # fill in the three secret values
 npm run serve                 # builds + starts the emulator suite
 ```
 
-The emulator reads `.env.local` automatically for `defineSecret` values
-when running locally — you do not need real Secret Manager access to
-develop against the emulator.
+Then call `syncCompatibilityManual` from the emulator UI or
+`firebase functions:shell` and check the returned `SyncSummary` — it
+reports `rowsRead`/`rowsImported` per table plus an `errors` array with
+one message per row that failed validation (including which table and
+row number), which is the fastest way to spot a range/tab-name mismatch
+without digging through logs.
 
 ## Deployment
 
@@ -131,55 +182,46 @@ firebase deploy --only functions
 firebase deploy --only firestore:rules
 ```
 
-Deploy rules whenever `firestore.rules` changes — Cloud Functions
-deployment does not touch security rules.
-
 ## Calling it from the frontend
 
 ```ts
 import { getCompatibility } from '@/lib/compatibilityApi'
 
-const { compatibility } = await getCompatibility({
-  personalityA: 'Aries',
-  personalityB: 'Leo',
+const result = await getCompatibility({
+  personA: {
+    sunSign: 'Pisces', moonSign: 'Virgo', risingSign: 'Leo',
+    chineseAnimal: 'Rat', chineseElement: 'Wood', yinYang: 'Yang',
+  },
+  personB: {
+    sunSign: 'Cancer', moonSign: 'Taurus', risingSign: 'Libra',
+    chineseAnimal: 'Pig', chineseElement: 'Wood', yinYang: 'Yin',
+  },
 })
-// compatibility === 92 — nothing else is available from this call.
+// result.compatibility  -> 87
+// result.band            -> "Very Good"
+// result.factors.sun     -> { score: 88, tier: 'HIGH', insight: '...' }
+// result.insights.communication -> '...'
 ```
 
-The caller must be signed in (`request.auth` is required) — this is also
-what makes per-user rate limiting possible. Unauthenticated calls are
-rejected with `unauthenticated` before any Firestore access happens.
-
-## Sending the result to an AI model
-
-If you add an AI explanation step, construct its input explicitly from the
-resolved result — never pass the callable's surrounding context, never
-loop in multiple pairs, never forward anything from Firestore directly:
-
-```ts
-const aiInput = {
-  personalityA: 'Aries',
-  personalityB: 'Leo',
-  compatibility: result.compatibility, // just the number
-}
-```
-
-The AI's job is to narrate a number it's handed, not to see (or infer) the
-table that number came from.
+The caller must be signed in — this is also what makes per-user rate
+limiting possible.
 
 ## Security summary
 
-- `compatibilityMatrix` and `rateLimits` are denied to the client SDK
-  entirely in `firestore.rules` (`allow read, write: if false`) — only the
-  Admin SDK, running inside these Cloud Functions, can touch them.
-- `getCompatibility` requires Firebase Auth, validates input with zod
-  (rejecting anything that isn't a well-formed 4-letter code before it
-  touches Firestore), and rate-limits per uid via a Firestore transaction.
-- `syncCompatibilityManual` additionally requires an `admin` custom claim.
-- `syncCompatibilityScheduled` has no HTTP surface at all — only Cloud
-  Scheduler can invoke it.
+- Every `fusion*` collection is denied to the client SDK entirely in
+  `firestore.rules` — only the Admin SDK, running inside these Cloud
+  Functions, can touch them.
+- `getCompatibility` requires Firebase Auth, validates every field of
+  both birth profiles with zod before touching Firestore, and
+  rate-limits per uid via a Firestore transaction.
+- The final `compatibility` number is a strict lookup — if any of the
+  six sub-tables is missing that pair, the call fails loudly rather than
+  guessing. The narrative text is treated as enrichment: a missing
+  tier/bucket blurb degrades to an empty string (logged as a warning)
+  rather than blocking the numeric result.
+- `syncCompatibilityManual` requires an `admin` custom claim.
+  `syncCompatibilityScheduled` has no HTTP surface at all.
 - Service account credentials live in Secret Manager, never in source,
-  never in a deployed bundle, never logged (`utils/logger.ts` redacts
-  anything shaped like matrix data on the way to Cloud Logging).
-- Sync is idempotent (upsert by `pairKey`) and partial-failure-tolerant
-  (one malformed row is skipped and reported, not fatal to the whole sync).
+  never logged.
+- Sync is idempotent (upsert by key) and partial-failure-tolerant — one
+  malformed row anywhere is skipped and reported, not fatal to the rest.

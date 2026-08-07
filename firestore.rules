@@ -33,7 +33,35 @@ service cloud.firestore {
     // is intentional belt-and-braces: even if a future rule change above
     // adds a broad catch-all match, these stay locked.
 
-    match /compatibilityMatrix/{pairKey} {
+    match /fusionSunScores/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionMoonScores/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionRisingScores/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionAnimalScores/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionElementScores/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionYinYangScores/{pairKey} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionInsightsLibrary/{bucketId} {
+      allow read: if false;
+      allow write: if false;
+    }
+    match /fusionFactorInsights/{docId} {
       allow read: if false;
       allow write: if false;
     }

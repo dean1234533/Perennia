@@ -17,7 +17,19 @@ import {
   googleServiceAccountEmail,
   googleServiceAccountKey,
   googleSheetId,
-  googleSheetRange,
+  rangeWesternSun,
+  rangeWesternMoon,
+  rangeWesternRising,
+  rangeChineseAnimal,
+  rangeChineseElement,
+  rangeChineseYinYang,
+  rangeInsightsLibrary,
+  rangeSunInsights,
+  rangeMoonInsights,
+  rangeRisingInsights,
+  rangeAnimalInsights,
+  rangeElementInsights,
+  rangeYinYangInsights,
   rateLimitMaxRequests,
   rateLimitWindowSeconds,
   cacheTtlSeconds,
@@ -27,14 +39,42 @@ import { resolveCompatibility, syncCompatibilityFromSheet } from './services/com
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
 import { log } from './utils/logger'
+import type { FusionTable } from './types/compatibility'
 
 initializeApp()
 
 const SHEET_SECRETS = [googleServiceAccountEmail, googleServiceAccountKey, googleSheetId]
 
+function buildSyncParams() {
+  const auth = {
+    clientEmail: googleServiceAccountEmail.value(),
+    privateKey: googleServiceAccountKey.value(),
+    sheetId: googleSheetId.value(),
+  }
+  const scoreRanges: Record<FusionTable, string> = {
+    sun: rangeWesternSun.value(),
+    moon: rangeWesternMoon.value(),
+    rising: rangeWesternRising.value(),
+    animal: rangeChineseAnimal.value(),
+    element: rangeChineseElement.value(),
+    yinYang: rangeChineseYinYang.value(),
+  }
+  const factorInsightRanges: Record<FusionTable, string> = {
+    sun: rangeSunInsights.value(),
+    moon: rangeMoonInsights.value(),
+    rising: rangeRisingInsights.value(),
+    animal: rangeAnimalInsights.value(),
+    element: rangeElementInsights.value(),
+    yinYang: rangeYinYangInsights.value(),
+  }
+  return { auth, scoreRanges, factorInsightRanges, insightsLibraryRange: rangeInsightsLibrary.value() }
+}
+
 // ---------------------------------------------------------------------------
 // getCompatibility — the ONLY way the frontend ever touches this data.
-// Input: { personalityA, personalityB }. Output: { compatibility }. Nothing else.
+// Input: { personA, personB } birth profiles. Output: score + band + a
+// short blurb per factor + the six overall narrative sections. Never the
+// underlying tables.
 // ---------------------------------------------------------------------------
 export const getCompatibility = onCall(
   { cors: true },
@@ -81,13 +121,8 @@ export const syncCompatibilityManual = onCall(
     }
 
     try {
-      const summary = await syncCompatibilityFromSheet({
-        clientEmail: googleServiceAccountEmail.value(),
-        privateKey: googleServiceAccountKey.value(),
-        sheetId: googleSheetId.value(),
-        range: googleSheetRange.value(),
-      })
-      log.info('manual_sync_triggered', { uid: request.auth.uid, rowsImported: summary.rowsImported })
+      const summary = await syncCompatibilityFromSheet(buildSyncParams())
+      log.info('manual_sync_triggered', { uid: request.auth.uid, errorCount: summary.errors.length })
       return summary
     } catch (err) {
       throw internal('Manual sync failed', err)
@@ -104,12 +139,7 @@ export const syncCompatibilityScheduled = onSchedule(
   { schedule: 'every 6 hours', secrets: SHEET_SECRETS, timeoutSeconds: 300 },
   async () => {
     try {
-      await syncCompatibilityFromSheet({
-        clientEmail: googleServiceAccountEmail.value(),
-        privateKey: googleServiceAccountKey.value(),
-        sheetId: googleSheetId.value(),
-        range: googleSheetRange.value(),
-      })
+      await syncCompatibilityFromSheet(buildSyncParams())
     } catch (err) {
       log.error('scheduled_sync_failed', { message: err instanceof Error ? err.message : String(err) })
       throw err
