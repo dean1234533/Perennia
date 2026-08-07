@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ShieldCheck, ScanFace, IdCard, CheckCircle2, Loader2 } from 'lucide-react'
+import { ShieldCheck, ScanFace, IdCard, CheckCircle2, Loader2, ShieldAlert } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
 import { useApp } from '@/context/AppContext'
 
-type Stage = 'intro' | 'id' | 'scanning-id' | 'selfie' | 'scanning-selfie' | 'processing' | 'success'
+type Stage = 'intro' | 'id' | 'scanning-id' | 'selfie' | 'scanning-selfie' | 'face-compare' | 'processing' | 'success'
 
 export function Verify() {
   const navigate = useNavigate()
@@ -19,7 +19,7 @@ export function Verify() {
   }
   const goScanSelfie = () => {
     setStage('scanning-selfie')
-    setTimeout(() => finish(), 1800)
+    setTimeout(() => setStage('face-compare'), 1800)
   }
   const finish = () => {
     setStage('processing')
@@ -93,7 +93,9 @@ export function Verify() {
                 <ScanFace className="h-8 w-8 text-champagne" />
               </div>
               <h2 className="font-serif-display mb-2 text-2xl">Liveness Check</h2>
-              <p className="mb-8 text-sm text-white/55">Center your face in the frame and hold still.</p>
+              <p className="mb-8 text-sm text-white/55">
+                Center your face in the frame and slowly turn your head as prompted.
+              </p>
               <div className="mx-auto mb-8 flex h-48 w-48 items-center justify-center rounded-full border-2 border-dashed border-gold/30 bg-white/[0.02]">
                 <ScanFace className="h-12 w-12 text-white/20" />
               </div>
@@ -114,7 +116,48 @@ export function Verify() {
                   transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
-              <p className="text-xs uppercase tracking-widest text-white/40">Matching biometrics…</p>
+              <p className="text-xs uppercase tracking-widest text-white/40">Detecting liveness · anti-spoof check…</p>
+            </motion.div>
+          )}
+
+          {stage === 'face-compare' && (
+            <motion.div key="face-compare" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <h2 className="font-serif-display mb-2 text-2xl">Comparing to Your ID</h2>
+              <p className="mb-8 text-sm text-white/55">Matching your selfie against your government ID.</p>
+
+              <div className="relative mx-auto mb-8 flex h-28 w-56 items-center justify-center">
+                <motion.div
+                  initial={{ x: 24 }}
+                  animate={{ x: 14 }}
+                  transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                  className="absolute left-0 flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-gold/40 bg-white/[0.02]"
+                >
+                  <IdCard className="h-8 w-8 text-white/25" />
+                </motion.div>
+                <motion.div
+                  initial={{ x: -24 }}
+                  animate={{ x: -14 }}
+                  transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                  className="absolute right-0 flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold/40 bg-white/[0.02]"
+                >
+                  <ScanFace className="h-8 w-8 text-white/25" />
+                </motion.div>
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.9, type: 'spring', stiffness: 300 }}
+                  className="absolute z-10 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/90"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-white" />
+                </motion.div>
+              </div>
+
+              <p className="mb-8 flex items-center justify-center gap-1.5 text-xs uppercase tracking-widest text-white/40">
+                <ShieldAlert className="h-3.5 w-3.5 text-gold" /> Running AI anti-spoof detection…
+              </p>
+              <Button size="lg" className="w-full" onClick={finish}>
+                Continue
+              </Button>
             </motion.div>
           )}
 
@@ -137,8 +180,9 @@ export function Verify() {
                 <CheckCircle2 className="h-8 w-8 text-emerald-400" />
               </motion.div>
               <h2 className="font-serif-display mb-2 text-2xl">You're Verified</h2>
-              <p className="mb-8 text-sm text-white/55">
-                Welcome to a community built on authenticity. Let's build your cosmic profile next.
+              <p className="mb-8 text-sm leading-relaxed text-white/55">
+                Face match confirmed against your ID. Welcome to a community built on authenticity —
+                let's build your cosmic profile next.
               </p>
               <Button size="lg" className="w-full" onClick={() => navigate('/birth-details')}>
                 Continue

@@ -1,20 +1,23 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  ArrowLeft, BadgeCheck, MapPin, Briefcase, Heart, X, MessageCircle,
-  Sparkles, Sun, Moon, ArrowUpCircle,
+  ArrowLeft, BadgeCheck, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { MasonryGallery } from '@/components/shared/MasonryGallery'
+import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
+import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
+import { getProfileGallery, getCoverImage } from '@/data/gallery-media'
+import { defaultSelfProfile } from '@/data/selfProfile'
 
 export function ProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { likeProfile, passProfile, profiles } = useApp()
   const profile = id ? profiles.find((p) => p.id === id) : undefined
-  const [activeImage, setActiveImage] = useState(0)
   const [liked, setLiked] = useState(false)
 
   if (!profile) {
@@ -25,6 +28,9 @@ export function ProfileDetail() {
       </div>
     )
   }
+
+  const gallery = getProfileGallery(profile.id)
+  const cover = getCoverImage(profile.id)
 
   const handleLike = () => {
     setLiked(true)
@@ -52,100 +58,77 @@ export function ProfileDetail() {
         <ArrowLeft className="h-4 w-4" />
       </Button>
 
-      {/* Gallery */}
-      <motion.div layoutId={`card-${profile.id}`} className="relative h-[70vh] w-full overflow-hidden md:h-[80vh]">
-        <AnimatePresence mode="wait">
+      {/* Cover image with parallax-ish scale-in */}
+      <div className="relative h-[38vh] min-h-[220px] w-full overflow-hidden md:h-[42vh]">
+        <motion.img
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          src={cover}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/20 to-black/10" />
+      </div>
+
+      <div className="mx-auto max-w-4xl px-6 md:px-0">
+        {/* Avatar overlapping cover */}
+        <div className="-mt-16 mb-4 flex items-end justify-between md:-mt-20">
           <motion.img
-            key={activeImage}
-            layoutId={activeImage === 0 ? `card-img-${profile.id}` : undefined}
-            src={profile.images[activeImage]}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            src={profile.images[0]}
             alt={profile.name}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="h-full w-full object-cover"
+            className="h-32 w-32 rounded-full border-4 border-midnight object-cover shadow-2xl md:h-40 md:w-40"
           />
-        </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/10 to-transparent" />
-
-        {/* Image indicators */}
-        <div className="absolute left-1/2 top-6 flex -translate-x-1/2 gap-1.5">
-          {profile.images.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveImage(i)}
-              className={`h-1 rounded-full transition-all cursor-pointer ${i === activeImage ? 'w-8 bg-gold' : 'w-4 bg-white/30'}`}
-            />
-          ))}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-          <div className="mb-3 flex items-center gap-2">
-            <Badge variant="gold">{profile.compatibilityLabel}</Badge>
-            <div className="glass-strong rounded-full px-3 py-1">
-              <span className="font-serif-display text-sm text-gradient-gold">{profile.compatibility}% Match</span>
-            </div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <div className="mb-2 flex items-center gap-2">
+            <h1 className="font-serif-display text-3xl text-white md:text-4xl">{profile.name}, {profile.age}</h1>
+            {profile.verified && (
+              <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] uppercase tracking-wide text-emerald-300 border border-emerald-500/30">
+                <BadgeCheck className="h-3 w-3" /> Verified
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-serif-display text-4xl text-white md:text-6xl">{profile.name}, {profile.age}</h1>
-            {profile.verified && <BadgeCheck className="h-6 w-6 text-gold" />}
+          <div className="mb-5 flex flex-wrap items-center gap-4 text-sm text-white/60">
+            <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {profile.location}</span>
+            <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {profile.profession}</span>
+            <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {profile.education}</span>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-white/70">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4" /> {profile.location}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Briefcase className="h-4 w-4" /> {profile.profession}
-            </span>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      <div className="mx-auto max-w-4xl px-6 py-16 md:px-0">
-        {/* About + Cosmic Snapshot — editorial split, no card chrome */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-20 grid grid-cols-1 gap-12 md:grid-cols-5"
-        >
-          <div className="md:col-span-3">
-            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About {profile.name.split(' ')[0]}</p>
-            <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">
-              {profile.about}
-            </p>
-          </div>
-          <div className="flex flex-col justify-center gap-4 md:col-span-2 md:border-l md:border-white/8 md:pl-10">
-            {[
-              { icon: Sun, label: 'Sun', value: profile.sunSign },
-              { icon: Moon, label: 'Moon', value: profile.moonSign },
-              { icon: ArrowUpCircle, label: 'Rising', value: profile.risingSign },
-            ].map((r) => (
-              <div key={r.label} className="flex items-center gap-3">
-                <r.icon className="h-4 w-4 shrink-0 text-gold" />
-                <p className="text-[11px] uppercase tracking-widest text-white/40">{r.label}</p>
-                <p className="font-serif-display text-lg text-champagne">{r.value}</p>
-              </div>
+        {/* Compatibility snapshot */}
+        <div className="mb-8">
+          <CompatibilitySnapshot profile={profile} self={defaultSelfProfile} />
+        </div>
+
+        {/* Bio */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About {profile.name.split(' ')[0]}</p>
+          <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">{profile.about}</p>
+        </motion.div>
+
+        {/* Interests */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
+          <div className="flex flex-wrap gap-2">
+            {profile.interests.map((interest) => (
+              <Badge key={interest} variant="glass">{interest}</Badge>
             ))}
           </div>
         </motion.div>
 
-        {/* Interests + Lifestyle — flowing, no boxes */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-          className="mb-20"
-        >
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
-          <div className="mb-10 flex flex-wrap gap-2">
-            {profile.interests.map((interest) => (
-              <Badge key={interest} variant="glass">
-                {interest}
-              </Badge>
-            ))}
-          </div>
+        {/* Goals */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
+          <p className="max-w-2xl text-xl leading-relaxed text-white/70">{profile.goals}</p>
+        </motion.div>
+
+        {/* Lifestyle */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
           <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
             {profile.lifestyle.map((item) => (
@@ -157,30 +140,39 @@ export function ProfileDetail() {
           </div>
         </motion.div>
 
-        {/* Prompts — large pull-quotes, no card chrome */}
-        <div className="mb-20 flex flex-col gap-14">
-          {profile.prompts.map((prompt, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + i * 0.08 }}
-            >
-              <p className="mb-3 text-xs uppercase tracking-widest text-gold/70">{prompt.question}</p>
-              <p className="font-serif-display text-3xl italic leading-snug text-white/95 md:text-4xl">
-                "{prompt.answer}"
-              </p>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-16">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Looking For</p>
-          <p className="max-w-2xl text-xl leading-relaxed text-white/70">{profile.goals}</p>
+        {/* Gallery — the centrepiece */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
+          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Gallery</p>
+          <h2 className="font-serif-display mb-5 text-2xl text-champagne">Exploring {profile.name.split(' ')[0]}'s World</h2>
+          <MasonryGallery items={gallery} />
         </motion.div>
 
+        {/* Premium detail sections */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
+          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">More About {profile.name.split(' ')[0]}</p>
+          <div className="mb-5 flex flex-wrap gap-2">
+            <Badge variant="gold">Values: {profile.values.join(', ')}</Badge>
+          </div>
+          <ProfileDetailSections
+            music={profile.music}
+            languages={profile.languages}
+            favoritePlaces={profile.favoritePlaces}
+            dreamDestinations={profile.dreamDestinations}
+            fitness={profile.fitness}
+            books={profile.books}
+            movies={profile.movies}
+          />
+        </motion.div>
+
+        {profile.prompts.map((prompt, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="mb-8">
+            <p className="mb-3 text-xs uppercase tracking-widest text-gold/70">{prompt.question}</p>
+            <p className="font-serif-display text-3xl italic leading-snug text-white/95 md:text-4xl">"{prompt.answer}"</p>
+          </motion.div>
+        ))}
+
         <Button variant="link" onClick={() => navigate(`/compatibility/${profile.id}`)} className="mx-auto flex text-sm">
-          View Full Compatibility Report →
+          <Sparkles className="h-3.5 w-3.5" /> View Full Compatibility Report →
         </Button>
       </div>
 

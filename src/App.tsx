@@ -11,6 +11,7 @@ import { Preferences } from '@/screens/Preferences'
 import { CosmicProfile } from '@/screens/CosmicProfile'
 import { Discovery } from '@/screens/Discovery'
 import { ProfileDetail } from '@/screens/ProfileDetail'
+import { MyProfile } from '@/screens/MyProfile'
 import { MatchScreen } from '@/screens/MatchScreen'
 import { Matches } from '@/screens/Matches'
 import { MessagesList } from '@/screens/MessagesList'
@@ -34,6 +35,7 @@ function App() {
 
             <Route path="/discovery" element={<AppShell><Discovery /></AppShell>} />
             <Route path="/profile/:id" element={<AppShell><ProfileDetail /></AppShell>} />
+            <Route path="/my-profile" element={<AppShell><MyProfile /></AppShell>} />
             <Route path="/match/:id" element={<MatchScreen />} />
             <Route path="/matches" element={<AppShell><Matches /></AppShell>} />
             <Route path="/messages" element={<AppShell><MessagesList /></AppShell>} />

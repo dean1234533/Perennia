@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Compass, Heart, MessageCircle, Settings, Sparkles } from 'lucide-react'
+import { Compass, Heart, MessageCircle, Settings, Sparkles, UserRound } from 'lucide-react'
 import { Starfield } from '@/components/shared/Starfield'
 import { cn } from '@/lib/utils'
 import { useApp } from '@/context/AppContext'
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/discovery', label: 'Discovery', icon: Compass },
   { to: '/matches', label: 'Matches', icon: Heart },
   { to: '/messages', label: 'Messages', icon: MessageCircle },
+  { to: '/my-profile', label: 'Profile', icon: UserRound },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 

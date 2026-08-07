@@ -13,6 +13,7 @@ export interface Profile {
   age: number
   location: string
   profession: string
+  education: string
   verified: boolean
   compatibility: number
   compatibilityLabel: string
@@ -24,6 +25,15 @@ export interface Profile {
   sunSign: string
   moonSign: string
   risingSign: string
+  chineseZodiac: string
+  values: string[]
+  music: string[]
+  languages: string[]
+  favoritePlaces: string[]
+  dreamDestinations: string[]
+  fitness: string
+  books: string
+  movies: string
   sections: CompatibilitySection[]
   prompts: { question: string; answer: string }[]
 }
@@ -87,6 +97,7 @@ export const profiles: Profile[] = [
     age: 29,
     location: 'London, UK',
     profession: 'Architect',
+    education: 'MArch, University College London',
     verified: true,
     compatibility: 94,
     compatibilityLabel: 'Rare Alignment',
@@ -111,6 +122,15 @@ export const profiles: Profile[] = [
     sunSign: 'Libra',
     moonSign: 'Pisces',
     risingSign: 'Leo',
+    chineseZodiac: 'Rabbit',
+    values: ['Honesty', 'Ambition', 'Creativity', 'Family'],
+    music: ['Jazz', 'Neo-Soul', 'Bossa Nova'],
+    languages: ['English', 'French'],
+    favoritePlaces: ['Lisbon', 'Kyoto', 'The local Sunday market'],
+    dreamDestinations: ['Marrakech', 'Patagonia'],
+    fitness: 'Pilates, 3x a week',
+    books: 'The Overstory — Richard Powers',
+    movies: 'In the Mood for Love',
     sections: sectionTemplates(94),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'Markets, a long lunch, and a gallery I\'ve been meaning to visit for months.' },
@@ -124,6 +144,7 @@ export const profiles: Profile[] = [
     age: 32,
     location: 'Edinburgh, UK',
     profession: 'Novelist',
+    education: 'MA English Literature, University of Edinburgh',
     verified: true,
     compatibility: 91,
     compatibilityLabel: 'Exceptional Match',
@@ -148,6 +169,15 @@ export const profiles: Profile[] = [
     sunSign: 'Scorpio',
     moonSign: 'Cancer',
     risingSign: 'Aquarius',
+    chineseZodiac: 'Dragon',
+    values: ['Depth', 'Curiosity', 'Loyalty', 'Solitude'],
+    music: ['Vinyl-only', 'Folk', 'Classical'],
+    languages: ['English', 'Gaelic (learning)'],
+    favoritePlaces: ['A used bookshop in Leith', 'The Highlands', 'Any fireplace'],
+    dreamDestinations: ['Reykjavik', 'The Faroe Islands'],
+    fitness: 'Long coastal walks',
+    books: 'Basically all of them',
+    movies: 'The Lighthouse',
     sections: sectionTemplates(91),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A second-hand bookshop, a fireplace, and no phone signal.' },
@@ -161,6 +191,7 @@ export const profiles: Profile[] = [
     age: 27,
     location: 'Bath, UK',
     profession: 'Physician',
+    education: 'MD, King\'s College London',
     verified: true,
     compatibility: 88,
     compatibilityLabel: 'Strong Alignment',
@@ -185,6 +216,15 @@ export const profiles: Profile[] = [
     sunSign: 'Virgo',
     moonSign: 'Taurus',
     risingSign: 'Capricorn',
+    chineseZodiac: 'Snake',
+    values: ['Compassion', 'Discipline', 'Growth', 'Balance'],
+    music: ['Piano', 'Indie Folk', 'Lo-fi'],
+    languages: ['English', 'Italian'],
+    favoritePlaces: ['Any botanical garden', 'The trail behind her flat'],
+    dreamDestinations: ['New Zealand', 'The Dolomites'],
+    fitness: 'Daily trail running',
+    books: 'When Breath Becomes Air',
+    movies: 'Little Women',
     sections: sectionTemplates(88),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A sunrise run, fresh bread, and a slow lazy afternoon.' },
@@ -198,6 +238,7 @@ export const profiles: Profile[] = [
     age: 31,
     location: 'Bristol, UK',
     profession: 'Product Designer',
+    education: 'BDes Industrial Design, Central Saint Martins',
     verified: true,
     compatibility: 85,
     compatibilityLabel: 'Strong Alignment',
@@ -222,6 +263,15 @@ export const profiles: Profile[] = [
     sunSign: 'Gemini',
     moonSign: 'Libra',
     risingSign: 'Sagittarius',
+    chineseZodiac: 'Horse',
+    values: ['Simplicity', 'Adventure', 'Craft', 'Honesty'],
+    music: ['Synth', 'Ambient', 'Surf rock'],
+    languages: ['English', 'Swedish'],
+    favoritePlaces: ['The workshop', 'Any coastline at dawn'],
+    dreamDestinations: ['Japan', 'Norway'],
+    fitness: 'Surfing, cycling',
+    books: 'Shop Class as Soulcraft',
+    movies: 'Chef',
     sections: sectionTemplates(85),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'Dawn surf, flat white, workshop time with sawdust everywhere.' },
@@ -235,6 +285,7 @@ export const profiles: Profile[] = [
     age: 28,
     location: 'Oxford, UK',
     profession: 'Curator',
+    education: 'MA Art History, Sorbonne',
     verified: true,
     compatibility: 82,
     compatibilityLabel: 'Strong Alignment',
@@ -259,6 +310,15 @@ export const profiles: Profile[] = [
     sunSign: 'Aquarius',
     moonSign: 'Leo',
     risingSign: 'Virgo',
+    chineseZodiac: 'Rooster',
+    values: ['Elegance', 'Curiosity', 'Romance', 'Tradition'],
+    music: ['French chanson', 'Chamber music'],
+    languages: ['English', 'French', 'Italian'],
+    favoritePlaces: ['The Musée Rodin gardens', 'Any flea market'],
+    dreamDestinations: ['Kyoto', 'Buenos Aires'],
+    fitness: 'Ballet, twice weekly',
+    books: 'The Elegance of the Hedgehog',
+    movies: 'Amélie',
     sections: sectionTemplates(82),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A gallery opening, followed by a candlelit dinner nobody rushes.' },
@@ -272,6 +332,7 @@ export const profiles: Profile[] = [
     age: 33,
     location: 'Manchester, UK',
     profession: 'Investment Director',
+    education: 'MBA, London Business School',
     verified: true,
     compatibility: 79,
     compatibilityLabel: 'Promising Match',
@@ -296,6 +357,15 @@ export const profiles: Profile[] = [
     sunSign: 'Capricorn',
     moonSign: 'Scorpio',
     risingSign: 'Taurus',
+    chineseZodiac: 'Ox',
+    values: ['Family', 'Ambition', 'Reliability', 'Generosity'],
+    music: ['Motown', 'Jazz standards'],
+    languages: ['English', 'Mandarin'],
+    favoritePlaces: ['The kitchen', 'The pool at 6am'],
+    dreamDestinations: ['Taiwan', 'The Amalfi Coast'],
+    fitness: 'Competitive swimming',
+    books: 'Atomic Habits',
+    movies: 'The Pursuit of Happyness',
     sections: sectionTemplates(79),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A long swim, cooking for people I love, an early night.' },
