@@ -15,8 +15,8 @@ function makeSparseStars(count: number): Star[] {
     x: Math.random() * 100,
     y: Math.random() * 100,
     size: Math.random() * 1.1 + 0.4,
-    delay: Math.random() * 8,
-    duration: Math.random() * 4 + 5,
+    delay: Math.random() * 10,
+    duration: Math.random() * 8 + 12,
     opacity: Math.random() * 0.35 + 0.15,
   }))
 }
