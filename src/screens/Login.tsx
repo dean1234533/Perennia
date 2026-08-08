@@ -14,7 +14,10 @@ export function Login() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const next = searchParams.get('next')
-  const destination = next || '/discovery'
+  // Logging in always lands on Discovery — EXCEPT when `next` is a Founding
+  // 500 destination (e.g. mid-checkout), where it means something real:
+  // continue that flow rather than dropping the member back at Discovery.
+  const destination = next?.startsWith('/founding-500') ? next : '/discovery'
   const { setAuthenticated } = useApp()
   const { logIn } = useAuth()
   const [email, setEmail] = useState('')

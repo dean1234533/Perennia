@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Check, Sparkles, ShieldCheck, Compass, MessageCircleHeart, Crown } from 'lucide-react'
+import { ArrowLeft, Check, Sparkles, ShieldCheck, Compass, MessageCircleHeart, Crown, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { MemberCounter } from '@/components/founding500/MemberCounter'
 import { PricingTimeline } from '@/components/founding500/PricingTimeline'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { ensureFounding500Config, subscribeFounding500Config } from '@/lib/founding500'
 import type { Founding500Config, MembershipTier } from '@/types/founding500'
@@ -31,7 +32,13 @@ export function Founding500() {
   // lands them back where they were actually headed, not always Discovery.
   const next = searchParams.get('next')
   const { isAuthenticated } = useApp()
+  const { user, logOut } = useAuth()
   const [config, setConfig] = useState<Founding500Config | null>(null)
+
+  const handleLogOut = async () => {
+    if (firebaseConfigured) await logOut()
+    navigate('/login')
+  }
 
   useEffect(() => {
     if (!firebaseConfigured) return
@@ -66,6 +73,16 @@ export function Founding500() {
       >
         <ArrowLeft className="h-4 w-4" />
       </Button>
+
+      {isAuthenticated && user?.email && (
+        <button
+          onClick={handleLogOut}
+          className="glass fixed right-4 top-4 z-30 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-white/50 hover:text-white cursor-pointer md:right-8 md:top-8"
+        >
+          <span className="max-w-[140px] truncate">{user.email}</span>
+          <LogOut className="h-3 w-3 shrink-0" />
+        </button>
+      )}
 
       {/* Hero */}
       <div className="relative z-10 mx-auto max-w-3xl px-6 pb-16 pt-24 text-center md:pt-32">
