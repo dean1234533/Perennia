@@ -12,6 +12,7 @@ const navItems = [
   { to: '/messages', label: 'Messages', mobileLabel: 'Messages', icon: MessageCircle },
   { to: '/compatibility', label: 'Compatibility', mobileLabel: 'Compat', icon: Star },
   { to: '/my-profile', label: 'Profile', mobileLabel: 'Profile', icon: UserRound },
+  { to: '/settings', label: 'Settings', mobileLabel: 'Settings', icon: Settings },
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -76,28 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             )
           })}
         </nav>
-
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            cn(
-              'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-white/45 transition-colors hover:text-white xl:px-4',
-              isActive && 'text-champagne'
-            )
-          }
-        >
-          <Settings className="h-5 w-5 shrink-0 mx-auto xl:mx-0" />
-          <span className="hidden xl:inline">Settings</span>
-        </NavLink>
       </aside>
-
-      {/* Mobile settings shortcut (bottom nav has no room for a 6th item) */}
-      <NavLink
-        to="/settings"
-        className="glass-strong fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-full text-white/60 hover:text-white lg:hidden"
-      >
-        <Settings className="h-4 w-4" />
-      </NavLink>
 
       {/* Main content */}
       <main className="relative z-10 min-h-screen pb-24 lg:pb-8 lg:pl-24 xl:pl-64">{children}</main>

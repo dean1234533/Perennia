@@ -141,7 +141,9 @@ export function ProfileDetail() {
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
           <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">More About {profile.name.split(' ')[0]}</p>
           <div className="mb-5 flex flex-wrap gap-2">
-            <Badge variant="gold">Values: {profile.values.join(', ')}</Badge>
+            {profile.values.map((value) => (
+              <Badge key={value} variant="gold">{value}</Badge>
+            ))}
           </div>
           <ProfileDetailSections
             music={profile.music}

@@ -24,14 +24,14 @@ interface OrbitPosition {
 // larger bubbles) so a translated circle never clips past the container
 // edge on narrow phone viewports — verified at 375px/390px widths.
 const ORBIT_POSITIONS: OrbitPosition[] = [
-  { x: 26, y: 6, size: 1.0 },
-  { x: 74, y: 11, size: 0.82 },
-  { x: 9, y: 38, size: 0.92 },
-  { x: 90, y: 42, size: 1.0 },
-  { x: 16, y: 70, size: 0.8 },
-  { x: 82, y: 73, size: 0.9 },
-  { x: 47, y: 88, size: 0.74 },
-  { x: 58, y: 4, size: 0.68 },
+  { x: 20, y: 10, size: 1.0 },
+  { x: 80, y: 15, size: 0.82 },
+  { x: 9, y: 40, size: 0.92 },
+  { x: 90, y: 44, size: 1.0 },
+  { x: 16, y: 72, size: 0.8 },
+  { x: 82, y: 75, size: 0.9 },
+  { x: 47, y: 90, size: 0.74 },
+  { x: 50, y: 3, size: 0.68 },
 ]
 
 interface ProfileOrbitProps {
@@ -128,8 +128,8 @@ export function ProfileOrbit({
                   </span>
                 )}
               </div>
-              <span className="glass rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wide text-white/55 group-hover:text-champagne whitespace-nowrap">
-                {cat.emoji} {cat.label}
+              <span className="glass rounded-full px-1.5 py-0.5 text-[8px] uppercase tracking-wide text-white/55 group-hover:text-champagne whitespace-nowrap">
+                {cat.label}
               </span>
             </motion.button>
           )
