@@ -123,7 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     />
                   )}
                   {isProfileTab ? (
-                    <SelfAvatar className={cn('h-6 w-6 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/20')} />
+                    <SelfAvatar className={cn('h-8 w-8 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/35')} />
                   ) : (
                     <item.icon className="h-6 w-6" />
                   )}
