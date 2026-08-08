@@ -64,7 +64,7 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] flex h-[100dvh] items-center justify-center bg-black/90 backdrop-blur-xl"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {/* Top bar */}
@@ -120,7 +120,7 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
               autoPlay
               muted
               playsInline
-              className="max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl"
+              className="max-h-[60dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl md:max-h-[78dvh]"
             />
           ) : (
             <motion.img
@@ -141,7 +141,10 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
       </AnimatePresence>
 
       {/* Caption + actions */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center gap-4 p-6">
+      <div
+        className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center gap-4 p-6"
+        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+      >
         {item.caption && (
           <p className="font-serif-display max-w-md text-center text-lg italic text-white/85">"{item.caption}"</p>
         )}
