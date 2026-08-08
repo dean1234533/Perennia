@@ -18,6 +18,10 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
   const [index, setIndex] = useState(initialIndex)
   const [zoomed, setZoomed] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  // The delete/caption bar is hidden until you tap the black background
+  // around the media — sidesteps needing it permanently docked somewhere
+  // that mobile browsers' shifting toolbar can push off-screen.
+  const [controlsVisible, setControlsVisible] = useState(false)
   const dragX = useMotionValue(0)
 
   const item = items[index]
@@ -76,8 +80,7 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col bg-black/90 backdrop-blur-xl"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      className="fixed inset-0 z-[100] flex h-[100dvh] flex-col bg-black/90 backdrop-blur-xl"
     >
       {/* Top bar — normal flow, always gets its own space */}
       <div className="z-10 flex shrink-0 items-center justify-between p-5">
@@ -126,6 +129,9 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
               if (info.offset.x < -80) goNext()
               else if (info.offset.x > 80) goPrev()
             }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setControlsVisible((v) => !v)
+            }}
           >
             {item.type === 'video' ? (
               <video
@@ -156,56 +162,65 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
         </AnimatePresence>
       </div>
 
-      {/* Caption + actions — normal flow, always gets its own space at the
-          bottom regardless of media size. */}
-      <div
-        className="z-10 flex shrink-0 flex-col items-center gap-4 p-6"
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-      >
-        {item.caption && (
-          <p className="font-serif-display max-w-md text-center text-lg italic text-white/85">"{item.caption}"</p>
+      {/* Caption + actions — hidden until you tap the black background
+          around the media, then docked in normal flow so it always gets
+          its own space regardless of media size. */}
+      <AnimatePresence>
+        {controlsVisible && (item.caption || onDelete) && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.2 }}
+            className="z-10 flex shrink-0 flex-col items-center gap-4 p-6"
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+          >
+            {item.caption && (
+              <p className="font-serif-display max-w-md text-center text-lg italic text-white/85">"{item.caption}"</p>
+            )}
+            {onDelete && (
+              <div className="flex items-center gap-3">
+                <AnimatePresence mode="wait">
+                  {confirmingDelete ? (
+                    <motion.div
+                      key="confirm"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-2"
+                    >
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete() }}
+                        className="glass-strong rounded-full bg-rose-500/20 px-4 py-2 text-sm text-rose-300 cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false) }}
+                        className="glass-strong rounded-full px-4 py-2 text-sm text-white/60 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      key="trigger"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      whileTap={{ scale: 0.85 }}
+                      onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true) }}
+                      className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/60 hover:text-rose-300 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </motion.div>
         )}
-        {onDelete && (
-          <div className="flex items-center gap-3">
-            <AnimatePresence mode="wait">
-              {confirmingDelete ? (
-                <motion.div
-                  key="confirm"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete() }}
-                    className="glass-strong rounded-full bg-rose-500/20 px-4 py-2 text-sm text-rose-300 cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false) }}
-                    className="glass-strong rounded-full px-4 py-2 text-sm text-white/60 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="trigger"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  whileTap={{ scale: 0.85 }}
-                  onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true) }}
-                  className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/60 hover:text-rose-300 cursor-pointer"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+      </AnimatePresence>
     </motion.div>
   )
 }
