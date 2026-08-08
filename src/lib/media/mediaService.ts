@@ -120,17 +120,34 @@ export async function uploadVideoMedia(uid: string, file: File, category: string
   return media
 }
 
+/** Only ever attempts to delete Storage files this media doc actually
+ *  references — no blind guessing across every possible filename, which
+ *  used to fire a 404 for every rendition/extension that didn't exist. */
+function storageCandidates(media: MediaDoc): string[] {
+  if (media.type === 'image') return ['display.webp', 'thumb.webp']
+
+  if (media.video) {
+    const names = ['poster.jpg']
+    if (media.video.p480) names.push('480p.mp4')
+    if (media.video.p720) names.push('720p.mp4')
+    if (media.video.p1080) names.push('1080p.mp4')
+    return names
+  }
+
+  // Still processing (or failed before producing variants) — the raw
+  // upload's extension isn't recorded on the doc, so this is the one case
+  // where we still have to try the possibilities. Rare: only hit when
+  // deleting a video before/without it finishing transcoding.
+  return ['incoming.mp4', 'incoming.mov', 'incoming.webm']
+}
+
 export async function deleteMedia(media: MediaDoc) {
   await deleteMediaDoc(media.id)
   const basePath = `users/${media.userId}/media/${media.id}`
-  const candidates =
-    media.type === 'image'
-      ? ['display.webp', 'thumb.webp']
-      : ['incoming.mp4', 'incoming.mov', 'incoming.webm', 'poster.jpg', '480p.mp4', '720p.mp4', '1080p.mp4']
   await Promise.all(
-    candidates.map((name) =>
+    storageCandidates(media).map((name) =>
       deleteObject(ref(storage, `${basePath}/${name}`)).catch(() => {
-        /* file may not exist for this media's variant set — fine */
+        /* file may not exist — fine, this candidate list is best-effort for the processing/error edge case */
       })
     )
   )
