@@ -7,7 +7,6 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { SelfAvatar } from '@/components/shared/SelfAvatar'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
@@ -62,29 +61,6 @@ export function Settings() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Preferences</p>
         <h1 className="font-serif-display text-4xl md:text-5xl">Settings</h1>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="relative mb-6 flex items-center gap-4 overflow-hidden rounded-3xl glass p-5"
-      >
-        {(onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl) && (
-          <img
-            src={onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl}
-            alt=""
-            className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-15 blur-2xl"
-          />
-        )}
-        <SelfAvatar className="relative h-16 w-16 rounded-full ring-2 ring-gold/40" />
-        <div className="relative flex-1">
-          <p className="font-serif-display text-xl text-champagne">{onboarding.name || 'Eleanor Ashworth'}</p>
-          <p className="text-sm text-white/45">{onboarding.sunSign || 'Libra'} • London, UK</p>
-        </div>
-        <Button variant="glass" size="sm" className="relative" onClick={() => navigate('/cosmic-profile')}>
-          Edit
-        </Button>
       </motion.div>
 
       {[
