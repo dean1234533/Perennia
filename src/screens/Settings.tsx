@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin, Heart, X, Check,
+  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin, Heart, X, Check, Crown,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
+import { subscribeFoundingMembership } from '@/lib/founding500'
+import type { FoundingMemberRecord } from '@/types/founding500'
 
 function Row({
   icon: Icon,
@@ -65,6 +67,12 @@ export function Settings() {
   const [phoneDraft, setPhoneDraft] = useState(onboarding.phone)
   const [savingInfo, setSavingInfo] = useState(false)
   const [savedPulse, setSavedPulse] = useState(false)
+  const [foundingRecord, setFoundingRecord] = useState<FoundingMemberRecord | null>(null)
+
+  useEffect(() => {
+    if (!firebaseConfigured || !user) return
+    return subscribeFoundingMembership(user.uid, setFoundingRecord)
+  }, [user])
 
   const email = firebaseConfigured ? user?.email ?? onboarding.email : onboarding.email
 
@@ -161,6 +169,26 @@ export function Settings() {
                           : 'Verify Now'}
                     </span>
                   </button>
+                }
+              />
+              <div className="h-px bg-white/5" />
+              <Row
+                icon={Crown}
+                label="Founding 500"
+                description={
+                  foundingRecord
+                    ? `Founding Member #${foundingRecord.memberNumber} · ${foundingRecord.tier === 'premium' ? 'Premium' : 'Essential'}`
+                    : 'Introductory pricing for our first 500 members'
+                }
+                onClick={() => navigate('/founding-500')}
+                right={
+                  foundingRecord ? (
+                    <span className="rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-wide text-gold">
+                      Member
+                    </span>
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-white/25" />
+                  )
                 }
               />
               <div className="h-px bg-white/5" />

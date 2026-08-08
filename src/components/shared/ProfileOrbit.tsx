@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { BadgeCheck, ShieldQuestion, Clock, ImagePlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -43,6 +44,9 @@ interface ProfileOrbitProps {
   onCategorySelect: (categoryId: string) => void
   compatibility?: number
   onPhotoClick?: () => void
+  /** Extra badges shown alongside verification status — e.g. a Founding
+   *  Member pill. Only ever passed for the signed-in member's own view. */
+  extraBadge?: ReactNode
 }
 
 function VerificationBadge({ status }: { status: ProfileOrbitProps['verificationStatus'] }) {
@@ -77,6 +81,7 @@ export function ProfileOrbit({
   onCategorySelect,
   compatibility,
   onPhotoClick,
+  extraBadge,
 }: ProfileOrbitProps) {
   return (
     <div className="flex flex-col items-center">
@@ -178,7 +183,10 @@ export function ProfileOrbit({
           {age ? `, ${age}` : ''}
         </h1>
         {location && <p className="text-sm text-white/55">{location}</p>}
-        <VerificationBadge status={verificationStatus} />
+        <div className="flex items-center gap-2">
+          <VerificationBadge status={verificationStatus} />
+          {extraBadge}
+        </div>
       </motion.div>
     </div>
   )

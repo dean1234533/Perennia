@@ -20,6 +20,9 @@ import { MessageThread } from '@/screens/MessageThread'
 import { CompatibilityReport } from '@/screens/CompatibilityReport'
 import { CompatibilityHub } from '@/screens/CompatibilityHub'
 import { Settings } from '@/screens/Settings'
+import { Founding500 } from '@/screens/Founding500'
+import { Founding500Checkout } from '@/screens/Founding500Checkout'
+import { Founding500Success } from '@/screens/Founding500Success'
 
 function App() {
   return (
@@ -28,6 +31,9 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Welcome />} />
+            <Route path="/founding-500" element={<Founding500 />} />
+            <Route path="/founding-500/checkout" element={<Founding500Checkout />} />
+            <Route path="/founding-500/success" element={<Founding500Success />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile-photo" element={<ProfilePhoto />} />

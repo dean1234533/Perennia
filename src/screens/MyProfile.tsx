@@ -10,6 +10,7 @@ import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
+import { FoundingMemberBadge } from '@/components/founding500/FoundingMemberBadge'
 import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CircularCropper } from '@/components/shared/CircularCropper'
@@ -223,6 +224,7 @@ export function MyProfile() {
         categories={orbitCategories}
         onCategorySelect={handleCategorySelect}
         onPhotoClick={() => photoInputRef.current?.click()}
+        extraBadge={<FoundingMemberBadge />}
       />
       <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
       {photoBusy && (

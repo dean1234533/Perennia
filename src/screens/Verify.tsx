@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ShieldCheck, CheckCircle2, Loader2, AlertTriangle, Clock, ExternalLink } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
@@ -17,6 +17,9 @@ type LocalStage = 'idle' | 'launching' | 'pending-webhook' | 'not-configured' | 
 
 export function Verify() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next')
+  const continueDestination = next || '/birth-details'
   const { user } = useAuth()
   const { onboarding } = useApp()
   const [stage, setStage] = useState<LocalStage>('idle')
@@ -75,7 +78,7 @@ export function Verify() {
                 Stripe Identity confirmed your face matches your government ID. Welcome to a
                 community built on authenticity — let's build your cosmic profile next.
               </p>
-              <Button size="lg" className="w-full" onClick={() => navigate('/birth-details')}>
+              <Button size="lg" className="w-full" onClick={() => navigate(continueDestination)}>
                 Continue
               </Button>
             </motion.div>
@@ -112,7 +115,7 @@ export function Verify() {
                 <p>2. Set <code className="text-champagne">VITE_STRIPE_PUBLISHABLE_KEY</code> in the frontend .env</p>
                 <p className="mt-1 text-white/40">See functions/.env.example for full setup steps.</p>
               </div>
-              <Button variant="glass" className="w-full" onClick={() => navigate('/birth-details')}>
+              <Button variant="glass" className="w-full" onClick={() => navigate(continueDestination)}>
                 Skip for Now <ExternalLink className="h-3.5 w-3.5" />
               </Button>
             </motion.div>

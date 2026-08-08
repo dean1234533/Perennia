@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, User, ArrowRight } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
@@ -20,6 +20,8 @@ function friendlyAuthError(err: unknown): string {
 
 export function SignUp() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next')
   const { updateOnboarding } = useApp()
   const { signUp } = useAuth()
   const [name, setName] = useState('')
@@ -28,6 +30,13 @@ export function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // A Founding 500 signup (or any other deep-linked flow) carries its
+  // destination through as `?next=`, so we skip straight to identity
+  // verification (per the Founding 500 flow spec) instead of forcing new
+  // members through the full dating-profile onboarding chain. `next` is
+  // re-attached to /verify so it still lands on the real destination after.
+  const destination = next ? `/verify?next=${encodeURIComponent(next)}` : '/profile-photo'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -35,7 +44,7 @@ export function SignUp() {
     if (firebaseConfigured) {
       try {
         await signUp(name, email, password)
-        navigate('/profile-photo')
+        navigate(destination)
       } catch (err) {
         setError(friendlyAuthError(err))
         setLoading(false)
@@ -43,7 +52,7 @@ export function SignUp() {
       return
     }
     updateOnboarding({ name, email, password })
-    setTimeout(() => navigate('/profile-photo'), 900)
+    setTimeout(() => navigate(destination), 900)
   }
 
   const isValid = name.length > 1 && email.includes('@') && password.length >= 6
@@ -107,7 +116,10 @@ export function SignUp() {
 
         <p className="mt-6 text-center text-xs text-white/40">
           Already have an account?{' '}
-          <button onClick={() => navigate('/login')} className="text-gold hover:underline cursor-pointer">
+          <button
+            onClick={() => navigate(next ? `/login?next=${encodeURIComponent(next)}` : '/login')}
+            className="text-gold hover:underline cursor-pointer"
+          >
             Log in
           </button>
         </p>

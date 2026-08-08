@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, ArrowRight } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
@@ -12,6 +12,9 @@ import { firebaseConfigured } from '@/lib/firebase'
 
 export function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next')
+  const destination = next || '/discovery'
   const { setAuthenticated } = useApp()
   const { logIn } = useAuth()
   const [email, setEmail] = useState('')
@@ -27,7 +30,7 @@ export function Login() {
     if (firebaseConfigured) {
       try {
         await logIn(email, password)
-        navigate('/discovery')
+        navigate(destination)
       } catch {
         setError('Incorrect email or password. Please try again.')
         setLoading(false)
@@ -42,7 +45,7 @@ export function Login() {
         return
       }
       setAuthenticated(true)
-      navigate('/discovery')
+      navigate(destination)
     }, 900)
   }
 
@@ -100,7 +103,10 @@ export function Login() {
 
         <p className="mt-6 text-center text-xs text-white/40">
           New to Perennia?{' '}
-          <button onClick={() => navigate('/signup')} className="text-gold hover:underline cursor-pointer">
+          <button
+            onClick={() => navigate(next ? `/signup?next=${encodeURIComponent(next)}` : '/signup')}
+            className="text-gold hover:underline cursor-pointer"
+          >
             Create an account
           </button>
         </p>

@@ -82,5 +82,24 @@ service cloud.firestore {
       allow read: if false;
       allow write: if false;
     }
+
+    // --- Founding 500 membership --------------------------------------
+    // Config is public (the pricing page is shown pre-auth) but only ever
+    // written via the Admin SDK / admin-only callables — never directly by
+    // clients, so pricing/availability can't be tampered with client-side.
+    match /config/founding500 {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // The single source of truth for "is this a real Founding 500 member" —
+    // written exclusively by the post-payment Stripe webhook. A member can
+    // read their own record (to show their certificate/badge) but can never
+    // write it — this is what makes it impossible to fake membership from
+    // the client.
+    match /foundingMembers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
   }
 }

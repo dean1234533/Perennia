@@ -33,9 +33,12 @@ import {
   stripeWebhookSecret,
 } from './config/env'
 import { getCompatibilityInputSchema, computeNatalChartInputSchema } from './validation/compatibility.validation'
+import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema } from './validation/founding500.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { createVerificationSession, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
+import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted } from './services/founding500.service'
+import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { computeFullNatalChart, AstrologyError } from './services/astrology.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
@@ -191,9 +194,11 @@ export const createIdentityVerificationSession = onCall(
 )
 
 // ---------------------------------------------------------------------------
-// stripeIdentityWebhook — Stripe calls this when a verification session
-// resolves. Signature-verified against STRIPE_WEBHOOK_SECRET so only Stripe
-// can flip a user's verification status; the client can never set it itself.
+// stripeIdentityWebhook — one shared Stripe webhook endpoint for this app.
+// Handles both identity-verification session results AND Founding 500
+// checkout completions, dispatched by event type. Signature-verified
+// against STRIPE_WEBHOOK_SECRET so only Stripe can trigger either — the
+// client can never set verification status or membership itself.
 // ---------------------------------------------------------------------------
 export const stripeIdentityWebhook = onRequest(
   { secrets: [stripeSecretKey, stripeWebhookSecret] },
@@ -210,7 +215,19 @@ export const stripeIdentityWebhook = onRequest(
         secretKey: stripeSecretKey.value(),
         webhookSecret: stripeWebhookSecret.value(),
       })
-      await handleVerificationWebhookEvent(event)
+
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as { metadata?: Record<string, string> }
+        if (session.metadata?.founding500 === 'true') {
+          await handleFoundingCheckoutCompleted(
+            event.data.object as Parameters<typeof handleFoundingCheckoutCompleted>[0],
+            stripeSecretKey.value()
+          )
+        }
+      } else {
+        await handleVerificationWebhookEvent(event)
+      }
+
       response.status(200).send('ok')
     } catch (err) {
       log.error('stripe_webhook_failed', { message: err instanceof Error ? err.message : String(err) })
@@ -218,6 +235,53 @@ export const stripeIdentityWebhook = onRequest(
     }
   }
 )
+
+// ---------------------------------------------------------------------------
+// Founding 500 — config read/bootstrap, admin update, and real Stripe
+// subscription checkout. See services/founding500.service.ts and
+// repositories/founding500.repository.ts.
+// ---------------------------------------------------------------------------
+// Deliberately no auth check: the Founding 500 pricing page is public (shown
+// pre-signup), and this bootstrap is safe to expose unauthenticated — it
+// only ever writes the fixed default config, and only if the doc doesn't
+// already exist yet (see ensureConfigSeeded). It can't be used to reset or
+// tamper with real config once seeded.
+export const ensureFounding500Config = onCall({}, async () => {
+  return ensureFounding500ConfigSeeded()
+})
+
+export const updateFounding500Config = onCall({}, async (request) => {
+  if (!request.auth) throw unauthenticated()
+  if (request.auth.token.admin !== true) throw permissionDenied('Admin access required.')
+  const parsed = updateFounding500ConfigInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+  const updated = await updateFounding500ConfigDoc(parsed.data)
+  log.info('founding500_config_updated', { uid: request.auth.uid, fields: Object.keys(parsed.data) })
+  return updated
+})
+
+export const createFoundingCheckoutSession = onCall({ secrets: [stripeSecretKey] }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in to join the Founding 500.')
+  const parsed = createFoundingCheckoutInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+  try {
+    return await createFoundingCheckoutSessionService({
+      uid: request.auth.uid,
+      email: request.auth.token.email,
+      tier: parsed.data.tier,
+      successUrl: parsed.data.successUrl,
+      cancelUrl: parsed.data.cancelUrl,
+      secretKey: stripeSecretKey.value(),
+    })
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('createFoundingCheckoutSession failed', err)
+  }
+})
 
 // ---------------------------------------------------------------------------
 // processVideoUpload — triggers on every file finalized under

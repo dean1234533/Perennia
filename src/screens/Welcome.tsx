@@ -68,6 +68,17 @@ export function Welcome() {
 
       {/* ============ HERO ============ */}
       <section className="relative z-10 flex flex-col items-center px-6 pb-20 pt-16 text-center md:pt-24">
+        <motion.button
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          onClick={() => navigate('/founding-500')}
+          className="glass mb-5 inline-flex items-center gap-2 rounded-full border border-gold/25 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-gold cursor-pointer hover:border-gold/50"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Introducing the Founding 500 — join us at the beginning
+        </motion.button>
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
