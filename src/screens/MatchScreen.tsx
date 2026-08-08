@@ -4,12 +4,12 @@ import { Sparkles, MessageCircle, Compass } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
 import { Starfield } from '@/components/shared/Starfield'
-import { selfAvatarUrl } from '@/lib/avatar'
+import { SelfAvatar } from '@/components/shared/SelfAvatar'
 
 export function MatchScreen() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profiles, onboarding } = useApp()
+  const { profiles } = useApp()
   const profile = id ? profiles.find((p) => p.id === id) : undefined
 
   if (!profile) {
@@ -41,14 +41,14 @@ export function MatchScreen() {
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 mb-8 flex items-center"
       >
-        <motion.img
+        <motion.div
           initial={{ x: 40, rotate: -6 }}
           animate={{ x: 0, rotate: -6 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          src={selfAvatarUrl(onboarding.gender)}
-          alt=""
-          className="h-32 w-32 -mr-4 rounded-full border-4 border-midnight object-cover shadow-2xl md:h-40 md:w-40"
-        />
+          className="h-32 w-32 -mr-4 md:h-40 md:w-40"
+        >
+          <SelfAvatar className="h-full w-full rounded-full border-4 border-midnight shadow-2xl" />
+        </motion.div>
         <motion.img
           initial={{ x: -40, rotate: 6 }}
           animate={{ x: 0, rotate: 6 }}

@@ -6,12 +6,12 @@ import { ProgressRing } from '@/components/ui/progress-ring'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Starfield } from '@/components/shared/Starfield'
-import { selfAvatarUrl } from '@/lib/avatar'
+import { SelfAvatar } from '@/components/shared/SelfAvatar'
 
 export function CompatibilityReport() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profiles, onboarding } = useApp()
+  const { profiles } = useApp()
   const profile = id ? profiles.find((p) => p.id === id) : undefined
 
   if (!profile) {
@@ -70,7 +70,7 @@ export function CompatibilityReport() {
         </motion.div>
 
         <div className="mb-16 flex items-center justify-center gap-4">
-          <img src={selfAvatarUrl(onboarding.gender)} alt="you" className="h-12 w-12 rounded-full border-2 border-gold/40 object-cover" />
+          <SelfAvatar className="h-12 w-12 rounded-full border-2 border-gold/40" />
           <Sparkles className="h-5 w-5 text-gold" />
           <img src={profile.images[0]} alt={profile.name} className="h-12 w-12 rounded-full border-2 border-gold/40 object-cover" />
         </div>

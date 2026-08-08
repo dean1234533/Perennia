@@ -7,10 +7,10 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
+import { SelfAvatar } from '@/components/shared/SelfAvatar'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
-import { selfAvatarUrl } from '@/lib/avatar'
 
 function Row({
   icon: Icon,
@@ -70,16 +70,14 @@ export function Settings() {
         transition={{ delay: 0.05 }}
         className="relative mb-6 flex items-center gap-4 overflow-hidden rounded-3xl glass p-5"
       >
-        <img
-          src={selfAvatarUrl(onboarding.gender)}
-          alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-15 blur-2xl"
-        />
-        <img
-          src={selfAvatarUrl(onboarding.gender)}
-          alt="You"
-          className="relative h-16 w-16 rounded-full object-cover ring-2 ring-gold/40"
-        />
+        {(onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl) && (
+          <img
+            src={onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl}
+            alt=""
+            className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-15 blur-2xl"
+          />
+        )}
+        <SelfAvatar className="relative h-16 w-16 rounded-full ring-2 ring-gold/40" />
         <div className="relative flex-1">
           <p className="font-serif-display text-xl text-champagne">{onboarding.name || 'Eleanor Ashworth'}</p>
           <p className="text-sm text-white/45">{onboarding.sunSign || 'Libra'} • London, UK</p>
