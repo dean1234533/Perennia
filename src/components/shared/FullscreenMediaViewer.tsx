@@ -42,6 +42,18 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, goNext, goPrev])
 
+  // Lock background scroll while the viewer is open — otherwise scrolling
+  // the page behind it toggles the mobile browser's collapsible toolbar,
+  // which keeps changing the real visible viewport height and made the
+  // bottom action bar (delete button) flicker in and out of view.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [])
+
   // React to items shrinking after a delete (real-time from Firestore) —
   // close if that was the last item, otherwise keep the index in bounds.
   useEffect(() => {
@@ -64,11 +76,11 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex h-[100dvh] items-center justify-center bg-black/90 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] flex flex-col bg-black/90 backdrop-blur-xl"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      {/* Top bar */}
-      <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-5">
+      {/* Top bar — normal flow, always gets its own space */}
+      <div className="z-10 flex shrink-0 items-center justify-between p-5">
         <span className="glass-strong rounded-full px-3.5 py-1.5 text-xs text-white/80">
           {index + 1} / {items.length}
         </span>
@@ -80,69 +92,74 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
         </button>
       </div>
 
-      {/* Prev / next arrows (desktop) */}
-      <button
-        onClick={(e) => { e.stopPropagation(); goPrev() }}
-        className="glass-strong absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); goNext() }}
-        className="glass-strong absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-
-      {/* Media */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={item.id}
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex h-full w-full items-center justify-center px-4 md:px-20"
-          drag={!zoomed ? 'x' : false}
-          style={{ x: dragX }}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.6}
-          onDragEnd={(_, info) => {
-            if (info.offset.x < -80) goNext()
-            else if (info.offset.x > 80) goPrev()
-          }}
+      {/* Media area — takes whatever space is left between the top bar and
+          the bottom action bar, so those two never get pushed off-screen
+          regardless of the browser's actual visible viewport height. */}
+      <div className="relative min-h-0 flex-1">
+        {/* Prev / next arrows (desktop) */}
+        <button
+          onClick={(e) => { e.stopPropagation(); goPrev() }}
+          className="glass-strong absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer"
         >
-          {item.type === 'video' ? (
-            <video
-              src={item.url}
-              poster={item.thumbnailUrl}
-              controls
-              autoPlay
-              muted
-              playsInline
-              className="max-h-[60dvh] w-auto max-w-full rounded-2xl object-contain shadow-2xl md:max-h-[78dvh]"
-            />
-          ) : (
-            <motion.img
-              src={item.url}
-              alt={item.caption ?? ''}
-              onDoubleClick={() => setZoomed((z) => !z)}
-              animate={{ scale: zoomed ? 1.8 : 1 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              drag={zoomed}
-              dragConstraints={{ left: -200, right: 200, top: -200, bottom: 200 }}
-              className={cn(
-                'max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl',
-                zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
-              )}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); goNext() }}
+          className="glass-strong absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
 
-      {/* Caption + actions */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="relative flex h-full w-full items-center justify-center px-4 md:px-20"
+            drag={!zoomed ? 'x' : false}
+            style={{ x: dragX }}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.6}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -80) goNext()
+              else if (info.offset.x > 80) goPrev()
+            }}
+          >
+            {item.type === 'video' ? (
+              <video
+                src={item.url}
+                poster={item.thumbnailUrl}
+                controls
+                autoPlay
+                muted
+                playsInline
+                className="h-full max-w-full rounded-2xl object-contain shadow-2xl"
+              />
+            ) : (
+              <motion.img
+                src={item.url}
+                alt={item.caption ?? ''}
+                onDoubleClick={() => setZoomed((z) => !z)}
+                animate={{ scale: zoomed ? 1.8 : 1 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                drag={zoomed}
+                dragConstraints={{ left: -200, right: 200, top: -200, bottom: 200 }}
+                className={cn(
+                  'h-full max-w-full rounded-2xl object-contain shadow-2xl',
+                  zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
+                )}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Caption + actions — normal flow, always gets its own space at the
+          bottom regardless of media size. */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center gap-4 p-6"
+        className="z-10 flex shrink-0 flex-col items-center gap-4 p-6"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
         {item.caption && (
