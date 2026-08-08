@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, MapPin, ArrowRight, Sparkles } from 'lucide-react'
+import { Calendar, Clock, MapPin, ArrowRight, Sparkles, Loader2 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
+import { computeNatalChart } from '@/lib/natalChart'
+import { firebaseConfigured } from '@/lib/firebase'
 
 function calcSunSign(dateStr: string): string {
   if (!dateStr) return ''
@@ -28,13 +30,46 @@ export function BirthDetails() {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [place, setPlace] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const sunSign = calcSunSign(date)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    updateOnboarding({ birthDate: date, birthTime: time, birthPlace: place, sunSign })
-    navigate('/preferences')
+    setError('')
+
+    if (!firebaseConfigured) {
+      updateOnboarding({ birthDate: date, birthTime: time, birthPlace: place, sunSign })
+      navigate('/preferences')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const chart = await computeNatalChart({ birthDate: date, birthTime: time, birthPlace: place })
+      updateOnboarding({
+        birthDate: date,
+        birthTime: time,
+        birthPlace: place,
+        sunSign: chart.sunSign,
+        moonSign: chart.moonSign,
+        risingSign: chart.risingSign,
+        chineseAnimal: chart.animal,
+        chineseElement: chart.element,
+        yinYang: chart.yinYang,
+      })
+      navigate('/preferences')
+    } catch (err) {
+      const message = (err as { message?: string })?.message ?? ''
+      setError(
+        message.includes('Couldn\'t find a city')
+          ? message
+          : 'Could not calculate your cosmic profile. Please check your birth place and try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const isValid = date && time && place.length > 1
@@ -90,8 +125,18 @@ export function BirthDetails() {
             </motion.div>
           )}
 
-          <Button type="submit" size="lg" className="mt-2 w-full" disabled={!isValid}>
-            Continue <ArrowRight className="h-4 w-4" />
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-300"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <Button type="submit" size="lg" className="mt-2 w-full" disabled={!isValid || loading}>
+            {loading ? (<><Loader2 className="h-4 w-4 animate-spin" /> Calculating your cosmic profile…</>) : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
           </Button>
         </form>
       </motion.div>

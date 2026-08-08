@@ -32,11 +32,12 @@ import {
   stripeSecretKey,
   stripeWebhookSecret,
 } from './config/env'
-import { getCompatibilityInputSchema } from './validation/compatibility.validation'
+import { getCompatibilityInputSchema, computeNatalChartInputSchema } from './validation/compatibility.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { createVerificationSession, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
 import { processUploadedVideo } from './services/videoProcessing.service'
+import { computeFullNatalChart, AstrologyError } from './services/astrology.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
 import { log } from './utils/logger'
 import type { FusionTable } from './types/compatibility'
@@ -143,6 +144,29 @@ export const syncCompatibilityScheduled = onSchedule(
     }
   }
 )
+
+// ---------------------------------------------------------------------------
+// computeNatalChart — real Sun/Moon/Rising sign + Chinese zodiac from an
+// actual birth date/time/place (ephemeris + geocoding + timezone math; see
+// services/astrology.service.ts). No hardcoded/placeholder signs.
+// ---------------------------------------------------------------------------
+export const computeNatalChart = onCall({}, async (request) => {
+  if (!request.auth) {
+    throw unauthenticated('Sign in to compute your cosmic profile.')
+  }
+  const parsed = computeNatalChartInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+  try {
+    const chart = computeFullNatalChart(parsed.data.birthDate, parsed.data.birthTime, parsed.data.birthPlace)
+    log.info('natal_chart_computed', { uid: request.auth.uid, city: chart.matchedCity })
+    return chart
+  } catch (err) {
+    if (err instanceof AstrologyError) throw invalidArgument(err.message)
+    throw internal('computeNatalChart failed', err)
+  }
+})
 
 // ---------------------------------------------------------------------------
 // createIdentityVerificationSession — starts a REAL Stripe Identity check.

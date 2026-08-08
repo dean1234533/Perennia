@@ -39,6 +39,11 @@ export interface UserDoc {
   birthTime: string
   birthPlace: string
   sunSign: string
+  moonSign: string
+  risingSign: string
+  chineseAnimal: string
+  chineseElement: string
+  yinYang: 'Yin' | 'Yang' | ''
   gender: 'male' | 'female' | ''
   likedIds: string[]
   passedIds: string[]
@@ -64,6 +69,11 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   birthTime: '',
   birthPlace: '',
   sunSign: '',
+  moonSign: '',
+  risingSign: '',
+  chineseAnimal: '',
+  chineseElement: '',
+  yinYang: '',
   gender: '',
   likedIds: [],
   passedIds: [],

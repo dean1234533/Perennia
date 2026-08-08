@@ -120,3 +120,12 @@ export function factorInsightRowSchema(kind: 'score' | 'yinYang') {
 }
 
 export type ParsedFactorInsightRow = z.infer<ReturnType<typeof factorInsightRowSchema>>
+
+/** Input for computeNatalChart — real birth date/time/place, no defaults. */
+export const computeNatalChartInputSchema = z.object({
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'birthDate must be YYYY-MM-DD'),
+  birthTime: z.string().regex(/^\d{2}:\d{2}$/, 'birthTime must be HH:MM'),
+  birthPlace: z.string().trim().min(1, 'birthPlace is required'),
+})
+
+export type ComputeNatalChartInput = z.infer<typeof computeNatalChartInputSchema>

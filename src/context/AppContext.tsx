@@ -27,6 +27,11 @@ export interface OnboardingData {
   birthTime: string
   birthPlace: string
   sunSign: string
+  moonSign: string
+  risingSign: string
+  chineseAnimal: string
+  chineseElement: string
+  yinYang: 'Yin' | 'Yang' | ''
   gender: 'male' | 'female' | ''
   profilePhotoUrl: string
   profilePhotoThumbUrl: string
@@ -62,6 +67,11 @@ const defaultOnboarding: OnboardingData = {
   birthTime: '',
   birthPlace: '',
   sunSign: '',
+  moonSign: '',
+  risingSign: '',
+  chineseAnimal: '',
+  chineseElement: '',
+  yinYang: '',
   gender: '',
   profilePhotoUrl: '',
   profilePhotoThumbUrl: '',
@@ -106,6 +116,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         birthTime: data.birthTime,
         birthPlace: data.birthPlace,
         sunSign: data.sunSign,
+        moonSign: data.moonSign ?? '',
+        risingSign: data.risingSign ?? '',
+        chineseAnimal: data.chineseAnimal ?? '',
+        chineseElement: data.chineseElement ?? '',
+        yinYang: data.yinYang ?? '',
         gender: data.gender ?? '',
         profilePhotoUrl: data.profilePhotoUrl ?? '',
         profilePhotoThumbUrl: data.profilePhotoThumbUrl ?? '',

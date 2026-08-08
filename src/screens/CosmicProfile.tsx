@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sun, Moon, ArrowUpCircle, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Sun, Moon, ArrowUpCircle, Sparkles, ArrowRight, ArrowLeft, Compass } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,12 @@ const traits = ['Intuitive', 'Loyal', 'Passionate', 'Idealistic', 'Warm', 'Deter
 function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
   const navigate = useNavigate()
   const { onboarding, completeOnboarding } = useApp()
-  const sunSign = onboarding.sunSign || 'Libra'
+  const sunSign = onboarding.sunSign || '—'
+  const moonSign = onboarding.moonSign || '—'
+  const risingSign = onboarding.risingSign || '—'
+  const chineseLabel = onboarding.chineseAnimal
+    ? `${onboarding.chineseElement} ${onboarding.chineseAnimal}`.trim()
+    : '—'
 
   const finish = async () => {
     await completeOnboarding()
@@ -57,7 +62,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-widest text-white/40">Moon Sign</p>
-                <p className="font-serif-display text-xl text-champagne">Pisces</p>
+                <p className="font-serif-display text-xl text-champagne">{moonSign}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
@@ -66,7 +71,16 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-widest text-white/40">Rising Sign</p>
-                <p className="font-serif-display text-xl text-champagne">Leo</p>
+                <p className="font-serif-display text-xl text-champagne">{risingSign}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/15">
+                <Compass className="h-5 w-5 text-gold" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/40">Chinese Zodiac</p>
+                <p className="font-serif-display text-xl text-champagne">{chineseLabel}{onboarding.yinYang ? ` · ${onboarding.yinYang}` : ''}</p>
               </div>
             </div>
           </div>
@@ -84,7 +98,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
             ))}
           </div>
           <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/55">
-            As a {sunSign} Sun with Pisces Moon, you lead with charm and diplomacy while feeling
+            As a {sunSign} Sun with {moonSign} Moon, you lead with charm and diplomacy while feeling
             things deeply beneath the surface. You're drawn to partners who can match your emotional
             intuition with steady, grounded presence.
           </p>

@@ -1,11 +1,3 @@
-export interface CompatibilitySection {
-  key: string
-  label: string
-  score: number
-  summary: string
-  detail: string
-}
-
 export interface Profile {
   id: string
   name: string
@@ -26,6 +18,8 @@ export interface Profile {
   moonSign: string
   risingSign: string
   chineseZodiac: string
+  chineseElement: string
+  yinYang: 'Yin' | 'Yang'
   values: string[]
   music: string[]
   languages: string[]
@@ -34,60 +28,8 @@ export interface Profile {
   fitness: string
   books: string
   movies: string
-  sections: CompatibilitySection[]
   prompts: { question: string; answer: string }[]
 }
-
-const sectionTemplates = (seed: number): CompatibilitySection[] => [
-  {
-    key: 'emotional',
-    label: 'Emotional Connection',
-    score: 82 + (seed % 13),
-    summary: 'A deep, intuitive emotional resonance runs between you both.',
-    detail:
-      'Your emotional rhythms move in sync — moments of vulnerability are met with warmth rather than withdrawal. This is the kind of pairing that tends to build trust quickly and deepen over time.',
-  },
-  {
-    key: 'communication',
-    label: 'Communication Style',
-    score: 74 + (seed % 20),
-    summary: 'You express yourselves in complementary ways.',
-    detail:
-      'One of you leads with directness, the other with nuance — together you tend to cover blind spots rather than talk past each other. Expect a few early misreads that resolve into fluency.',
-  },
-  {
-    key: 'values',
-    label: 'Life Values',
-    score: 85 + (seed % 10),
-    summary: 'Your core values are strikingly aligned.',
-    detail:
-      'Family, ambition, and how you define a life well-lived point in the same direction. This kind of alignment is rare and tends to be the strongest predictor of long-term compatibility.',
-  },
-  {
-    key: 'chemistry',
-    label: 'Physical Chemistry',
-    score: 70 + (seed % 25),
-    summary: 'A magnetic, unmistakable pull.',
-    detail:
-      'The charts suggest a strong initial spark with room to grow into something steadier — the kind of chemistry that rewards patience rather than rushing.',
-  },
-  {
-    key: 'intellect',
-    label: 'Intellectual Compatibility',
-    score: 78 + (seed % 18),
-    summary: 'Conversations that could run for hours.',
-    detail:
-      'You are drawn to similar ideas but arrive at them differently, which tends to make for lively, generative conversation rather than repetitive agreement.',
-  },
-  {
-    key: 'vision',
-    label: 'Long-Term Vision',
-    score: 80 + (seed % 15),
-    summary: 'Your futures point toward the same horizon.',
-    detail:
-      'Where you each see yourselves in five years overlaps meaningfully — a strong signal for those seeking something built to last, not just a beautiful beginning.',
-  },
-]
 
 export const profiles: Profile[] = [
   {
@@ -123,6 +65,8 @@ export const profiles: Profile[] = [
     moonSign: 'Pisces',
     risingSign: 'Leo',
     chineseZodiac: 'Rabbit',
+    chineseElement: 'Water',
+    yinYang: 'Yin',
     values: ['Honesty', 'Ambition', 'Creativity', 'Family'],
     music: ['Jazz', 'Neo-Soul', 'Bossa Nova'],
     languages: ['English', 'French'],
@@ -131,7 +75,6 @@ export const profiles: Profile[] = [
     fitness: 'Pilates, 3x a week',
     books: 'The Overstory — Richard Powers',
     movies: 'In the Mood for Love',
-    sections: sectionTemplates(94),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'Markets, a long lunch, and a gallery I\'ve been meaning to visit for months.' },
       { question: 'I\'m looking for…', answer: 'Someone emotionally fluent who still gets excited about small things.' },
@@ -170,6 +113,8 @@ export const profiles: Profile[] = [
     moonSign: 'Cancer',
     risingSign: 'Aquarius',
     chineseZodiac: 'Dragon',
+    chineseElement: 'Wood',
+    yinYang: 'Yang',
     values: ['Depth', 'Curiosity', 'Loyalty', 'Solitude'],
     music: ['Vinyl-only', 'Folk', 'Classical'],
     languages: ['English', 'Gaelic (learning)'],
@@ -178,7 +123,6 @@ export const profiles: Profile[] = [
     fitness: 'Long coastal walks',
     books: 'Basically all of them',
     movies: 'The Lighthouse',
-    sections: sectionTemplates(91),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A second-hand bookshop, a fireplace, and no phone signal.' },
       { question: 'I\'m looking for…', answer: 'Depth over small talk, and someone who reads the acknowledgements page.' },
@@ -217,6 +161,8 @@ export const profiles: Profile[] = [
     moonSign: 'Taurus',
     risingSign: 'Capricorn',
     chineseZodiac: 'Snake',
+    chineseElement: 'Fire',
+    yinYang: 'Yin',
     values: ['Compassion', 'Discipline', 'Growth', 'Balance'],
     music: ['Piano', 'Indie Folk', 'Lo-fi'],
     languages: ['English', 'Italian'],
@@ -225,7 +171,6 @@ export const profiles: Profile[] = [
     fitness: 'Daily trail running',
     books: 'When Breath Becomes Air',
     movies: 'Little Women',
-    sections: sectionTemplates(88),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A sunrise run, fresh bread, and a slow lazy afternoon.' },
       { question: 'I\'m looking for…', answer: 'Steadiness with a sense of humour — someone who laughs easily.' },
@@ -264,6 +209,8 @@ export const profiles: Profile[] = [
     moonSign: 'Libra',
     risingSign: 'Sagittarius',
     chineseZodiac: 'Horse',
+    chineseElement: 'Fire',
+    yinYang: 'Yang',
     values: ['Simplicity', 'Adventure', 'Craft', 'Honesty'],
     music: ['Synth', 'Ambient', 'Surf rock'],
     languages: ['English', 'Swedish'],
@@ -272,7 +219,6 @@ export const profiles: Profile[] = [
     fitness: 'Surfing, cycling',
     books: 'Shop Class as Soulcraft',
     movies: 'Chef',
-    sections: sectionTemplates(85),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'Dawn surf, flat white, workshop time with sawdust everywhere.' },
       { question: 'I\'m looking for…', answer: 'Someone who is as excited by a spontaneous trip as a quiet night in.' },
@@ -311,6 +257,8 @@ export const profiles: Profile[] = [
     moonSign: 'Leo',
     risingSign: 'Virgo',
     chineseZodiac: 'Rooster',
+    chineseElement: 'Metal',
+    yinYang: 'Yin',
     values: ['Elegance', 'Curiosity', 'Romance', 'Tradition'],
     music: ['French chanson', 'Chamber music'],
     languages: ['English', 'French', 'Italian'],
@@ -319,7 +267,6 @@ export const profiles: Profile[] = [
     fitness: 'Ballet, twice weekly',
     books: 'The Elegance of the Hedgehog',
     movies: 'Amélie',
-    sections: sectionTemplates(82),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A gallery opening, followed by a candlelit dinner nobody rushes.' },
       { question: 'I\'m looking for…', answer: 'A partner in curiosity — someone who wants to see everything.' },
@@ -358,6 +305,8 @@ export const profiles: Profile[] = [
     moonSign: 'Scorpio',
     risingSign: 'Taurus',
     chineseZodiac: 'Ox',
+    chineseElement: 'Earth',
+    yinYang: 'Yin',
     values: ['Family', 'Ambition', 'Reliability', 'Generosity'],
     music: ['Motown', 'Jazz standards'],
     languages: ['English', 'Mandarin'],
@@ -366,7 +315,6 @@ export const profiles: Profile[] = [
     fitness: 'Competitive swimming',
     books: 'Atomic Habits',
     movies: 'The Pursuit of Happyness',
-    sections: sectionTemplates(79),
     prompts: [
       { question: 'A perfect Sunday looks like…', answer: 'A long swim, cooking for people I love, an early night.' },
       { question: 'I\'m looking for…', answer: 'Ambition balanced with warmth — someone who wants a real partnership.' },
