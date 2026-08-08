@@ -267,12 +267,14 @@ function TierCard({
         featured ? 'glass-strong border border-gold/30 glow-gold' : 'glass border border-white/5'
       }`}
     >
-      {featured && (
-        <span className="absolute right-6 top-6 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
-          Most Chosen
-        </span>
-      )}
-      <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Founding 500 Member</p>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs uppercase tracking-[0.25em] text-gold/70">Founding 500 Member</p>
+        {featured && (
+          <span className="shrink-0 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
+            Most Chosen
+          </span>
+        )}
+      </div>
       <h3 className="font-serif-display mb-3 text-3xl text-champagne">{title}</h3>
       <p className="mb-6 text-sm leading-relaxed text-white/55">{description}</p>
 
