@@ -56,6 +56,11 @@ interface AppContextValue {
   clearLastMatch: () => void
   profileExtras: SelfProfile
   updateProfileExtras: (extras: SelfProfile) => Promise<void>
+  /** Set while a fullscreen overlay (media viewer, etc.) is open so
+   *  AppShell can hide the bottom nav underneath it and bring it back on
+   *  close, rather than leaving it sitting there under the overlay. */
+  hideBottomNav: boolean
+  setHideBottomNav: (v: boolean) => void
 }
 
 const defaultOnboarding: OnboardingData = {
@@ -92,6 +97,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
   const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
+  const [hideBottomNav, setHideBottomNav] = useState(false)
   const resolvedChartKey = useRef<string | null>(null)
 
   // Load curated profiles — from Firestore when configured, otherwise the bundled mock data.
@@ -275,6 +281,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearLastMatch,
         profileExtras,
         updateProfileExtras,
+        hideBottomNav,
+        setHideBottomNav,
       }}
     >
       {children}

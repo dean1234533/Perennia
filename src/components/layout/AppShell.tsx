@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Compass, Heart, MessageCircle, Settings, Sparkles, UserRound, Star } from 'lucide-react'
 import { Starfield } from '@/components/shared/Starfield'
 import { SelfAvatar } from '@/components/shared/SelfAvatar'
+import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -28,6 +29,7 @@ const mobileNavItems = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
+  const { hideBottomNav } = useApp()
 
   return (
     <div className="relative min-h-screen bg-midnight text-white">
@@ -97,7 +99,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           distinct icon shape plus a clear active-state pill (background
           highlight + dot) so which tab is current is still obvious without
           text. Profile is the leftmost tab. */}
-      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-2.5 lg:hidden">
+      <motion.nav
+        initial={false}
+        animate={hideBottomNav ? { y: '100%', opacity: 0 } : { y: 0, opacity: 1 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-2.5 lg:hidden"
+        style={{ pointerEvents: hideBottomNav ? 'none' : 'auto' }}
+      >
         {mobileNavItems.map((item) => {
           const isProfileTab = item.to === '/my-profile'
           return (
@@ -132,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </NavLink>
           )
         })}
-      </nav>
+      </motion.nav>
     </div>
   )
 }

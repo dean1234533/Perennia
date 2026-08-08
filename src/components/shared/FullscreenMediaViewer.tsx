@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import type { DisplayMediaItem } from '@/types/media'
 import { cn } from '@/lib/utils'
+import { useApp } from '@/context/AppContext'
 
 interface FullscreenMediaViewerProps {
   items: DisplayMediaItem[]
@@ -23,6 +24,7 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
   // that mobile browsers' shifting toolbar can push off-screen.
   const [controlsVisible, setControlsVisible] = useState(false)
   const dragX = useMotionValue(0)
+  const { setHideBottomNav } = useApp()
 
   const item = items[index]
 
@@ -57,6 +59,13 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
       document.body.style.overflow = prevOverflow
     }
   }, [])
+
+  // Hide the app's bottom nav while this overlay is open, restore it when
+  // the viewer closes (unmounts).
+  useEffect(() => {
+    setHideBottomNav(true)
+    return () => setHideBottomNav(false)
+  }, [setHideBottomNav])
 
   // React to items shrinking after a delete (real-time from Firestore) —
   // close if that was the last item, otherwise keep the index in bounds.
