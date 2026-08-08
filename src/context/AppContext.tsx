@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { profiles as fallbackProfiles, type Profile } from '@/data/profiles'
 import { firebaseConfigured } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import { emptySelfProfile, type SelfProfile } from '@/data/selfProfile'
+import { getCompatibility, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import {
   fetchProfiles,
   seedProfilesIfNeeded,
@@ -91,6 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
   const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
+  const resolvedChartKey = useRef<string | null>(null)
 
   // Load curated profiles — from Firestore when configured, otherwise the bundled mock data.
   useEffect(() => {
@@ -100,6 +102,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then(setProfiles)
       .catch((err) => console.warn('[Perennia] Failed to load profiles from Firestore:', err))
   }, [])
+
+  // Once the signed-in member's own natal chart is complete, replace each
+  // discovery profile's bundled mock compatibility score/label with the
+  // real one from the Fusion System backend — so the badge shown in
+  // Discovery/Matches/the orbit hero always matches the detailed report.
+  // Only 6 seed profiles exist, so a full batch is cheap; re-runs only if
+  // the member's own chart actually changes.
+  useEffect(() => {
+    if (!firebaseConfigured || profiles.length === 0) return
+    const { sunSign, moonSign, risingSign, chineseAnimal, chineseElement, yinYang } = onboarding
+    if (!sunSign || !moonSign || !risingSign || !chineseAnimal || !chineseElement || !yinYang) return
+
+    const chartKey = [sunSign, moonSign, risingSign, chineseAnimal, chineseElement, yinYang].join('|')
+    if (resolvedChartKey.current === chartKey) return
+    resolvedChartKey.current = chartKey
+
+    const personA: PersonBirthProfile = { sunSign, moonSign, risingSign, chineseAnimal, chineseElement, yinYang }
+    let cancelled = false
+
+    Promise.all(
+      profiles.map(async (p) => {
+        try {
+          const result = await getCompatibility({
+            personA,
+            personB: {
+              sunSign: p.sunSign,
+              moonSign: p.moonSign,
+              risingSign: p.risingSign,
+              chineseAnimal: p.chineseZodiac,
+              chineseElement: p.chineseElement,
+              yinYang: p.yinYang,
+            },
+          })
+          return { id: p.id, compatibility: result.compatibility, compatibilityLabel: result.band }
+        } catch (err) {
+          console.warn(`[Perennia] Failed to compute real compatibility for ${p.id}:`, err)
+          return null
+        }
+      })
+    ).then((results) => {
+      if (cancelled) return
+      setProfiles((prev) =>
+        prev.map((p) => {
+          const real = results.find((r) => r?.id === p.id)
+          return real ? { ...p, compatibility: real.compatibility, compatibilityLabel: real.compatibilityLabel } : p
+        })
+      )
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [profiles.length, onboarding.sunSign, onboarding.moonSign, onboarding.risingSign, onboarding.chineseAnimal, onboarding.chineseElement, onboarding.yinYang])
 
   // Sync the signed-in user's doc (onboarding fields + like/pass/match state).
   useEffect(() => {
