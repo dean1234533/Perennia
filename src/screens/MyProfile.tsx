@@ -50,6 +50,11 @@ export function MyProfile() {
   const [viewerIndex, setViewerIndex] = useState(0)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadCategory, setUploadCategory] = useState(onboarding.categories[0]?.id ?? 'moments')
+  // Orbit bubbles (around the profile photo) only ever hold videos; the
+  // gallery's "Upload Media" button only ever adds photos. Tracking which
+  // one opened the modal lets it show the right picker copy/accept type
+  // instead of a generic "photos or videos" that doesn't match either.
+  const [uploadMode, setUploadMode] = useState<'photo' | 'video'>('photo')
   const [uploadBusy, setUploadBusy] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
@@ -103,6 +108,7 @@ export function MyProfile() {
       setViewerIndex(0)
     } else {
       setUploadCategory(id)
+      setUploadMode('video')
       setUploadOpen(true)
     }
   }
@@ -115,12 +121,16 @@ export function MyProfile() {
     try {
       let i = 0
       for (const file of Array.from(files)) {
-        if (ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        if (uploadMode === 'photo') {
+          if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+            throw new Error(`"${file.name}" isn't a supported photo type.`)
+          }
           await uploadImageMedia(user.uid, file, uploadCategory, order + i)
-        } else if (ACCEPTED_VIDEO_TYPES.includes(file.type)) {
-          await uploadVideoMedia(user.uid, file, uploadCategory, order + i)
         } else {
-          throw new Error(`"${file.name}" isn't a supported image or video type.`)
+          if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
+            throw new Error(`"${file.name}" isn't a supported video type.`)
+          }
+          await uploadVideoMedia(user.uid, file, uploadCategory, order + i)
         }
         i++
       }
@@ -272,6 +282,7 @@ export function MyProfile() {
             size="sm"
             onClick={() => {
               setUploadCategory(activeCategory)
+              setUploadMode('photo')
               setUploadOpen(true)
             }}
           >
@@ -508,7 +519,7 @@ export function MyProfile() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept={uploadMode === 'photo' ? 'image/*' : 'video/*'}
                 multiple
                 className="hidden"
                 onChange={(e) => handleFiles(e.target.files)}
@@ -519,8 +530,10 @@ export function MyProfile() {
                 className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-white/15 py-10 text-white/50 hover:border-gold/30 hover:text-white/80 cursor-pointer disabled:cursor-wait"
               >
                 {uploadBusy ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <Upload className="h-6 w-6" />}
-                <span className="text-sm">{uploadBusy ? 'Uploading…' : 'Select photos or videos'}</span>
-                <span className="text-[10px] text-white/30">JPG, PNG, WebP, HEIC · MP4, MOV, WebM (max 15s)</span>
+                <span className="text-sm">{uploadBusy ? 'Uploading…' : uploadMode === 'photo' ? 'Select photos' : 'Select videos'}</span>
+                <span className="text-[10px] text-white/30">
+                  {uploadMode === 'photo' ? 'JPG, PNG, WebP, HEIC' : 'MP4, MOV, WebM (max 15s)'}
+                </span>
               </button>
               {uploadError && <p className="mt-3 text-xs text-rose">{uploadError}</p>}
               <Button variant="glass" className="mt-4 w-full" onClick={() => setUploadOpen(false)} disabled={uploadBusy}>
