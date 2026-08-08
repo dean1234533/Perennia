@@ -145,13 +145,13 @@ export function Welcome() {
           alt="Two people at golden hour"
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/25 to-midnight/10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-midnight/70 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/45 to-midnight/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-midnight/85 via-midnight/30 to-transparent" />
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-xl px-6 md:px-16">
             <FadeUp>
-              <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/80">A Different Kind of Beginning</p>
-              <h2 className="font-serif-display text-4xl leading-[1.1] md:text-6xl">
+              <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/80 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)]">A Different Kind of Beginning</p>
+              <h2 className="font-serif-display text-4xl leading-[1.1] [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] md:text-6xl">
                 Some connections aren't <span className="text-gradient-gold italic">found</span>.
                 <br />
                 They're recognized.
@@ -224,7 +224,7 @@ export function Welcome() {
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-midnight/30" />
         <div className="absolute inset-0 flex items-end justify-center pb-16">
           <FadeUp className="text-center">
-            <p className="font-serif-display text-2xl italic text-champagne md:text-3xl">
+            <p className="font-serif-display text-2xl italic text-champagne [text-shadow:0_2px_16px_rgba(0,0,0,0.8)] md:text-3xl">
               "Rare alignment isn't a feature. It's a feeling."
             </p>
           </FadeUp>
@@ -315,10 +315,10 @@ export function Welcome() {
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <FadeUp>
-            <h2 className="font-serif-display mb-5 max-w-2xl text-4xl leading-tight md:text-6xl">
+            <h2 className="font-serif-display mb-5 max-w-2xl text-4xl leading-tight [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] md:text-6xl">
               Your Story Deserves a <span className="text-gradient-gold italic">Beautiful Beginning</span>
             </h2>
-            <p className="mx-auto mb-10 max-w-md text-white/65">
+            <p className="mx-auto mb-10 max-w-md text-white/65 [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
               Join thousands who have found a love that truly fits — written in the stars,
               grounded in reality.
             </p>

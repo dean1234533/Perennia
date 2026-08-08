@@ -84,7 +84,7 @@ export function Discovery() {
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r" />
-              <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-[10px] uppercase tracking-widest text-champagne border border-gold/30">
+              <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-gold/30 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-widest text-champagne shadow-lg backdrop-blur-md">
                 <Sparkles className="h-3 w-3" /> Top Alignment
               </div>
             </div>

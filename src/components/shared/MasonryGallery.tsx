@@ -70,7 +70,7 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="columns-2 gap-3 sm:columns-3 md:gap-4"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4"
           >
             {filtered.map((item, i) => (
               <motion.button
@@ -81,7 +81,7 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
                 whileHover={{ scale: 1.02 }}
                 onClick={() => item.processingStatus !== 'processing' && setViewerIndex(viewable.indexOf(item))}
                 disabled={item.processingStatus === 'processing'}
-                className="group relative mb-3 block w-full overflow-hidden rounded-2xl bg-white/[0.08] md:mb-4 cursor-pointer disabled:cursor-wait"
+                className="group relative block w-full overflow-hidden rounded-2xl bg-white/[0.08] cursor-pointer disabled:cursor-wait"
               >
                 <GalleryImage
                   src={item.thumbnailUrl || item.url}
