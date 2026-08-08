@@ -6,23 +6,36 @@ import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
 
+interface MembershipState {
+  uid: string
+  record: FoundingMemberRecord | null
+}
+
 /** Perennia is a paid, Founding-500-gated app: every real screen behind
  *  this guard requires (1) a real signed-in account and (2) a real
  *  `foundingMembers/{uid}` record — written exclusively by the post-payment
  *  Stripe webhook, never guessable/fakeable client-side. There is no
- *  "logged in but hasn't paid" access to the product. */
+ *  "logged in but hasn't paid" access to the product.
+ *
+ *  `membershipState` is only ever trusted when its `uid` matches the
+ *  CURRENT user's uid — on a cold page load, `authReady`/`user` can flip to
+ *  a real signed-in user in the same render a leftover "no membership yet"
+ *  value from before auth resolved is still sitting in state (the
+ *  Firestore subscription for the real uid hasn't resolved yet). Matching
+ *  on uid instead of relying on effect-ordering closes that race: a stale
+ *  or not-yet-fetched value can never be mistaken for "confirmed no
+ *  membership" and trigger a false redirect. */
 export function RequireFoundingMembership({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { user, authReady } = useAuth()
-  const [membership, setMembership] = useState<FoundingMemberRecord | null | undefined>(undefined)
+  const [membershipState, setMembershipState] = useState<MembershipState | null>(null)
 
   useEffect(() => {
-    if (!firebaseConfigured || !user) {
-      setMembership(null)
-      return
-    }
-    setMembership(undefined)
-    return subscribeFoundingMembership(user.uid, setMembership)
+    if (!firebaseConfigured || !user) return
+    const uid = user.uid
+    return subscribeFoundingMembership(uid, (record) => {
+      setMembershipState({ uid, record })
+    })
   }, [user])
 
   if (!firebaseConfigured) {
@@ -32,7 +45,7 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
     return <>{children}</>
   }
 
-  if (!authReady || membership === undefined) {
+  if (!authReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-midnight">
         <Loader2 className="h-6 w-6 animate-spin text-gold" />
@@ -44,7 +57,15 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
     return <Navigate to={`/signup?next=${encodeURIComponent(location.pathname)}`} replace />
   }
 
-  if (!membership) {
+  if (!membershipState || membershipState.uid !== user.uid) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-midnight">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+      </div>
+    )
+  }
+
+  if (!membershipState.record) {
     return <Navigate to={`/founding-500?next=${encodeURIComponent(location.pathname)}`} replace />
   }
 

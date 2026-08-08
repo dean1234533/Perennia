@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ShieldCheck, Loader2, AlertTriangle, Lock } from 'lucide-react'
+import { ArrowLeft, ShieldCheck, Loader2, AlertTriangle, Lock, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { useApp } from '@/context/AppContext'
@@ -19,7 +19,7 @@ export function Founding500Checkout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { isAuthenticated, onboarding } = useApp()
-  const { authReady } = useAuth()
+  const { authReady, user, logOut } = useAuth()
   const tier = (searchParams.get('tier') === 'premium' ? 'premium' : 'essential') as MembershipTier
   const next = searchParams.get('next')
   const checkoutPath = `/founding-500/checkout?tier=${tier}${next ? `&next=${encodeURIComponent(next)}` : ''}`
@@ -80,6 +80,11 @@ export function Founding500Checkout() {
   }
   if (!isAuthenticated) return null
 
+  const handleLogOut = async () => {
+    await logOut()
+    navigate('/login')
+  }
+
   return (
     <div className="relative min-h-screen bg-midnight text-white">
       <AtmosphericBackground />
@@ -87,6 +92,16 @@ export function Founding500Checkout() {
       <Button variant="glass" size="icon" onClick={() => navigate(-1)} className="fixed left-4 top-4 z-30 md:left-8 md:top-8">
         <ArrowLeft className="h-4 w-4" />
       </Button>
+
+      {user?.email && (
+        <button
+          onClick={handleLogOut}
+          className="glass fixed right-4 top-4 z-30 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-white/50 hover:text-white cursor-pointer md:right-8 md:top-8"
+        >
+          <span className="max-w-[140px] truncate">{user.email}</span>
+          <LogOut className="h-3 w-3 shrink-0" />
+        </button>
+      )}
 
       <div className="relative z-10 mx-auto max-w-lg px-6 pb-20 pt-24 md:pt-32">
         <div className="mb-8 text-center">
