@@ -19,15 +19,18 @@ interface OrbitPosition {
 // A hand-placed, asymmetric arrangement — deliberately not an even circle of
 // evenly-spaced dots (that would read as generic "story ring" chrome). This
 // is Perennia's own celestial-orbit signature.
+// x values are kept inside an 8-92% band (with extra clearance for the
+// larger bubbles) so a translated circle never clips past the container
+// edge on narrow phone viewports — verified at 375px/390px widths.
 const ORBIT_POSITIONS: OrbitPosition[] = [
   { x: 26, y: 6, size: 1.0 },
-  { x: 76, y: 11, size: 0.82 },
-  { x: 4, y: 38, size: 0.92 },
-  { x: 97, y: 42, size: 1.05 },
-  { x: 13, y: 70, size: 0.8 },
-  { x: 85, y: 73, size: 0.95 },
+  { x: 74, y: 11, size: 0.82 },
+  { x: 9, y: 38, size: 0.92 },
+  { x: 90, y: 42, size: 1.0 },
+  { x: 16, y: 70, size: 0.8 },
+  { x: 82, y: 73, size: 0.9 },
   { x: 47, y: 88, size: 0.74 },
-  { x: 58, y: 1, size: 0.68 },
+  { x: 58, y: 4, size: 0.68 },
 ]
 
 interface ProfileOrbitProps {

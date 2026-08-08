@@ -7,11 +7,11 @@ import { SelfAvatar } from '@/components/shared/SelfAvatar'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/discovery', label: 'Discover', icon: Compass },
-  { to: '/matches', label: 'Matches', icon: Heart },
-  { to: '/messages', label: 'Messages', icon: MessageCircle },
-  { to: '/compatibility', label: 'Compatibility', icon: Star },
-  { to: '/my-profile', label: 'Profile', icon: UserRound },
+  { to: '/discovery', label: 'Discover', mobileLabel: 'Discover', icon: Compass },
+  { to: '/matches', label: 'Matches', mobileLabel: 'Matches', icon: Heart },
+  { to: '/messages', label: 'Messages', mobileLabel: 'Messages', icon: MessageCircle },
+  { to: '/compatibility', label: 'Compatibility', mobileLabel: 'Compat', icon: Star },
+  { to: '/my-profile', label: 'Profile', mobileLabel: 'Profile', icon: UserRound },
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -102,8 +102,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Main content */}
       <main className="relative z-10 min-h-screen pb-24 lg:pb-8 lg:pl-24 xl:pl-64">{children}</main>
 
-      {/* Mobile bottom nav */}
-      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-3 lg:hidden">
+      {/* Mobile bottom nav — each tab is flex-1 so 5 items are guaranteed to
+          fit any phone width, no matter the label length. */}
+      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center px-1 py-3 lg:hidden">
         {navItems.map((item) => {
           const isProfileTab = item.to === '/my-profile'
           return (
@@ -112,7 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'relative flex flex-col items-center gap-1 rounded-xl px-4 py-1.5 text-[10px] font-medium uppercase tracking-wide text-white/45 transition-colors',
+                  'relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[9px] font-medium uppercase tracking-wide text-white/45 transition-colors',
                   isActive && 'text-champagne'
                 )
               }
@@ -131,7 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   ) : (
                     <item.icon className="h-5 w-5" />
                   )}
-                  {item.label}
+                  <span className="max-w-full truncate">{item.mobileLabel}</span>
                 </>
               )}
             </NavLink>
