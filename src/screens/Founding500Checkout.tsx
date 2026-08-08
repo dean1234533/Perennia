@@ -5,6 +5,7 @@ import { ArrowLeft, ShieldCheck, Loader2, AlertTriangle, Lock } from 'lucide-rea
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFounding500Config, createFoundingCheckoutSession, FoundingCheckoutNotConfiguredError } from '@/lib/founding500'
 import type { Founding500Config, MembershipTier } from '@/types/founding500'
@@ -18,7 +19,10 @@ export function Founding500Checkout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { isAuthenticated, onboarding } = useApp()
+  const { authReady } = useAuth()
   const tier = (searchParams.get('tier') === 'premium' ? 'premium' : 'essential') as MembershipTier
+  const next = searchParams.get('next')
+  const checkoutPath = `/founding-500/checkout?tier=${tier}${next ? `&next=${encodeURIComponent(next)}` : ''}`
 
   const [config, setConfig] = useState<Founding500Config | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -31,10 +35,16 @@ export function Founding500Checkout() {
   }, [])
 
   useEffect(() => {
+    // Wait for Firebase Auth to actually finish restoring the session
+    // before deciding — on a direct page load/refresh (not an in-app
+    // navigation), `isAuthenticated` is briefly false while that's still
+    // in flight, which used to bounce a genuinely signed-in member to
+    // /signup for the account they already have.
+    if (!firebaseConfigured || !authReady) return
     if (!isAuthenticated) {
-      navigate(`/signup?next=${encodeURIComponent(`/founding-500/checkout?tier=${tier}`)}`, { replace: true })
+      navigate(`/signup?next=${encodeURIComponent(checkoutPath)}`, { replace: true })
     }
-  }, [isAuthenticated, tier, navigate])
+  }, [authReady, isAuthenticated, checkoutPath, navigate])
 
   const isVerified = onboarding.verification.status === 'verified'
   const isFull = !config || !config.enabled || config.currentMemberCount >= config.memberLimit
@@ -44,10 +54,11 @@ export function Founding500Checkout() {
     setError('')
     setSubmitting(true)
     try {
+      const successUrl = `${window.location.origin}/founding-500/success${next ? `?next=${encodeURIComponent(next)}` : ''}`
       const { url } = await createFoundingCheckoutSession({
         tier,
-        successUrl: `${window.location.origin}/founding-500/success`,
-        cancelUrl: `${window.location.origin}/founding-500/checkout?tier=${tier}`,
+        successUrl,
+        cancelUrl: `${window.location.origin}${checkoutPath}`,
       })
       window.location.href = url
     } catch (err) {
@@ -60,6 +71,13 @@ export function Founding500Checkout() {
     }
   }
 
+  if (firebaseConfigured && !authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-midnight">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+      </div>
+    )
+  }
   if (!isAuthenticated) return null
 
   return (
@@ -120,7 +138,7 @@ export function Founding500Checkout() {
                 <Button
                   size="sm"
                   variant="glass"
-                  onClick={() => navigate(`/verify?next=${encodeURIComponent(`/founding-500/checkout?tier=${tier}`)}`)}
+                  onClick={() => navigate(`/verify?next=${encodeURIComponent(checkoutPath)}`)}
                 >
                   Verify
                 </Button>

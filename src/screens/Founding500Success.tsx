@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Sparkles, Loader2, BadgeCheck, ShieldCheck, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,8 @@ import type { FoundingMemberRecord } from '@/types/founding500'
 
 export function Founding500Success() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const destination = searchParams.get('next') || '/discovery'
   const { user } = useAuth()
   const { onboarding } = useApp()
   const [record, setRecord] = useState<FoundingMemberRecord | null>(null)
@@ -102,7 +104,7 @@ export function Founding500Success() {
               />
             </div>
 
-            <Button size="lg" className="w-full" onClick={() => navigate('/discovery')}>
+            <Button size="lg" className="w-full" onClick={() => navigate(destination)}>
               Enter Perennia
             </Button>
           </motion.div>

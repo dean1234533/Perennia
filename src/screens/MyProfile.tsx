@@ -187,7 +187,7 @@ export function MyProfile() {
   const photoUrl = onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
 
   return (
-    <div className="mx-auto max-w-4xl px-6 pb-32 pt-8 md:px-0">
+    <div className="mx-auto max-w-4xl px-6 pb-32 pt-16 md:px-0 md:pt-8">
       {/* Top bar */}
       <div className="mb-6 flex items-center justify-between">
         <AnimatePresence>
@@ -204,12 +204,12 @@ export function MyProfile() {
         </AnimatePresence>
         <div className="ml-auto flex items-center gap-2">
           {editMode ? (
-            <Button onClick={saveExtras}>
-              <Check className="h-4 w-4" /> Save
+            <Button size="sm" onClick={saveExtras}>
+              <Check className="h-3.5 w-3.5" /> Save
             </Button>
           ) : (
-            <Button variant="glass" onClick={() => setEditMode(true)}>
-              <Pencil className="h-4 w-4" /> Edit Profile
+            <Button size="sm" variant="glass" onClick={() => setEditMode(true)}>
+              <Pencil className="h-3.5 w-3.5" /> Edit Profile
             </Button>
           )}
         </div>

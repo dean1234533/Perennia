@@ -23,7 +23,9 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
 
   const finish = async () => {
     await completeOnboarding()
-    navigate('/discovery')
+    // Perennia is Founding-500-gated end to end — finishing onboarding
+    // doesn't grant app access by itself, it hands off to the real paywall.
+    navigate('/founding-500?next=' + encodeURIComponent('/discovery'))
   }
 
   return (

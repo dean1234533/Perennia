@@ -70,6 +70,20 @@ body {
   overflow-x: hidden;
 }
 
+/* iOS Safari force-zooms the whole page when a focused input/textarea/select
+ * has a computed font-size under 16px, and doesn't reliably zoom back out on
+ * blur. Every text field in the app must render at 16px+ on mobile so
+ * focusing the chat box (or any form field) never triggers this — this is a
+ * blanket safety net on top of fixing individual components, since it's easy
+ * to reintroduce a sub-16px input without noticing on desktop. */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 ::selection {
   background: rgba(229, 192, 123, 0.3);
   color: #fff;

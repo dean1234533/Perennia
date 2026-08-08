@@ -63,7 +63,7 @@ export function ProfileDetail() {
   }
 
   return (
-    <div className="pb-32 pt-8">
+    <div className="pb-32 pt-16 md:pt-8">
       <Button
         variant="glass"
         size="icon"

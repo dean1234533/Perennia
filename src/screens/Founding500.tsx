@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Check, Sparkles, ShieldCheck, Compass, MessageCircleHeart, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,11 @@ function formatPrice(amount: number, currency: string) {
 
 export function Founding500() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // Carried from RequireFoundingMembership when an unpaid visitor tries to
+  // reach a real app screen — preserved through signup/checkout so payment
+  // lands them back where they were actually headed, not always Discovery.
+  const next = searchParams.get('next')
   const { isAuthenticated } = useApp()
   const [config, setConfig] = useState<Founding500Config | null>(null)
 
@@ -37,7 +42,7 @@ export function Founding500() {
   const isFull = !config || !config.enabled || config.currentMemberCount >= config.memberLimit
 
   const handleSelectTier = (tier: MembershipTier) => {
-    const dest = `/founding-500/checkout?tier=${tier}`
+    const dest = `/founding-500/checkout?tier=${tier}${next ? `&next=${encodeURIComponent(next)}` : ''}`
     if (!isAuthenticated) {
       navigate(`/signup?next=${encodeURIComponent(dest)}`)
     } else {
@@ -64,6 +69,15 @@ export function Founding500() {
 
       {/* Hero */}
       <div className="relative z-10 mx-auto max-w-3xl px-6 pb-16 pt-24 text-center md:pt-32">
+        {next && (
+          <motion.p
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-auto mb-6 max-w-md rounded-xl border border-gold/20 bg-gold/5 px-4 py-2.5 text-xs text-champagne/80"
+          >
+            Perennia is a Founding 500 membership — choose a plan to continue.
+          </motion.p>
+        )}
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

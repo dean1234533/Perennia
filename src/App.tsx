@@ -3,6 +3,7 @@ import { AppProvider } from '@/context/AppContext'
 import { AuthProvider } from '@/context/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
+import { RequireFoundingMembership } from '@/components/layout/RequireFoundingMembership'
 import { Welcome } from '@/screens/Welcome'
 import { SignUp } from '@/screens/SignUp'
 import { Login } from '@/screens/Login'
@@ -44,16 +45,16 @@ function App() {
             <Route path="/preferences" element={<Preferences />} />
             <Route path="/cosmic-profile" element={<CosmicProfile />} />
 
-            <Route path="/discovery" element={<AppShell><Discovery /></AppShell>} />
-            <Route path="/profile/:id" element={<AppShell><ProfileDetail /></AppShell>} />
-            <Route path="/my-profile" element={<AppShell><MyProfile /></AppShell>} />
-            <Route path="/match/:id" element={<MatchScreen />} />
-            <Route path="/matches" element={<AppShell><Matches /></AppShell>} />
-            <Route path="/messages" element={<AppShell><MessagesList /></AppShell>} />
-            <Route path="/messages/:id" element={<AppShell><MessageThread /></AppShell>} />
-            <Route path="/compatibility" element={<AppShell><CompatibilityHub /></AppShell>} />
-            <Route path="/compatibility/:id" element={<AppShell><CompatibilityReport /></AppShell>} />
-            <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
+            <Route path="/discovery" element={<RequireFoundingMembership><AppShell><Discovery /></AppShell></RequireFoundingMembership>} />
+            <Route path="/profile/:id" element={<RequireFoundingMembership><AppShell><ProfileDetail /></AppShell></RequireFoundingMembership>} />
+            <Route path="/my-profile" element={<RequireFoundingMembership><AppShell><MyProfile /></AppShell></RequireFoundingMembership>} />
+            <Route path="/match/:id" element={<RequireFoundingMembership><MatchScreen /></RequireFoundingMembership>} />
+            <Route path="/matches" element={<RequireFoundingMembership><AppShell><Matches /></AppShell></RequireFoundingMembership>} />
+            <Route path="/messages" element={<RequireFoundingMembership><AppShell><MessagesList /></AppShell></RequireFoundingMembership>} />
+            <Route path="/messages/:id" element={<RequireFoundingMembership><AppShell><MessageThread /></AppShell></RequireFoundingMembership>} />
+            <Route path="/compatibility" element={<RequireFoundingMembership><AppShell><CompatibilityHub /></AppShell></RequireFoundingMembership>} />
+            <Route path="/compatibility/:id" element={<RequireFoundingMembership><AppShell><CompatibilityReport /></AppShell></RequireFoundingMembership>} />
+            <Route path="/settings" element={<RequireFoundingMembership><AppShell><Settings /></AppShell></RequireFoundingMembership>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

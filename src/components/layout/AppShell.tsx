@@ -93,45 +93,45 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Main content */}
       <main className="relative z-10 min-h-screen pb-24 lg:pb-8 lg:pl-24 xl:pl-64">{children}</main>
 
-      {/* Mobile bottom nav — the NAV ITSELF scrolls horizontally if it
-          doesn't fit (snap-scroll strip); the page never does. Profile is
-          the leftmost tab. */}
-      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 overflow-x-auto overscroll-x-contain px-2 py-3 lg:hidden [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex w-max snap-x snap-mandatory items-center gap-1">
-          {mobileNavItems.map((item) => {
-            const isProfileTab = item.to === '/my-profile'
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'relative flex w-16 shrink-0 snap-start flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-white/45 transition-colors',
-                    isActive && 'text-champagne'
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && (
-                      <motion.div
-                        layoutId="nav-active-mobile"
-                        className="absolute -top-3 h-1 w-6 rounded-full bg-gradient-to-r from-gold to-champagne"
-                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                      />
-                    )}
-                    {isProfileTab ? (
-                      <SelfAvatar className={cn('h-5 w-5 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/20')} />
-                    ) : (
-                      <item.icon className="h-5 w-5" />
-                    )}
-                    <span className="max-w-full truncate">{item.mobileLabel}</span>
-                  </>
-                )}
-              </NavLink>
-            )
-          })}
-        </div>
+      {/* Mobile bottom nav — icons only, no labels. Each tab gets a
+          distinct icon shape plus a clear active-state pill (background
+          highlight + dot) so which tab is current is still obvious without
+          text. Profile is the leftmost tab. */}
+      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-2.5 lg:hidden">
+        {mobileNavItems.map((item) => {
+          const isProfileTab = item.to === '/my-profile'
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              aria-label={item.label}
+              title={item.label}
+              className={({ isActive }) =>
+                cn(
+                  'relative flex h-12 w-12 items-center justify-center rounded-2xl text-white/45 transition-colors',
+                  isActive && 'bg-gold/10 border border-gold/20 text-champagne'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-active-mobile"
+                      className="absolute -top-2.5 h-1 w-5 rounded-full bg-gradient-to-r from-gold to-champagne"
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  {isProfileTab ? (
+                    <SelfAvatar className={cn('h-6 w-6 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/20')} />
+                  ) : (
+                    <item.icon className="h-6 w-6" />
+                  )}
+                </>
+              )}
+            </NavLink>
+          )
+        })}
       </nav>
     </div>
   )

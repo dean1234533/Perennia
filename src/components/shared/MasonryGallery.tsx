@@ -123,40 +123,34 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
   )
 }
 
-/** A plain <img> gives no visible feedback while loading (just a faint
- *  placeholder background, easy to mistake for a broken/transparent tile)
- *  and none at all if the URL 404s. This shows a real loading shimmer and
- *  a visible broken-image state instead of a blank hole. */
+/** Deliberately NOT a wrapper div with `position: absolute` children —
+ *  that combination has a real WebKit bug inside CSS multi-column layouts
+ *  (`columns-2` here): Safari fails to reserve the wrapper's aspect-ratio
+ *  height, so the tile collapses and whatever comes after it in the page
+ *  overlaps into the still-painted (but layout-less) image. The `<img>`
+ *  itself must stay in normal flow with `aspect-ratio` applied directly,
+ *  exactly like a plain image — a background tint + inline error swap give
+ *  the same loading/broken-image feedback without introducing that bug. */
 function GalleryImage({ src, alt, aspectRatio }: { src: string; alt: string; aspectRatio: string }) {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
 
   if (status === 'error') {
     return (
-      <div
-        className="flex w-full items-center justify-center bg-white/[0.06] text-white/25"
-        style={{ aspectRatio }}
-      >
+      <div className="flex w-full items-center justify-center bg-white/[0.06] text-white/25" style={{ aspectRatio }}>
         <ImageOff className="h-6 w-6" />
       </div>
     )
   }
 
   return (
-    <div className="relative w-full" style={{ aspectRatio }}>
-      {status === 'loading' && (
-        <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.08] to-white/[0.03]" />
-      )}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        onLoad={() => setStatus('loaded')}
-        onError={() => setStatus('error')}
-        className={cn(
-          'absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105',
-          status === 'loading' ? 'opacity-0' : 'opacity-100'
-        )}
-      />
-    </div>
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onLoad={() => setStatus('loaded')}
+      onError={() => setStatus('error')}
+      style={{ aspectRatio, backgroundColor: 'rgba(255,255,255,0.06)' }}
+      className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
   )
 }
