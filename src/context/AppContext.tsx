@@ -20,6 +20,7 @@ import {
 export interface OnboardingData {
   name: string
   email: string
+  phone: string
   password: string
   verification: VerificationState
   birthDate: string
@@ -54,6 +55,7 @@ interface AppContextValue {
 const defaultOnboarding: OnboardingData = {
   name: '',
   email: '',
+  phone: '',
   password: '',
   verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null },
   birthDate: '',
@@ -98,6 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         name: data.name,
         email: data.email,
+        phone: data.phone ?? '',
         verification: data.verification ?? prev.verification,
         birthDate: data.birthDate,
         birthTime: data.birthTime,

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin, Heart,
+  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin, Heart, X, Check,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
@@ -16,36 +18,55 @@ function Row({
   label,
   description,
   right,
+  onClick,
 }: {
   icon: React.ElementType
   label: string
   description?: string
   right?: React.ReactNode
+  onClick?: () => void
 }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-4">
+  const content = (
+    <>
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5">
           <Icon className="h-4 w-4 text-champagne" />
         </div>
-        <div>
+        <div className="text-left">
           <p className="text-sm font-medium text-white">{label}</p>
           {description && <p className="text-xs text-white/40">{description}</p>}
         </div>
       </div>
-      {right ?? <ChevronRight className="h-4 w-4 text-white/25" />}
-    </div>
+      {right ?? (onClick && <ChevronRight className="h-4 w-4 text-white/25" />)}
+    </>
   )
+
+  if (onClick) {
+    return (
+      <button onClick={onClick} className="flex w-full items-center justify-between gap-4 py-4 text-left cursor-pointer">
+        {content}
+      </button>
+    )
+  }
+
+  return <div className="flex items-center justify-between gap-4 py-4">{content}</div>
 }
 
 export function Settings() {
   const navigate = useNavigate()
   const { setAuthenticated, onboarding, updateOnboarding } = useApp()
-  const { logOut } = useAuth()
+  const { user, logOut } = useAuth()
   const [notifications, setNotifications] = useState(true)
   const [showDistance, setShowDistance] = useState(true)
   const [incognito, setIncognito] = useState(false)
   const [darkCosmic, setDarkCosmic] = useState(true)
+  const [personalInfoOpen, setPersonalInfoOpen] = useState(false)
+  const [nameDraft, setNameDraft] = useState(onboarding.name)
+  const [phoneDraft, setPhoneDraft] = useState(onboarding.phone)
+  const [savingInfo, setSavingInfo] = useState(false)
+  const [savedPulse, setSavedPulse] = useState(false)
+
+  const email = firebaseConfigured ? user?.email ?? onboarding.email : onboarding.email
 
   const logout = async () => {
     if (firebaseConfigured) {
@@ -56,11 +77,40 @@ export function Settings() {
     navigate('/')
   }
 
+  const openPersonalInfo = () => {
+    setNameDraft(onboarding.name)
+    setPhoneDraft(onboarding.phone)
+    setPersonalInfoOpen(true)
+  }
+
+  const savePersonalInfo = async () => {
+    setSavingInfo(true)
+    updateOnboarding({ name: nameDraft.trim(), phone: phoneDraft.trim() })
+    setSavingInfo(false)
+    setPersonalInfoOpen(false)
+    setSavedPulse(true)
+    setTimeout(() => setSavedPulse(false), 2000)
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 pt-8 pb-10 md:pt-12">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Preferences</p>
-        <h1 className="font-serif-display text-4xl md:text-5xl">Settings</h1>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center justify-between">
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Preferences</p>
+          <h1 className="font-serif-display text-4xl md:text-5xl">Settings</h1>
+        </div>
+        <AnimatePresence>
+          {savedPulse && (
+            <motion.span
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-300"
+            >
+              Saved
+            </motion.span>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {[
@@ -69,9 +119,19 @@ export function Settings() {
           delay: 0.1,
           content: (
             <>
-              <Row icon={User} label="Personal Information" description="Name, email, phone number" />
+              <Row
+                icon={User}
+                label="Personal Information"
+                description={onboarding.name ? `${onboarding.name} · ${email || 'no email'}` : 'Name, email, phone number'}
+                onClick={openPersonalInfo}
+              />
               <div className="h-px bg-white/5" />
-              <Row icon={Sparkles} label="Cosmic Profile" description="Birth details & astrology" />
+              <Row
+                icon={Sparkles}
+                label="Cosmic Profile"
+                description="Birth details & astrology"
+                onClick={() => navigate('/cosmic-profile')}
+              />
               <div className="h-px bg-white/5" />
               <Row
                 icon={Shield}
@@ -166,6 +226,63 @@ export function Settings() {
           <LogOut className="h-4 w-4" /> Log Out
         </Button>
       </motion.div>
+
+      <AnimatePresence>
+        {personalInfoOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && setPersonalInfoOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass-strong w-full max-w-sm rounded-2xl p-6"
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="font-serif-display text-xl text-champagne">Personal Information</h3>
+                <button onClick={() => setPersonalInfoOpen(false)} className="cursor-pointer text-white/40 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="settings-name">Full Name</Label>
+                  <Input id="settings-name" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="settings-phone">Phone Number</Label>
+                  <Input
+                    id="settings-phone"
+                    type="tel"
+                    placeholder="Add a phone number"
+                    value={phoneDraft}
+                    onChange={(e) => setPhoneDraft(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Email</Label>
+                  <p className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2.5 text-sm text-white/50">
+                    {email || 'No email on file'}
+                  </p>
+                  <p className="text-[11px] text-white/30">
+                    Email is tied to your login and can't be changed here.
+                  </p>
+                </div>
+              </div>
+
+              <Button className="mt-6 w-full" onClick={savePersonalInfo} disabled={savingInfo}>
+                <Check className="h-4 w-4" /> {savingInfo ? 'Saving…' : 'Save Changes'}
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

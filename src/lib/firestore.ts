@@ -32,6 +32,7 @@ export interface VerificationState {
 export interface UserDoc {
   name: string
   email: string
+  phone: string
   verification: VerificationState
   onboardingComplete: boolean
   birthDate: string
@@ -56,6 +57,7 @@ const defaultVerification: VerificationState = {
 }
 
 const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
+  phone: '',
   verification: defaultVerification,
   onboardingComplete: false,
   birthDate: '',
