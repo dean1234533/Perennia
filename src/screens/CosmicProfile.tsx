@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sun, Moon, ArrowUpCircle, Sparkles, ArrowRight } from 'lucide-react'
+import { Sun, Moon, ArrowUpCircle, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
@@ -91,16 +91,26 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
         </div>
       </Card>
 
-      {isOnboarding ? (
+      {isOnboarding && (
         <Button size="lg" className="w-full" onClick={finish}>
           Enter Perennia <ArrowRight className="h-4 w-4" />
         </Button>
-      ) : (
-        <Button size="lg" variant="glass" className="w-full" onClick={() => navigate('/settings')}>
-          Edit Profile
-        </Button>
       )}
     </motion.div>
+  )
+}
+
+function CosmicProfileBackButton() {
+  const navigate = useNavigate()
+  return (
+    <Button
+      variant="glass"
+      size="icon"
+      onClick={() => navigate(-1)}
+      className="fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72"
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </Button>
   )
 }
 
@@ -110,6 +120,7 @@ export function CosmicProfile() {
   if (onboardingComplete) {
     return (
       <AppShell>
+        <CosmicProfileBackButton />
         <div className="flex justify-center px-6 py-10 md:py-16">
           <CosmicProfileContent isOnboarding={false} />
         </div>

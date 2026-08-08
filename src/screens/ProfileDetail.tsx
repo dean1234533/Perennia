@@ -58,7 +58,7 @@ export function ProfileDetail() {
         variant="glass"
         size="icon"
         onClick={() => navigate('/discovery')}
-        className="fixed left-4 top-4 z-30 md:left-8 md:top-8"
+        className="fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72"
       >
         <ArrowLeft className="h-4 w-4" />
       </Button>
