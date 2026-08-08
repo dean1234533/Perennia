@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { MasonryGallery } from '@/components/shared/MasonryGallery'
+import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
 import { getProfileGallery, DEMO_GALLERY_CATEGORIES } from '@/data/gallery-media'
@@ -17,7 +18,7 @@ export function ProfileDetail() {
   const { likeProfile, passProfile, profiles, profileExtras } = useApp()
   const profile = id ? profiles.find((p) => p.id === id) : undefined
   const [liked, setLiked] = useState(false)
-  const [viewerCategory, setViewerCategory] = useState<string | null>(null)
+  const [videoViewerCategory, setVideoViewerCategory] = useState<string | null>(null)
 
   if (!profile) {
     return (
@@ -31,11 +32,20 @@ export function ProfileDetail() {
   // This bundled seed/demo profile's media — see data/gallery-media.ts for
   // why this is clearly separated from real member uploads.
   const gallery = getProfileGallery(profile.id)
+  // Gallery = photos only; orbit bubbles = videos only (same split as the
+  // real member-facing MyProfile screen).
+  const galleryImages = gallery.filter((g) => g.type === 'image')
 
   const orbitCategories = DEMO_GALLERY_CATEGORIES.map((c) => {
-    const items = gallery.filter((g) => g.category === c.id)
-    return { id: c.id, label: c.label, emoji: c.emoji, coverUrl: items[0]?.thumbnailUrl ?? null, count: items.length }
+    const videos = gallery.filter((g) => g.category === c.id && g.type === 'video')
+    return { id: c.id, label: c.label, emoji: c.emoji, coverUrl: videos[0]?.thumbnailUrl ?? null, count: videos.length }
   })
+
+  const handleOrbitSelect = (categoryId: string) => {
+    if (gallery.some((g) => g.category === categoryId && g.type === 'video')) {
+      setVideoViewerCategory(categoryId)
+    }
+  }
 
   const handleLike = () => {
     setLiked(true)
@@ -70,7 +80,7 @@ export function ProfileDetail() {
           age={profile.age}
           verificationStatus={profile.verified ? 'verified' : 'unverified'}
           categories={orbitCategories}
-          onCategorySelect={setViewerCategory}
+          onCategorySelect={handleOrbitSelect}
           compatibility={profile.compatibility}
         />
 
@@ -124,7 +134,7 @@ export function ProfileDetail() {
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
           <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
           <h2 className="font-serif-display mb-5 text-2xl text-champagne">Exploring {profile.name.split(' ')[0]}'s World</h2>
-          <MasonryGallery key={viewerCategory ?? 'default'} items={gallery} categories={DEMO_GALLERY_CATEGORIES} initialCategory={viewerCategory ?? undefined} />
+          <MasonryGallery items={galleryImages} categories={DEMO_GALLERY_CATEGORIES} />
         </motion.div>
 
         {/* Premium detail sections */}
@@ -184,6 +194,14 @@ export function ProfileDetail() {
           <Heart className={`h-7 w-7 ${liked ? 'fill-midnight' : ''}`} />
         </motion.button>
       </div>
+
+      {videoViewerCategory && (
+        <FullscreenMediaViewer
+          items={gallery.filter((g) => g.category === videoViewerCategory && g.type === 'video')}
+          initialIndex={0}
+          onClose={() => setVideoViewerCategory(null)}
+        />
+      )}
     </div>
   )
 }

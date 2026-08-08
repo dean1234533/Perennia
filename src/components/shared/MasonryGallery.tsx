@@ -14,9 +14,11 @@ interface MasonryGalleryProps {
    *  "Upload Media" button targets whatever category is on screen). */
   activeCategory?: string
   onCategoryChange?: (id: string) => void
+  /** When provided, items can be deleted from the fullscreen viewer. */
+  onDelete?: (item: DisplayMediaItem) => void
 }
 
-export function MasonryGallery({ items, categories, initialCategory, activeCategory, onCategoryChange }: MasonryGalleryProps) {
+export function MasonryGallery({ items, categories, initialCategory, activeCategory, onCategoryChange, onDelete }: MasonryGalleryProps) {
   const [internalTab, setInternalTab] = useState(initialCategory ?? categories[0]?.id ?? '')
   const activeTab = activeCategory ?? internalTab
   const setActiveTab = (id: string) => {
@@ -117,7 +119,7 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
       </AnimatePresence>
 
       {viewerIndex !== null && (
-        <FullscreenMediaViewer items={viewable} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
+        <FullscreenMediaViewer items={viewable} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} onDelete={onDelete} />
       )}
     </div>
   )

@@ -76,22 +76,28 @@ export function MyProfile() {
   }))
 
   const displayItems = media.map(toDisplayItem)
+  // The gallery only ever shows photos — videos live exclusively in the
+  // orbit bubbles around the profile photo, not mixed into the grid.
+  const galleryItems = displayItems.filter((i) => i.type === 'image')
 
+  // Orbit bubbles only ever show videos — a category with only photos
+  // renders as an empty/emoji bubble, since its content lives in the
+  // gallery instead.
   const orbitCategories = categories.map((c) => {
-    const items = media.filter((m) => m.category === c.id && m.processingStatus === 'ready')
+    const videos = media.filter((m) => m.category === c.id && m.type === 'video' && m.processingStatus === 'ready')
     return {
       id: c.id,
       label: c.label,
       emoji: c.emoji,
-      coverUrl: items[0]?.thumbnailUrl || items[0]?.video?.poster || null,
-      count: media.filter((m) => m.category === c.id && m.processingStatus !== 'error').length,
+      coverUrl: videos[0]?.video?.poster || videos[0]?.thumbnailUrl || null,
+      count: media.filter((m) => m.category === c.id && m.type === 'video' && m.processingStatus !== 'error').length,
     }
   })
 
   const handleCategorySelect = (id: string) => {
     setActiveCategory(id)
-    const hasItems = displayItems.some((i) => i.category === id && i.processingStatus === 'ready')
-    if (hasItems && !editMode) {
+    const hasVideo = displayItems.some((i) => i.category === id && i.type === 'video' && i.processingStatus === 'ready')
+    if (hasVideo && !editMode) {
       setViewerCategory(id)
       setViewerIndex(0)
     } else {
@@ -144,6 +150,11 @@ export function MyProfile() {
   }
 
   const categoryItems = media.filter((m) => m.category === activeCategory)
+
+  const handleDeleteDisplayItem = (item: DisplayMediaItem) => {
+    const match = media.find((m) => m.id === item.id)
+    if (match) deleteMedia(match)
+  }
 
   const handleReorder = async (newOrder: MediaDoc[]) => {
     setMedia((prev) => {
@@ -265,7 +276,13 @@ export function MyProfile() {
             <Upload className="h-3.5 w-3.5" /> Upload Media
           </Button>
         </div>
-        <MasonryGallery items={displayItems} categories={categories} activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
+        <MasonryGallery
+          items={galleryItems}
+          categories={categories}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          onDelete={handleDeleteDisplayItem}
+        />
       </div>
 
       {/* Manage media (edit mode) */}
@@ -516,9 +533,10 @@ export function MyProfile() {
 
       {viewerCategory && (
         <FullscreenMediaViewer
-          items={displayItems.filter((i) => i.category === viewerCategory && i.processingStatus === 'ready')}
+          items={displayItems.filter((i) => i.category === viewerCategory && i.type === 'video' && i.processingStatus === 'ready')}
           initialIndex={viewerIndex}
           onClose={() => setViewerCategory(null)}
+          onDelete={handleDeleteDisplayItem}
         />
       )}
     </div>

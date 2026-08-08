@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Heart, MessageCircle } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Heart, MessageCircle, Trash2 } from 'lucide-react'
 import type { DisplayMediaItem } from '@/types/media'
 import { cn } from '@/lib/utils'
 
@@ -8,12 +8,17 @@ interface FullscreenMediaViewerProps {
   items: DisplayMediaItem[]
   initialIndex: number
   onClose: () => void
+  /** When provided, shows a delete button. The caller owns the actual
+   *  deletion (Storage + Firestore); this component just reacts to the
+   *  resulting shrink of `items` via the effect below. */
+  onDelete?: (item: DisplayMediaItem) => void
 }
 
-export function FullscreenMediaViewer({ items, initialIndex, onClose }: FullscreenMediaViewerProps) {
+export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }: FullscreenMediaViewerProps) {
   const [index, setIndex] = useState(initialIndex)
   const [zoomed, setZoomed] = useState(false)
   const [liked, setLiked] = useState<Record<string, boolean>>({})
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const dragX = useMotionValue(0)
 
   const item = items[index]
@@ -38,7 +43,22 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose }: Fullscre
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, goNext, goPrev])
 
+  // React to items shrinking after a delete (real-time from Firestore) —
+  // close if that was the last item, otherwise keep the index in bounds.
+  useEffect(() => {
+    if (items.length === 0) {
+      onClose()
+      return
+    }
+    if (index >= items.length) setIndex(items.length - 1)
+  }, [items.length, index, onClose])
+
   if (!item) return null
+
+  const handleDelete = () => {
+    onDelete?.(item)
+    setConfirmingDelete(false)
+  }
 
   return (
     <motion.div
@@ -139,6 +159,44 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose }: Fullscre
             <MessageCircle className="h-4 w-4" />
             <span className="text-xs">Comments soon</span>
           </button>
+          {onDelete && (
+            <AnimatePresence mode="wait">
+              {confirmingDelete ? (
+                <motion.div
+                  key="confirm"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete() }}
+                    className="glass-strong rounded-full bg-rose-500/20 px-4 py-2 text-sm text-rose-300 cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false) }}
+                    className="glass-strong rounded-full px-4 py-2 text-sm text-white/60 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="trigger"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  whileTap={{ scale: 0.85 }}
+                  onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true) }}
+                  className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/60 hover:text-rose-300 cursor-pointer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </motion.div>
