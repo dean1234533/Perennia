@@ -15,6 +15,17 @@ const navItems = [
   { to: '/settings', label: 'Settings', mobileLabel: 'Settings', icon: Settings },
 ]
 
+// Mobile bottom nav shows Profile first (leftmost) — everything else keeps
+// the same relative order.
+const mobileNavItems = [
+  navItems[4], // Profile
+  navItems[0], // Discover
+  navItems[1], // Matches
+  navItems[2], // Messages
+  navItems[3], // Compatibility
+  navItems[5], // Settings
+]
+
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
 
@@ -82,42 +93,45 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Main content */}
       <main className="relative z-10 min-h-screen pb-24 lg:pb-8 lg:pl-24 xl:pl-64">{children}</main>
 
-      {/* Mobile bottom nav — each tab is flex-1 so 5 items are guaranteed to
-          fit any phone width, no matter the label length. */}
-      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center px-1 py-3 lg:hidden">
-        {navItems.map((item) => {
-          const isProfileTab = item.to === '/my-profile'
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[9px] font-medium uppercase tracking-wide text-white/45 transition-colors',
-                  isActive && 'text-champagne'
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-active-mobile"
-                      className="absolute -top-3 h-1 w-6 rounded-full bg-gradient-to-r from-gold to-champagne"
-                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  {isProfileTab ? (
-                    <SelfAvatar className={cn('h-5 w-5 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/20')} />
-                  ) : (
-                    <item.icon className="h-5 w-5" />
-                  )}
-                  <span className="max-w-full truncate">{item.mobileLabel}</span>
-                </>
-              )}
-            </NavLink>
-          )
-        })}
+      {/* Mobile bottom nav — the NAV ITSELF scrolls horizontally if it
+          doesn't fit (snap-scroll strip); the page never does. Profile is
+          the leftmost tab. */}
+      <nav className="glass-strong fixed bottom-0 left-0 right-0 z-40 overflow-x-auto overscroll-x-contain px-2 py-3 lg:hidden [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max snap-x snap-mandatory items-center gap-1">
+          {mobileNavItems.map((item) => {
+            const isProfileTab = item.to === '/my-profile'
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    'relative flex w-16 shrink-0 snap-start flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-white/45 transition-colors',
+                    isActive && 'text-champagne'
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-active-mobile"
+                        className="absolute -top-3 h-1 w-6 rounded-full bg-gradient-to-r from-gold to-champagne"
+                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                      />
+                    )}
+                    {isProfileTab ? (
+                      <SelfAvatar className={cn('h-5 w-5 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/20')} />
+                    ) : (
+                      <item.icon className="h-5 w-5" />
+                    )}
+                    <span className="max-w-full truncate">{item.mobileLabel}</span>
+                  </>
+                )}
+              </NavLink>
+            )
+          })}
+        </div>
       </nav>
     </div>
   )

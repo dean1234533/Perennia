@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Loader2 } from 'lucide-react'
+import { Play, Loader2, ImageOff } from 'lucide-react'
 import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
 import { FullscreenMediaViewer } from './FullscreenMediaViewer'
 import { cn } from '@/lib/utils'
@@ -81,14 +81,12 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
                 whileHover={{ scale: 1.02 }}
                 onClick={() => item.processingStatus !== 'processing' && setViewerIndex(viewable.indexOf(item))}
                 disabled={item.processingStatus === 'processing'}
-                className="group relative mb-3 block w-full overflow-hidden rounded-2xl bg-white/[0.03] md:mb-4 cursor-pointer disabled:cursor-wait"
+                className="group relative mb-3 block w-full overflow-hidden rounded-2xl bg-white/[0.08] md:mb-4 cursor-pointer disabled:cursor-wait"
               >
-                <img
+                <GalleryImage
                   src={item.thumbnailUrl || item.url}
                   alt={item.caption ?? ''}
-                  loading="lazy"
-                  className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  style={{ aspectRatio: i % 5 === 0 ? '3/4' : i % 3 === 0 ? '1/1' : '4/5' }}
+                  aspectRatio={i % 5 === 0 ? '3/4' : i % 3 === 0 ? '1/1' : '4/5'}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 {item.processingStatus === 'processing' && (
@@ -121,6 +119,44 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
       {viewerIndex !== null && (
         <FullscreenMediaViewer items={viewable} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} onDelete={onDelete} />
       )}
+    </div>
+  )
+}
+
+/** A plain <img> gives no visible feedback while loading (just a faint
+ *  placeholder background, easy to mistake for a broken/transparent tile)
+ *  and none at all if the URL 404s. This shows a real loading shimmer and
+ *  a visible broken-image state instead of a blank hole. */
+function GalleryImage({ src, alt, aspectRatio }: { src: string; alt: string; aspectRatio: string }) {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
+
+  if (status === 'error') {
+    return (
+      <div
+        className="flex w-full items-center justify-center bg-white/[0.06] text-white/25"
+        style={{ aspectRatio }}
+      >
+        <ImageOff className="h-6 w-6" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative w-full" style={{ aspectRatio }}>
+      {status === 'loading' && (
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.08] to-white/[0.03]" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')}
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105',
+          status === 'loading' ? 'opacity-0' : 'opacity-100'
+        )}
+      />
     </div>
   )
 }

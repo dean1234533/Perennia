@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from '@/context/AppContext'
 import { AuthProvider } from '@/context/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
+import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { Welcome } from '@/screens/Welcome'
 import { SignUp } from '@/screens/SignUp'
 import { Login } from '@/screens/Login'
@@ -29,6 +30,7 @@ function App() {
     <AuthProvider>
       <AppProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/founding-500" element={<Founding500 />} />
