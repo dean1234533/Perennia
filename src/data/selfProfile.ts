@@ -17,6 +17,30 @@ export interface SelfProfile {
   location: string
 }
 
+/** True default for a brand-new real member — intentionally empty. Filling
+ *  this in is a real, persisted edit the user makes in MyProfile; nothing
+ *  here is presented as if it were their content. */
+export const emptySelfProfile: SelfProfile = {
+  about: '',
+  interests: [],
+  values: [],
+  lifestyle: [],
+  music: [],
+  languages: [],
+  favoritePlaces: [],
+  dreamDestinations: [],
+  fitness: '',
+  books: '',
+  movies: '',
+  goals: '',
+  profession: '',
+  education: '',
+  location: '',
+}
+
+/** Reference/demo content — used ONLY as illustrative placeholder text
+ *  shown in empty-state prompts, and by the bundled seed profiles'
+ *  compatibility comparisons. Never written to a real user's record. */
 export const defaultSelfProfile: SelfProfile = {
   about:
     'I design buildings by day and chase golden hour with a film camera by night. Looking for someone curious about the world, unafraid of long conversations, and up for a spontaneous weekend trip.',

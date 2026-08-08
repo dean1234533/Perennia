@@ -1,17 +1,13 @@
-// Verified editorial/lifestyle photography for profile galleries.
-// Every URL was fetched and visually inspected before use. Shared across
-// mock profiles for this prototype — real production media would be
-// per-user uploads (see MediaPipeline notes in ProfileEdit).
-
-export type GalleryCategory = 'moments' | 'videos' | 'travel' | 'highlights' | 'lifestyle' | 'favorites'
-
-export interface GalleryItem {
-  id: string
-  url: string
-  category: GalleryCategory
-  isVideo?: boolean
-  caption?: string
-}
+// Verified editorial/lifestyle photography for the bundled SEED/DEMO
+// profiles only (Amara, Julian, Sienna, Theo, Isabelle, Marcus) — these are
+// the one seeded demo account's discovery pool, clearly separate from real
+// user data. A real member's own profile never reads from this file; it
+// reads their actual uploads from Firestore (see lib/media/mediaService.ts).
+// Every URL was fetched and visually inspected before use. Uses the same
+// category taxonomy as real uploads (see data/mediaCategories.ts) so both
+// share one MasonryGallery/FullscreenMediaViewer implementation.
+import type { DisplayMediaItem } from '@/types/media'
+import { DEFAULT_MEDIA_CATEGORIES } from './mediaCategories'
 
 const pool = {
   travelBridge: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1200&q=80&auto=format&fit=crop',
@@ -31,31 +27,32 @@ const pool = {
   cinematicSunset: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1200&q=80&auto=format&fit=crop',
 }
 
-/** Builds a consistent, varied gallery for a given profile using a seeded subset of the pool. */
-export function buildGallery(seed: number): GalleryItem[] {
-  const items: GalleryItem[] = [
-    { id: 'm1', url: pool.candidHoodie, category: 'moments', caption: 'Sunday errands, unreasonably good mood' },
-    { id: 'm2', url: pool.foodBoard, category: 'moments', caption: 'Cheese board o\'clock' },
-    { id: 'm3', url: pool.fineDining, category: 'moments' },
-    { id: 'v1', url: pool.mountainSunset, category: 'videos', isVideo: true, caption: 'Sunrise from the ridge' },
-    { id: 'v2', url: pool.coupleGoldenLight, category: 'videos', isVideo: true },
-    { id: 't1', url: pool.travelBridge, category: 'travel', caption: 'San Francisco, last spring' },
-    { id: 't2', url: pool.mountainSunset, category: 'travel', caption: 'Above the clouds' },
-    { id: 't3', url: pool.lakeReflection, category: 'travel', caption: 'A morning of doing absolutely nothing' },
-    { id: 't4', url: pool.citySkyline, category: 'travel' },
-    { id: 'h1', url: pool.cinematicSunset, category: 'highlights', caption: 'Best sunset of the year' },
-    { id: 'h2', url: pool.natureField, category: 'highlights' },
-    { id: 'h3', url: pool.lakeReflection, category: 'highlights' },
-    { id: 'l1', url: pool.petDogFlower, category: 'lifestyle', caption: 'My shadow, most days' },
-    { id: 'l2', url: pool.petDogsRun, category: 'lifestyle' },
-    { id: 'l3', url: pool.petCat, category: 'lifestyle', caption: 'She runs the household' },
-    { id: 'l4', url: pool.petPuppy, category: 'lifestyle' },
-    { id: 'f1', url: pool.handsTouching, category: 'favorites', caption: 'A favourite kind of quiet' },
-    { id: 'f2', url: pool.natureField, category: 'favorites' },
+function img(id: string, url: string, category: string, caption?: string): DisplayMediaItem {
+  return { id, url, thumbnailUrl: url, category, type: 'image', caption, processingStatus: 'ready' }
+}
+
+function buildGallery(seed: number): DisplayMediaItem[] {
+  const items: DisplayMediaItem[] = [
+    img('m1', pool.candidHoodie, 'moments', "Sunday errands, unreasonably good mood"),
+    img('m2', pool.foodBoard, 'moments', 'Cheese board o\'clock'),
+    img('m3', pool.fineDining, 'moments'),
+    img('t1', pool.travelBridge, 'travel', 'San Francisco, last spring'),
+    img('t2', pool.mountainSunset, 'travel', 'Above the clouds'),
+    img('t3', pool.lakeReflection, 'travel', 'A morning of doing absolutely nothing'),
+    img('t4', pool.citySkyline, 'travel'),
+    img('mem1', pool.cinematicSunset, 'memories', 'Best sunset of the year'),
+    img('mem2', pool.natureField, 'memories'),
+    img('mem3', pool.lakeReflection, 'memories'),
+    img('l1', pool.petDogFlower, 'lifestyle', 'My shadow, most days'),
+    img('l2', pool.petDogsRun, 'lifestyle'),
+    img('l3', pool.petCat, 'lifestyle', 'She runs the household'),
+    img('l4', pool.petPuppy, 'lifestyle'),
+    img('a1', pool.handsTouching, 'adventures', 'A favourite kind of quiet'),
+    img('a2', pool.natureField, 'adventures'),
+    img('f1', pool.coupleGoldenLight, 'food', 'Golden-hour dinner'),
+    img('h1', pool.foodBoard, 'hobbies'),
   ]
 
-  // Rotate the array based on the seed so different profiles feel distinct
-  // without needing entirely separate media sets.
   const offset = seed % items.length
   return [...items.slice(offset), ...items.slice(0, offset)]
 }
@@ -66,23 +63,16 @@ function seedFromId(id: string): number {
   return hash
 }
 
-/** Deterministic per-profile gallery, so the same profile always shows the same media. */
-export function getProfileGallery(id: string): GalleryItem[] {
+/** Deterministic per-profile gallery, so the same demo profile always shows the same media. */
+export function getProfileGallery(id: string): DisplayMediaItem[] {
   return buildGallery(seedFromId(id))
 }
 
-/** A wide, editorial cover image for the profile header — pulled from the travel/highlights pool. */
+/** A wide, editorial cover image for the profile header — pulled from the travel/memories pool. */
 export function getCoverImage(id: string): string {
   const gallery = getProfileGallery(id)
-  const cover = gallery.find((g) => g.category === 'highlights' || g.category === 'travel')
+  const cover = gallery.find((g) => g.category === 'memories' || g.category === 'travel')
   return cover?.url ?? pool.cinematicSunset
 }
 
-export const GALLERY_TABS: { key: GalleryCategory; label: string; emoji: string }[] = [
-  { key: 'moments', label: 'Moments', emoji: '📷' },
-  { key: 'videos', label: 'Videos', emoji: '🎬' },
-  { key: 'travel', label: 'Travel', emoji: '✈️' },
-  { key: 'highlights', label: 'Highlights', emoji: '✨' },
-  { key: 'lifestyle', label: 'Lifestyle', emoji: '🌿' },
-  { key: 'favorites', label: 'Favorites', emoji: '💛' },
-]
+export const DEMO_GALLERY_CATEGORIES = DEFAULT_MEDIA_CATEGORIES

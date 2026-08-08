@@ -1,345 +1,574 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
-  BadgeCheck, MapPin, Briefcase, GraduationCap, Sun, Sparkles, Pencil, Eye,
-  Plus, X, Crop, ImagePlus, Check, Settings as SettingsIcon,
+  Settings, Pencil, Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
+  GripVertical, Loader2, ImageIcon, VideoIcon,
 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
-import { selfAvatarUrl } from '@/lib/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
+import { CircularCropper } from '@/components/shared/CircularCropper'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
-import { GALLERY_TABS, getProfileGallery, type GalleryItem, type GalleryCategory } from '@/data/gallery-media'
-import { defaultSelfProfile } from '@/data/selfProfile'
+import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
+import { subscribeUserMedia, renameCategoryRemote, type MediaDoc } from '@/lib/firestore'
+import {
+  uploadImageMedia, uploadVideoMedia, deleteMedia, reorderMedia,
+  updateMediaCaption, updateMediaCategory, setProfilePhotoFromMedia, uploadProfilePhoto,
+  ACCEPTED_VIDEO_TYPES,
+} from '@/lib/media/mediaService'
+import { ACCEPTED_IMAGE_TYPES } from '@/lib/media/imageProcessing'
+import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
+import type { SelfProfile } from '@/data/selfProfile'
+
+function toDisplayItem(m: MediaDoc): DisplayMediaItem {
+  return {
+    id: m.id,
+    url: m.url,
+    thumbnailUrl: m.thumbnailUrl || m.video?.poster || '',
+    category: m.category,
+    type: m.type,
+    caption: m.caption,
+    processingStatus: m.processingStatus,
+  }
+}
 
 export function MyProfile() {
   const navigate = useNavigate()
-  const { onboarding } = useApp()
+  const { user } = useAuth()
+  const { onboarding, profileExtras, updateProfileExtras } = useApp()
+
+  const [media, setMedia] = useState<MediaDoc[]>([])
   const [editMode, setEditMode] = useState(false)
-  const [gallery, setGallery] = useState<GalleryItem[]>(() => getProfileGallery('self'))
-  const [coverId, setCoverId] = useState<string>(() => gallery.find((g) => g.category === 'highlights')?.id ?? gallery[0].id)
-  const [activeTab, setActiveTab] = useState<GalleryCategory>('moments')
-  const [interests, setInterests] = useState(defaultSelfProfile.interests)
+  const [activeCategory, setActiveCategory] = useState(onboarding.categories[0]?.id ?? 'moments')
+  const [viewerCategory, setViewerCategory] = useState<string | null>(null)
+  const [viewerIndex, setViewerIndex] = useState(0)
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [uploadCategory, setUploadCategory] = useState(onboarding.categories[0]?.id ?? 'moments')
+  const [uploadBusy, setUploadBusy] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [cropFile, setCropFile] = useState<File | null>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [draft, setDraft] = useState<SelfProfile>(profileExtras)
   const [newInterest, setNewInterest] = useState('')
-  const [cropTarget, setCropTarget] = useState<GalleryItem | null>(null)
-  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [savedPulse, setSavedPulse] = useState(false)
 
-  const coverImage = gallery.find((g) => g.id === coverId)?.url ?? gallery[0].url
-  const filtered = gallery.filter((g) => g.category === activeTab)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
-  const removeMedia = (id: string) => {
-    setGallery((prev) => prev.filter((g) => g.id !== id))
-    if (coverId === id) setCoverId(gallery[0]?.id ?? '')
+  useEffect(() => {
+    if (!editMode) setDraft(profileExtras)
+  }, [profileExtras, editMode])
+
+  useEffect(() => {
+    if (!user) return
+    return subscribeUserMedia(user.uid, setMedia)
+  }, [user])
+
+  const categories: DisplayCategory[] = onboarding.categories.map((c) => ({
+    id: c.id,
+    label: c.label,
+    emoji: DEFAULT_MEDIA_CATEGORIES.find((d) => d.id === c.id)?.emoji ?? '✨',
+  }))
+
+  const displayItems = media.map(toDisplayItem)
+
+  const orbitCategories = categories.map((c) => {
+    const items = media.filter((m) => m.category === c.id && m.processingStatus === 'ready')
+    return {
+      id: c.id,
+      label: c.label,
+      emoji: c.emoji,
+      coverUrl: items[0]?.thumbnailUrl || items[0]?.video?.poster || null,
+      count: media.filter((m) => m.category === c.id && m.processingStatus !== 'error').length,
+    }
+  })
+
+  const handleCategorySelect = (id: string) => {
+    setActiveCategory(id)
+    const hasItems = displayItems.some((i) => i.category === id && i.processingStatus === 'ready')
+    if (hasItems && !editMode) {
+      setViewerCategory(id)
+      setViewerIndex(0)
+    } else {
+      setUploadCategory(id)
+      setUploadOpen(true)
+    }
   }
 
-  const addMedia = () => {
-    const pool = getProfileGallery('self')
-    const candidate = pool.find((p) => !gallery.some((g) => g.id === p.id) && p.category === activeTab)
-      ?? { id: `new-${Date.now()}`, url: pool[Math.floor(Math.random() * pool.length)].url, category: activeTab }
-    setGallery((prev) => [{ ...candidate, id: `${candidate.id}-${Date.now()}` }, ...prev])
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || !user) return
+    setUploadBusy(true)
+    setUploadError(null)
+    const order = media.filter((m) => m.category === uploadCategory).length
+    try {
+      let i = 0
+      for (const file of Array.from(files)) {
+        if (ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+          await uploadImageMedia(user.uid, file, uploadCategory, order + i)
+        } else if (ACCEPTED_VIDEO_TYPES.includes(file.type)) {
+          await uploadVideoMedia(user.uid, file, uploadCategory, order + i)
+        } else {
+          throw new Error(`"${file.name}" isn't a supported image or video type.`)
+        }
+        i++
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
+    } finally {
+      setUploadBusy(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
-  const updateCaption = (id: string, caption: string) => {
-    setGallery((prev) => prev.map((g) => (g.id === id ? { ...g, caption } : g)))
+  const handleReplacePhoto = (files: FileList | null) => {
+    const file = files?.[0]
+    if (!file) return
+    setCropFile(file)
+    if (photoInputRef.current) photoInputRef.current.value = ''
   }
 
-  const handleSave = () => {
+  const confirmCrop = async (blob: Blob) => {
+    if (!user) return
+    setPhotoBusy(true)
+    try {
+      await uploadProfilePhoto(user.uid, blob)
+    } finally {
+      setPhotoBusy(false)
+      setCropFile(null)
+    }
+  }
+
+  const categoryItems = media.filter((m) => m.category === activeCategory)
+
+  const handleReorder = async (newOrder: MediaDoc[]) => {
+    setMedia((prev) => {
+      const others = prev.filter((m) => m.category !== activeCategory)
+      return [...others, ...newOrder]
+    })
+    await reorderMedia(newOrder.map((m, i) => ({ id: m.id, order: i })))
+  }
+
+  const handleRenameCategory = async (id: string, label: string) => {
+    if (!user || !label.trim()) return
+    await renameCategoryRemote(user.uid, id, label.trim())
+  }
+
+  const saveExtras = useCallback(async () => {
+    await updateProfileExtras(draft)
     setEditMode(false)
     setSavedPulse(true)
     setTimeout(() => setSavedPulse(false), 2000)
-  }
+  }, [draft, updateProfileExtras])
 
-  const removeInterest = (interest: string) => setInterests((prev) => prev.filter((i) => i !== interest))
   const addInterest = () => {
-    const trimmed = newInterest.trim()
-    if (trimmed && !interests.includes(trimmed)) setInterests((prev) => [...prev, trimmed])
+    const val = newInterest.trim()
+    if (!val || draft.interests.includes(val)) return
+    setDraft((d) => ({ ...d, interests: [...d.interests, val] }))
     setNewInterest('')
   }
 
+  const photoUrl = onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
+
   return (
-    <div className="pb-32">
-      {/* Top action bar */}
-      <div className="fixed left-4 right-4 top-4 z-30 flex items-center justify-between md:left-8 md:right-8">
+    <div className="mx-auto max-w-4xl px-6 pb-32 pt-8 md:px-0">
+      {/* Top bar */}
+      <div className="mb-6 flex items-center justify-between">
         <AnimatePresence>
           {savedPulse && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
+            <motion.span
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-emerald-300"
+              exit={{ opacity: 0 }}
+              className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-300"
             >
-              <Check className="h-4 w-4" /> Profile saved
-            </motion.div>
+              Profile saved
+            </motion.span>
           )}
         </AnimatePresence>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="glass" size="icon" onClick={() => navigate('/settings')}>
-            <SettingsIcon className="h-4 w-4" />
+            <Settings className="h-4 w-4" />
           </Button>
           {editMode ? (
-            <Button variant="gold" size="sm" onClick={handleSave}>
+            <Button onClick={saveExtras}>
               <Check className="h-4 w-4" /> Save
             </Button>
           ) : (
-            <Button variant="glass" size="sm" onClick={() => setEditMode(true)}>
-              <Pencil className="h-3.5 w-3.5" /> Edit Profile
+            <Button variant="glass" onClick={() => setEditMode(true)}>
+              <Pencil className="h-4 w-4" /> Edit Profile
             </Button>
           )}
         </div>
       </div>
 
-      {/* Cover */}
-      <div className="relative h-[38vh] min-h-[220px] w-full overflow-hidden md:h-[42vh]">
-        <motion.img
-          key={coverImage}
-          initial={{ opacity: 0.4, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          src={coverImage}
-          alt=""
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/20 to-black/10" />
+      {/* Orbit hero */}
+      <ProfileOrbit
+        photoUrl={photoUrl}
+        name={onboarding.name || 'Your Name'}
+        location={draft.location}
+        verificationStatus={onboarding.verification.status}
+        categories={orbitCategories}
+        onCategorySelect={handleCategorySelect}
+        onPhotoClick={() => photoInputRef.current?.click()}
+      />
+      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
+      {photoBusy && (
+        <p className="mt-2 text-center text-xs text-white/40">
+          <Loader2 className="mr-1 inline h-3 w-3 animate-spin" /> Uploading photo…
+        </p>
+      )}
+
+      {onboarding.verification.status !== 'verified' && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={() => navigate('/verify')}
+          className="glass mx-auto mt-4 flex items-center gap-2 rounded-full border border-gold/25 px-4 py-2 text-xs text-champagne cursor-pointer hover:border-gold/50"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {onboarding.verification.status === 'pending' ? 'Verification in review' : 'Verify your identity'}
+        </motion.button>
+      )}
+
+      {/* About */}
+      <div className="mt-10">
+        <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About Me</p>
+        {editMode ? (
+          <textarea
+            value={draft.about}
+            onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
+            placeholder="Tell people who you are…"
+            rows={4}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-lg text-white/90 outline-none focus:border-gold/40"
+          />
+        ) : (
+          <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">
+            {draft.about || <span className="text-lg font-sans italic text-white/30">Add a bio so people know who you are.</span>}
+          </p>
+        )}
+      </div>
+
+      {/* My World — quick category strip */}
+      <div className="mt-10">
+        <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">My World</p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {orbitCategories.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => handleCategorySelect(c.id)}
+              className="glass flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs text-white/60 hover:text-champagne cursor-pointer"
+            >
+              <span>{c.emoji}</span> {c.label} <span className="text-white/30">· {c.count}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Moments — the gallery */}
+      <div className="mt-10">
+        <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="font-serif-display text-2xl text-champagne">Your Gallery</h2>
+          <Button
+            size="sm"
+            onClick={() => {
+              setUploadCategory(activeCategory)
+              setUploadOpen(true)
+            }}
+          >
+            <Upload className="h-3.5 w-3.5" /> Upload Media
+          </Button>
+        </div>
+        <MasonryGallery key={activeCategory} items={displayItems} categories={categories} initialCategory={activeCategory} />
+      </div>
+
+      {/* Manage media (edit mode) */}
+      <AnimatePresence>
         {editMode && (
-          <div className="absolute bottom-4 right-4 rounded-full glass-strong px-3 py-1.5 text-[11px] text-white/70">
-            Tap any photo below and choose "Set as Cover"
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-10 overflow-hidden">
+            <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Manage Media</p>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {categories.map((c) => (
+                <CategoryTab
+                  key={c.id}
+                  cat={c}
+                  active={activeCategory === c.id}
+                  onSelect={() => setActiveCategory(c.id)}
+                  onRename={(label) => handleRenameCategory(c.id, label)}
+                />
+              ))}
+            </div>
+
+            <Reorder.Group
+              axis="y"
+              values={categoryItems}
+              onReorder={handleReorder}
+              className="flex flex-col gap-3"
+            >
+              {categoryItems.map((item) => (
+                <Reorder.Item key={item.id} value={item} className="glass flex items-center gap-3 rounded-2xl p-3">
+                  <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-white/30 active:cursor-grabbing" />
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5">
+                    {item.thumbnailUrl ? (
+                      <img src={item.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-white/20">
+                        {item.type === 'video' ? <VideoIcon className="h-5 w-5" /> : <ImageIcon className="h-5 w-5" />}
+                      </div>
+                    )}
+                    {item.processingStatus === 'processing' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    defaultValue={item.caption}
+                    placeholder="Add a caption…"
+                    onBlur={(e) => updateMediaCaption(item.id, e.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-xs text-white/80 outline-none focus:border-gold/30"
+                  />
+                  <select
+                    value={item.category}
+                    onChange={(e) => updateMediaCategory(item.id, e.target.value)}
+                    className="rounded-lg border border-white/10 bg-midnight px-2 py-1.5 text-xs text-white/60"
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                  {item.type === 'image' && item.processingStatus === 'ready' && (
+                    <button
+                      onClick={() => user && setProfilePhotoFromMedia(user.uid, item)}
+                      title="Set as profile photo"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/40 hover:text-gold cursor-pointer"
+                    >
+                      <Star className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => deleteMedia(item)}
+                    title="Delete"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/40 hover:text-rose cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+            {categoryItems.length === 0 && (
+              <p className="glass rounded-2xl px-6 py-10 text-center text-sm text-white/40">
+                Nothing in {categories.find((c) => c.id === activeCategory)?.label} yet.
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Interests */}
+      <div className="mt-10">
+        <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
+        {editMode ? (
+          <>
+            <Reorder.Group axis="x" values={draft.interests} onReorder={(v) => setDraft((d) => ({ ...d, interests: v }))} className="mb-3 flex flex-wrap gap-2">
+              {draft.interests.map((interest) => (
+                <Reorder.Item key={interest} value={interest} className="cursor-grab active:cursor-grabbing">
+                  <Badge variant="glass" className="flex items-center gap-1.5">
+                    {interest}
+                    <button onClick={() => setDraft((d) => ({ ...d, interests: d.interests.filter((i) => i !== interest) }))} className="cursor-pointer">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+            <div className="flex gap-2">
+              <input
+                value={newInterest}
+                onChange={(e) => setNewInterest(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addInterest()}
+                placeholder="Add an interest…"
+                className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40"
+              />
+              <Button size="sm" variant="glass" onClick={addInterest}><Plus className="h-3.5 w-3.5" /></Button>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {draft.interests.length ? (
+              draft.interests.map((i) => <Badge key={i} variant="glass">{i}</Badge>)
+            ) : (
+              <p className="text-sm italic text-white/30">No interests added yet.</p>
+            )}
           </div>
         )}
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 md:px-0">
-        <div className="-mt-16 mb-4 flex items-end justify-between md:-mt-20">
-          <div className="relative">
-            <img
-              src={selfAvatarUrl(onboarding.gender)}
-              alt="You"
-              className="h-32 w-32 rounded-full border-4 border-midnight object-cover shadow-2xl md:h-40 md:w-40"
-            />
-            {editMode && (
-              <button className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-gold text-midnight shadow-lg cursor-pointer">
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
+      {/* Relationship goals */}
+      <div className="mt-10">
+        <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
+        {editMode ? (
+          <input
+            value={draft.goals}
+            onChange={(e) => setDraft((d) => ({ ...d, goals: e.target.value }))}
+            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-lg text-white/80 outline-none focus:border-gold/40"
+          />
+        ) : (
+          <p className="max-w-2xl text-xl leading-relaxed text-white/70">
+            {draft.goals || <span className="italic text-white/30">Not added yet.</span>}
+          </p>
+        )}
+      </div>
+
+      {/* Profession / education / location */}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {(['profession', 'education', 'location'] as const).map((field) => (
+          <div key={field}>
+            <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field}</p>
+            {editMode ? (
+              <input
+                value={draft[field]}
+                onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
+                className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
+              />
+            ) : (
+              <p className="text-sm text-white/80">{draft[field] || <span className="italic text-white/30">—</span>}</p>
             )}
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="mb-2 flex items-center gap-2">
-          <h1 className="font-serif-display text-3xl text-white md:text-4xl">{onboarding.name || 'Eleanor Ashworth'}</h1>
-          <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] uppercase tracking-wide text-emerald-300 border border-emerald-500/30">
-            <BadgeCheck className="h-3 w-3" /> Verified
-          </span>
-        </div>
-        <div className="mb-5 flex flex-wrap items-center gap-4 text-sm text-white/60">
-          <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {defaultSelfProfile.location}</span>
-          <span className="flex items-center gap-1.5"><Sun className="h-4 w-4" /> {onboarding.sunSign || 'Libra'}</span>
-          <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {defaultSelfProfile.profession}</span>
-          <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {defaultSelfProfile.education}</span>
-        </div>
-
-        {/* Bio */}
-        <div className="mb-8">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About Me</p>
-          <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">{defaultSelfProfile.about}</p>
-        </div>
-
-        {/* Interests — reorderable in edit mode */}
-        <div className="mb-8">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
-          {editMode ? (
-            <>
-              <Reorder.Group axis="x" values={interests} onReorder={setInterests} className="mb-3 flex flex-wrap gap-2">
-                {interests.map((interest) => (
-                  <Reorder.Item key={interest} value={interest} className="cursor-grab active:cursor-grabbing">
-                    <span className="glass flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs text-white/80">
-                      {interest}
-                      <button onClick={() => removeInterest(interest)} className="text-white/40 hover:text-rose-300 cursor-pointer">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  </Reorder.Item>
-                ))}
-              </Reorder.Group>
-              <div className="flex max-w-xs items-center gap-2">
-                <Input
-                  value={newInterest}
-                  onChange={(e) => setNewInterest(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addInterest()}
-                  placeholder="Add an interest…"
-                  className="h-9 text-sm"
+      {/* Premium detail sections */}
+      <div className="mt-12">
+        <p className="mb-5 text-xs uppercase tracking-[0.25em] text-gold/70">More About You</p>
+        {editMode ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {(['music', 'languages', 'favoritePlaces', 'dreamDestinations'] as const).map((field) => (
+              <div key={field}>
+                <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field} (comma-separated)</p>
+                <input
+                  value={draft[field].join(', ')}
+                  onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
                 />
-                <Button size="icon" variant="glass" onClick={addInterest} className="h-9 w-9 shrink-0">
-                  <Plus className="h-4 w-4" />
-                </Button>
               </div>
-            </>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {interests.map((interest) => <Badge key={interest} variant="glass">{interest}</Badge>)}
-            </div>
-          )}
-        </div>
-
-        {/* Goals */}
-        <div className="mb-8">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
-          <p className="max-w-2xl text-xl leading-relaxed text-white/70">{defaultSelfProfile.goals}</p>
-        </div>
-
-        {/* Lifestyle */}
-        <div className="mb-10">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-            {defaultSelfProfile.lifestyle.map((item) => (
-              <div key={item.label}>
-                <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
-                <p className="text-sm text-white/80">{item.value}</p>
+            ))}
+            {(['fitness', 'books', 'movies'] as const).map((field) => (
+              <div key={field}>
+                <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field}</p>
+                <input
+                  value={draft[field]}
+                  onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
+                />
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Gallery */}
-        <div className="mb-12">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Gallery</p>
-              <h2 className="font-serif-display text-2xl text-champagne">Your World</h2>
-            </div>
-            {editMode && (
-              <Button size="sm" variant="glass" onClick={addMedia}>
-                <ImagePlus className="h-3.5 w-3.5" /> Add Media
-              </Button>
-            )}
-          </div>
-
-          {editMode ? (
-            <div>
-              <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
-                {GALLERY_TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors cursor-pointer ${
-                      activeTab === tab.key ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50 hover:text-white/80'
-                    }`}
-                  >
-                    <span>{tab.emoji}</span> {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <Reorder.Group
-                axis="y"
-                values={filtered}
-                onReorder={(newOrder) => {
-                  setGallery((prev) => [...prev.filter((g) => g.category !== activeTab), ...newOrder])
-                }}
-                className="grid grid-cols-2 gap-4 sm:grid-cols-3"
-              >
-                {filtered.map((item) => (
-                  <Reorder.Item key={item.id} value={item} className="cursor-grab active:cursor-grabbing">
-                    <div className="group relative overflow-hidden rounded-2xl">
-                      <img src={item.url} alt="" className="h-40 w-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      <button
-                        onClick={() => removeMedia(item.id)}
-                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-rose-300 cursor-pointer"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setCropTarget(item)}
-                        className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-gold cursor-pointer"
-                      >
-                        <Crop className="h-3.5 w-3.5" />
-                      </button>
-                      {coverId === item.id ? (
-                        <span className="absolute bottom-2 left-2 rounded-full bg-gold/90 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-midnight">
-                          Cover
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => setCoverId(item.id)}
-                          className="absolute bottom-2 left-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] uppercase tracking-wide text-white/70 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"
-                        >
-                          Set as Cover
-                        </button>
-                      )}
-                      <input
-                        value={item.caption ?? ''}
-                        onChange={(e) => updateCaption(item.id, e.target.value)}
-                        placeholder="Add a caption…"
-                        className="absolute bottom-2 right-2 w-[60%] rounded-md bg-black/50 px-2 py-1 text-[10px] text-white placeholder:text-white/40 outline-none"
-                      />
-                    </div>
-                  </Reorder.Item>
-                ))}
-              </Reorder.Group>
-            </div>
-          ) : (
-            <MasonryGallery items={gallery} />
-          )}
-        </div>
-
-        {/* Premium sections */}
-        <div className="mb-12">
-          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">More About Me</p>
-          <div className="mb-5 flex flex-wrap gap-2">
-            <Badge variant="gold">Values: {defaultSelfProfile.values.join(', ')}</Badge>
-          </div>
+        ) : (
           <ProfileDetailSections
-            music={defaultSelfProfile.music}
-            languages={defaultSelfProfile.languages}
-            favoritePlaces={defaultSelfProfile.favoritePlaces}
-            dreamDestinations={defaultSelfProfile.dreamDestinations}
-            fitness={defaultSelfProfile.fitness}
-            books={defaultSelfProfile.books}
-            movies={defaultSelfProfile.movies}
+            music={draft.music}
+            languages={draft.languages}
+            favoritePlaces={draft.favoritePlaces}
+            dreamDestinations={draft.dreamDestinations}
+            fitness={draft.fitness}
+            books={draft.books}
+            movies={draft.movies}
           />
-        </div>
-
-        {!editMode && (
-          <Button variant="link" onClick={() => setViewerIndex(0)} className="mx-auto flex text-sm">
-            <Eye className="h-3.5 w-3.5" /> Preview as Others See It
-          </Button>
         )}
       </div>
 
-      {viewerIndex !== null && (
-        <FullscreenMediaViewer items={gallery} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
-      )}
-
-      {/* Mock crop dialog */}
+      {/* Upload modal */}
       <AnimatePresence>
-        {cropTarget && (
+        {uploadOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-6"
-            onClick={() => setCropTarget(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && !uploadBusy && setUploadOpen(false)}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              onClick={(e) => e.stopPropagation()}
-              className="glass-strong w-full max-w-sm rounded-3xl p-6 text-center"
-            >
-              <p className="font-serif-display mb-4 text-xl text-champagne">Crop Photo</p>
-              <div className="relative mx-auto mb-5 aspect-square w-full max-w-[240px] overflow-hidden rounded-2xl border-2 border-gold/40">
-                <img src={cropTarget.url} alt="" className="h-full w-full object-cover" />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-strong w-full max-w-md rounded-2xl p-6">
+              <h3 className="font-serif-display mb-4 text-xl text-champagne">Upload Media</h3>
+              <div className="mb-4 flex flex-wrap gap-2">
+                {categories.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setUploadCategory(c.id)}
+                    className={`rounded-full px-3 py-1.5 text-xs cursor-pointer ${uploadCategory === c.id ? 'bg-gold/15 border border-gold/30 text-champagne' : 'glass text-white/50'}`}
+                  >
+                    {c.emoji} {c.label}
+                  </button>
+                ))}
               </div>
-              <p className="mb-5 text-xs text-white/45">Drag to reposition · pinch to zoom (prototype preview)</p>
-              <Button className="w-full" onClick={() => setCropTarget(null)}>Apply Crop</Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadBusy}
+                className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-white/15 py-10 text-white/50 hover:border-gold/30 hover:text-white/80 cursor-pointer disabled:cursor-wait"
+              >
+                {uploadBusy ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <Upload className="h-6 w-6" />}
+                <span className="text-sm">{uploadBusy ? 'Uploading…' : 'Select photos or videos'}</span>
+                <span className="text-[10px] text-white/30">JPG, PNG, WebP, HEIC · MP4, MOV, WebM</span>
+              </button>
+              {uploadError && <p className="mt-3 text-xs text-rose">{uploadError}</p>}
+              <Button variant="glass" className="mt-4 w-full" onClick={() => setUploadOpen(false)} disabled={uploadBusy}>
+                Done
+              </Button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {cropFile && <CircularCropper file={cropFile} onConfirm={confirmCrop} onCancel={() => setCropFile(null)} />}
+
+      {viewerCategory && (
+        <FullscreenMediaViewer
+          items={displayItems.filter((i) => i.category === viewerCategory && i.processingStatus === 'ready')}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerCategory(null)}
+        />
+      )}
     </div>
+  )
+}
+
+function CategoryTab({ cat, active, onSelect, onRename }: { cat: DisplayCategory; active: boolean; onSelect: () => void; onRename: (label: string) => void }) {
+  const [renaming, setRenaming] = useState(false)
+  const [value, setValue] = useState(cat.label)
+
+  if (renaming) {
+    return (
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => { setRenaming(false); onRename(value) }}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        className="w-28 rounded-full border border-gold/30 bg-white/[0.03] px-3 py-1.5 text-xs text-white outline-none"
+      />
+    )
+  }
+
+  return (
+    <button
+      onClick={onSelect}
+      onDoubleClick={() => setRenaming(true)}
+      className={`rounded-full px-3.5 py-1.5 text-xs cursor-pointer ${active ? 'bg-gold/15 border border-gold/30 text-champagne' : 'glass text-white/50 hover:text-white/80'}`}
+      title="Double-click to rename"
+    >
+      {cat.emoji} {cat.label}
+    </button>
   )
 }

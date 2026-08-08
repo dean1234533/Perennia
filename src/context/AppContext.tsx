@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import { profiles as fallbackProfiles, type Profile } from '@/data/profiles'
 import { firebaseConfigured } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
+import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
+import { emptySelfProfile, type SelfProfile } from '@/data/selfProfile'
 import {
   fetchProfiles,
   seedProfilesIfNeeded,
@@ -10,19 +12,24 @@ import {
   likeProfileRemote,
   passProfileRemote,
   completeOnboardingRemote,
+  updateProfileExtrasRemote,
   type UserDoc,
+  type VerificationState,
 } from '@/lib/firestore'
 
 export interface OnboardingData {
   name: string
   email: string
   password: string
-  verified: boolean
+  verification: VerificationState
   birthDate: string
   birthTime: string
   birthPlace: string
   sunSign: string
   gender: 'male' | 'female' | ''
+  profilePhotoUrl: string
+  profilePhotoThumbUrl: string
+  categories: { id: string; label: string }[]
 }
 
 interface AppContextValue {
@@ -40,18 +47,23 @@ interface AppContextValue {
   completeOnboarding: () => Promise<void>
   lastMatchId: string | null
   clearLastMatch: () => void
+  profileExtras: SelfProfile
+  updateProfileExtras: (extras: SelfProfile) => Promise<void>
 }
 
 const defaultOnboarding: OnboardingData = {
   name: '',
   email: '',
   password: '',
-  verified: false,
+  verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null },
   birthDate: '',
   birthTime: '',
   birthPlace: '',
   sunSign: '',
   gender: '',
+  profilePhotoUrl: '',
+  profilePhotoThumbUrl: '',
+  categories: DEFAULT_MEDIA_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -66,6 +78,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [localAuthenticated, setLocalAuthenticated] = useState(false)
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
+  const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
 
   // Load curated profiles — from Firestore when configured, otherwise the bundled mock data.
   useEffect(() => {
@@ -85,20 +98,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         name: data.name,
         email: data.email,
-        verified: data.verified,
+        verification: data.verification ?? prev.verification,
         birthDate: data.birthDate,
         birthTime: data.birthTime,
         birthPlace: data.birthPlace,
         sunSign: data.sunSign,
         gender: data.gender ?? '',
+        profilePhotoUrl: data.profilePhotoUrl ?? '',
+        profilePhotoThumbUrl: data.profilePhotoThumbUrl ?? '',
+        categories: data.categories?.length ? data.categories : prev.categories,
       }))
       setLikedIds(data.likedIds ?? [])
       setPassedIds(data.passedIds ?? [])
       setMatchedIds(data.matchedIds ?? [])
       setRemoteOnboardingComplete(!!data.onboardingComplete)
+      if (data.profileExtras) setProfileExtras(data.profileExtras)
     })
     return unsub
   }, [user])
+
+  const updateProfileExtras = useCallback(
+    async (extras: SelfProfile) => {
+      setProfileExtras(extras)
+      if (firebaseConfigured && user) {
+        await updateProfileExtrasRemote(user.uid, extras)
+      }
+    },
+    [user]
+  )
 
   const updateOnboarding = useCallback(
     (data: Partial<OnboardingData>) => {
@@ -173,6 +200,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         completeOnboarding,
         lastMatchId,
         clearLastMatch,
+        profileExtras,
+        updateProfileExtras,
       }}
     >
       {children}

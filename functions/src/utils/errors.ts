@@ -26,6 +26,10 @@ export function resourceExhausted(message = 'Too many requests. Please slow down
   return new HttpsError('resource-exhausted', message)
 }
 
+export function failedPrecondition(message: string): HttpsError {
+  return new HttpsError('failed-precondition', message)
+}
+
 /** Catch-all for anything unexpected — deliberately generic for the client. */
 export function internal(logMessage: string, cause?: unknown): HttpsError {
   // eslint-disable-next-line no-console

@@ -41,7 +41,9 @@ export function ProfileDetailSections({
             </div>
             <p className="text-[11px] uppercase tracking-widest text-white/45">{card.label}</p>
           </div>
-          <p className="font-serif-display text-lg leading-snug text-champagne">{card.content}</p>
+          <p className="font-serif-display text-lg leading-snug text-champagne">
+            {card.content || <span className="text-sm font-sans italic text-white/30">Not added yet</span>}
+          </p>
         </motion.div>
       ))}
     </div>

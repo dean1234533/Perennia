@@ -35,7 +35,7 @@ export function SignUp() {
     if (firebaseConfigured) {
       try {
         await signUp(name, email, password)
-        navigate('/verify')
+        navigate('/profile-photo')
       } catch (err) {
         setError(friendlyAuthError(err))
         setLoading(false)
@@ -43,13 +43,13 @@ export function SignUp() {
       return
     }
     updateOnboarding({ name, email, password })
-    setTimeout(() => navigate('/verify'), 900)
+    setTimeout(() => navigate('/profile-photo'), 900)
   }
 
   const isValid = name.length > 1 && email.includes('@') && password.length >= 6
 
   return (
-    <OnboardingShell step={1} totalSteps={6}>
+    <OnboardingShell step={1} totalSteps={7}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

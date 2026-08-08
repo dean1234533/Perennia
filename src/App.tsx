@@ -6,6 +6,7 @@ import { Welcome } from '@/screens/Welcome'
 import { SignUp } from '@/screens/SignUp'
 import { Login } from '@/screens/Login'
 import { Verify } from '@/screens/Verify'
+import { ProfilePhoto } from '@/screens/ProfilePhoto'
 import { BirthDetails } from '@/screens/BirthDetails'
 import { Preferences } from '@/screens/Preferences'
 import { CosmicProfile } from '@/screens/CosmicProfile'
@@ -17,6 +18,7 @@ import { Matches } from '@/screens/Matches'
 import { MessagesList } from '@/screens/MessagesList'
 import { MessageThread } from '@/screens/MessageThread'
 import { CompatibilityReport } from '@/screens/CompatibilityReport'
+import { CompatibilityHub } from '@/screens/CompatibilityHub'
 import { Settings } from '@/screens/Settings'
 
 function App() {
@@ -28,6 +30,7 @@ function App() {
             <Route path="/" element={<Welcome />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/profile-photo" element={<ProfilePhoto />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/birth-details" element={<BirthDetails />} />
             <Route path="/preferences" element={<Preferences />} />
@@ -40,6 +43,7 @@ function App() {
             <Route path="/matches" element={<AppShell><Matches /></AppShell>} />
             <Route path="/messages" element={<AppShell><MessagesList /></AppShell>} />
             <Route path="/messages/:id" element={<AppShell><MessageThread /></AppShell>} />
+            <Route path="/compatibility" element={<AppShell><CompatibilityHub /></AppShell>} />
             <Route path="/compatibility/:id" element={<AppShell><CompatibilityReport /></AppShell>} />
             <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
 

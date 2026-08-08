@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Heart, MessageCircle, Play } from 'lucide-react'
-import type { GalleryItem } from '@/data/gallery-media'
+import { X, ChevronLeft, ChevronRight, Heart, MessageCircle } from 'lucide-react'
+import type { DisplayMediaItem } from '@/types/media'
 import { cn } from '@/lib/utils'
 
 interface FullscreenMediaViewerProps {
-  items: GalleryItem[]
+  items: DisplayMediaItem[]
   initialIndex: number
   onClose: () => void
 }
@@ -37,6 +37,8 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose }: Fullscre
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose, goNext, goPrev])
+
+  if (!item) return null
 
   return (
     <motion.div
@@ -91,23 +93,28 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose }: Fullscre
             else if (info.offset.x > 80) goPrev()
           }}
         >
-          <motion.img
-            src={item.url}
-            alt={item.caption ?? ''}
-            onDoubleClick={() => setZoomed((z) => !z)}
-            animate={{ scale: zoomed ? 1.8 : 1 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            drag={zoomed}
-            dragConstraints={{ left: -200, right: 200, top: -200, bottom: 200 }}
-            className={cn(
-              'max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl',
-              zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
-            )}
-          />
-          {item.isVideo && !zoomed && (
-            <div className="pointer-events-none absolute flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-              <Play className="h-6 w-6 fill-white text-white" />
-            </div>
+          {item.type === 'video' ? (
+            <video
+              src={item.url}
+              poster={item.thumbnailUrl}
+              controls
+              autoPlay
+              className="max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl"
+            />
+          ) : (
+            <motion.img
+              src={item.url}
+              alt={item.caption ?? ''}
+              onDoubleClick={() => setZoomed((z) => !z)}
+              animate={{ scale: zoomed ? 1.8 : 1 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              drag={zoomed}
+              dragConstraints={{ left: -200, right: 200, top: -200, bottom: 200 }}
+              className={cn(
+                'max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl',
+                zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
+              )}
+            />
           )}
         </motion.div>
       </AnimatePresence>

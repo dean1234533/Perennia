@@ -118,7 +118,7 @@ export function CosmicProfile() {
   }
 
   return (
-    <OnboardingShell step={5} totalSteps={6}>
+    <OnboardingShell step={6} totalSteps={7}>
       <CosmicProfileContent isOnboarding={true} />
     </OnboardingShell>
   )

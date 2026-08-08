@@ -18,6 +18,15 @@ export const googleServiceAccountEmail = defineSecret('GOOGLE_SHEETS_CLIENT_EMAI
 export const googleServiceAccountKey = defineSecret('GOOGLE_SHEETS_PRIVATE_KEY')
 export const googleSheetId = defineSecret('GOOGLE_SHEET_ID')
 
+// --- Identity verification (Stripe Identity) ----------------------------
+// Not set in this environment yet — see functions/README.md "Identity
+// verification setup" for how to create these. Until STRIPE_SECRET_KEY is
+// set, createIdentityVerificationSession throws a clear failed-precondition
+// error and the client shows a "verification not configured" state instead
+// of faking a result.
+export const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY')
+export const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
+
 // --- Sub-score table ranges (Western Zodiac tab) ------------------------
 // Columns read directly off a screenshot of the real sheet: three side by
 // side 3-column tables (label | score | rule-applied) at B:D, F:H, J:L.

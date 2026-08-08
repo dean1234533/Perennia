@@ -99,7 +99,36 @@ export function Settings() {
               <div className="h-px bg-white/5" />
               <Row icon={Sparkles} label="Cosmic Profile" description="Birth details & astrology" />
               <div className="h-px bg-white/5" />
-              <Row icon={Shield} label="Verification" description="Identity verified" right={<span className="text-xs text-emerald-400">Verified</span>} />
+              <Row
+                icon={Shield}
+                label="Verification"
+                description={
+                  onboarding.verification.status === 'verified'
+                    ? 'Identity verified via Stripe'
+                    : onboarding.verification.status === 'pending'
+                      ? 'Verification in review'
+                      : 'Not verified yet'
+                }
+                right={
+                  <button onClick={() => navigate('/verify')} className="cursor-pointer">
+                    <span
+                      className={`text-xs ${
+                        onboarding.verification.status === 'verified'
+                          ? 'text-emerald-400'
+                          : onboarding.verification.status === 'pending'
+                            ? 'text-gold'
+                            : 'text-white/40'
+                      }`}
+                    >
+                      {onboarding.verification.status === 'verified'
+                        ? 'Verified'
+                        : onboarding.verification.status === 'pending'
+                          ? 'Pending'
+                          : 'Verify Now'}
+                    </span>
+                  </button>
+                }
+              />
               <div className="h-px bg-white/5" />
               <Row
                 icon={Heart}

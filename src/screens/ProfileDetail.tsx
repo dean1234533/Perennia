@@ -1,24 +1,23 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  ArrowLeft, BadgeCheck, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles,
-} from 'lucide-react'
+import { ArrowLeft, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
-import { getProfileGallery, getCoverImage } from '@/data/gallery-media'
-import { defaultSelfProfile } from '@/data/selfProfile'
+import { getProfileGallery, DEMO_GALLERY_CATEGORIES } from '@/data/gallery-media'
 
 export function ProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { likeProfile, passProfile, profiles } = useApp()
+  const { likeProfile, passProfile, profiles, profileExtras } = useApp()
   const profile = id ? profiles.find((p) => p.id === id) : undefined
   const [liked, setLiked] = useState(false)
+  const [viewerCategory, setViewerCategory] = useState<string | null>(null)
 
   if (!profile) {
     return (
@@ -29,8 +28,14 @@ export function ProfileDetail() {
     )
   }
 
+  // This bundled seed/demo profile's media — see data/gallery-media.ts for
+  // why this is clearly separated from real member uploads.
   const gallery = getProfileGallery(profile.id)
-  const cover = getCoverImage(profile.id)
+
+  const orbitCategories = DEMO_GALLERY_CATEGORIES.map((c) => {
+    const items = gallery.filter((g) => g.category === c.id)
+    return { id: c.id, label: c.label, emoji: c.emoji, coverUrl: items[0]?.thumbnailUrl ?? null, count: items.length }
+  })
 
   const handleLike = () => {
     setLiked(true)
@@ -48,7 +53,7 @@ export function ProfileDetail() {
   }
 
   return (
-    <div className="pb-32">
+    <div className="pb-32 pt-8">
       <Button
         variant="glass"
         size="icon"
@@ -58,51 +63,26 @@ export function ProfileDetail() {
         <ArrowLeft className="h-4 w-4" />
       </Button>
 
-      {/* Cover image with parallax-ish scale-in */}
-      <div className="relative h-[38vh] min-h-[220px] w-full overflow-hidden md:h-[42vh]">
-        <motion.img
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-          src={cover}
-          alt=""
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/20 to-black/10" />
-      </div>
-
       <div className="mx-auto max-w-4xl px-6 md:px-0">
-        {/* Avatar overlapping cover */}
-        <div className="-mt-16 mb-4 flex items-end justify-between md:-mt-20">
-          <motion.img
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            src={profile.images[0]}
-            alt={profile.name}
-            className="h-32 w-32 rounded-full border-4 border-midnight object-cover shadow-2xl md:h-40 md:w-40"
-          />
-        </div>
+        <ProfileOrbit
+          photoUrl={profile.images[0]}
+          name={profile.name}
+          age={profile.age}
+          verificationStatus={profile.verified ? 'verified' : 'unverified'}
+          categories={orbitCategories}
+          onCategorySelect={setViewerCategory}
+          compatibility={profile.compatibility}
+        />
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <div className="mb-2 flex items-center gap-2">
-            <h1 className="font-serif-display text-3xl text-white md:text-4xl">{profile.name}, {profile.age}</h1>
-            {profile.verified && (
-              <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] uppercase tracking-wide text-emerald-300 border border-emerald-500/30">
-                <BadgeCheck className="h-3 w-3" /> Verified
-              </span>
-            )}
-          </div>
-          <div className="mb-5 flex flex-wrap items-center gap-4 text-sm text-white/60">
-            <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {profile.location}</span>
-            <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {profile.profession}</span>
-            <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {profile.education}</span>
-          </div>
-        </motion.div>
+        <div className="mb-8 mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60">
+          <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {profile.location}</span>
+          <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {profile.profession}</span>
+          <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {profile.education}</span>
+        </div>
 
         {/* Compatibility snapshot */}
         <div className="mb-8">
-          <CompatibilitySnapshot profile={profile} self={defaultSelfProfile} />
+          <CompatibilitySnapshot profile={profile} self={profileExtras} />
         </div>
 
         {/* Bio */}
@@ -140,11 +120,11 @@ export function ProfileDetail() {
           </div>
         </motion.div>
 
-        {/* Gallery — the centrepiece */}
+        {/* Gallery */}
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
-          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Gallery</p>
+          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
           <h2 className="font-serif-display mb-5 text-2xl text-champagne">Exploring {profile.name.split(' ')[0]}'s World</h2>
-          <MasonryGallery items={gallery} />
+          <MasonryGallery key={viewerCategory ?? 'default'} items={gallery} categories={DEMO_GALLERY_CATEGORIES} initialCategory={viewerCategory ?? undefined} />
         </motion.div>
 
         {/* Premium detail sections */}

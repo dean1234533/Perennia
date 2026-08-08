@@ -40,7 +40,7 @@ export function BirthDetails() {
   const isValid = date && time && place.length > 1
 
   return (
-    <OnboardingShell step={3} totalSteps={6}>
+    <OnboardingShell step={4} totalSteps={7}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

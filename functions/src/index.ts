@@ -10,8 +10,9 @@
  * intentionally thin: auth checks, input validation, and wiring only.
  */
 import { initializeApp } from 'firebase-admin/app'
-import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
+import { onObjectFinalized } from 'firebase-functions/v2/storage'
 
 import {
   googleServiceAccountEmail,
@@ -28,10 +29,14 @@ import {
   rateLimitMaxRequests,
   rateLimitWindowSeconds,
   cacheTtlSeconds,
+  stripeSecretKey,
+  stripeWebhookSecret,
 } from './config/env'
 import { getCompatibilityInputSchema } from './validation/compatibility.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { assertWithinRateLimit } from './services/rateLimit.service'
+import { createVerificationSession, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
+import { processUploadedVideo } from './services/videoProcessing.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
 import { log } from './utils/logger'
 import type { FusionTable } from './types/compatibility'
@@ -136,5 +141,70 @@ export const syncCompatibilityScheduled = onSchedule(
       log.error('scheduled_sync_failed', { message: err instanceof Error ? err.message : String(err) })
       throw err
     }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// createIdentityVerificationSession — starts a REAL Stripe Identity check.
+// Returns a client_secret the frontend hands to Stripe.js's
+// `verifyIdentity()`, which renders Stripe's own hosted document + selfie +
+// liveness capture UI. We never see or store raw ID/biometric data — Stripe
+// does the verification and tells us the result via the webhook below.
+// ---------------------------------------------------------------------------
+export const createIdentityVerificationSession = onCall(
+  { secrets: [stripeSecretKey] },
+  async (request) => {
+    if (!request.auth) {
+      throw unauthenticated('Sign in to verify your identity.')
+    }
+    try {
+      return await createVerificationSession({ uid: request.auth.uid, secretKey: stripeSecretKey.value() })
+    } catch (err) {
+      if (err instanceof HttpsError) throw err
+      throw internal('createIdentityVerificationSession failed', err)
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// stripeIdentityWebhook — Stripe calls this when a verification session
+// resolves. Signature-verified against STRIPE_WEBHOOK_SECRET so only Stripe
+// can flip a user's verification status; the client can never set it itself.
+// ---------------------------------------------------------------------------
+export const stripeIdentityWebhook = onRequest(
+  { secrets: [stripeSecretKey, stripeWebhookSecret] },
+  async (request, response) => {
+    const signature = request.headers['stripe-signature']
+    if (typeof signature !== 'string') {
+      response.status(400).send('Missing Stripe-Signature header')
+      return
+    }
+    try {
+      const event = constructWebhookEvent({
+        rawBody: request.rawBody,
+        signature,
+        secretKey: stripeSecretKey.value(),
+        webhookSecret: stripeWebhookSecret.value(),
+      })
+      await handleVerificationWebhookEvent(event)
+      response.status(200).send('ok')
+    } catch (err) {
+      log.error('stripe_webhook_failed', { message: err instanceof Error ? err.message : String(err) })
+      response.status(400).send('Webhook error')
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// processVideoUpload — triggers on every file finalized under
+// users/{uid}/media/{mediaId}/incoming.*, runs real ffmpeg transcoding
+// (480p/720p/1080p + poster), and updates the media doc when done.
+// ---------------------------------------------------------------------------
+export const processVideoUpload = onObjectFinalized(
+  { memory: '2GiB', timeoutSeconds: 540, cpu: 2 },
+  async (event) => {
+    const filePath = event.data.name
+    if (!filePath.includes('/incoming.')) return
+    await processUploadedVideo(filePath, event.data.bucket)
   }
 )

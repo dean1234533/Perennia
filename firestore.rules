@@ -25,6 +25,18 @@ service cloud.firestore {
         && conversationId.split('_')[0] == request.auth.uid;
     }
 
+    // Real uploaded media (photos/videos). Any signed-in member can view
+    // (profile browsing), but only the owner can create/update/delete their
+    // own items. The video-processing Cloud Function writes processed
+    // variants via the Admin SDK, which bypasses these rules entirely.
+    match /media/{mediaId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
     // --- Perennia Compatibility Fusion System -------------------------
     // Proprietary data. The client SDK must NEVER read or write these
     // collections under any condition — every access goes through the
