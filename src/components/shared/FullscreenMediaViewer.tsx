@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Heart, MessageCircle, Trash2 } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import type { DisplayMediaItem } from '@/types/media'
 import { cn } from '@/lib/utils'
 
@@ -17,7 +17,6 @@ interface FullscreenMediaViewerProps {
 export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }: FullscreenMediaViewerProps) {
   const [index, setIndex] = useState(initialIndex)
   const [zoomed, setZoomed] = useState(false)
-  const [liked, setLiked] = useState<Record<string, boolean>>({})
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const dragX = useMotionValue(0)
 
@@ -119,6 +118,8 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
               poster={item.thumbnailUrl}
               controls
               autoPlay
+              muted
+              playsInline
               className="max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl"
             />
           ) : (
@@ -144,22 +145,8 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
         {item.caption && (
           <p className="font-serif-display max-w-md text-center text-lg italic text-white/85">"{item.caption}"</p>
         )}
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={(e) => {
-              e.stopPropagation()
-              setLiked((prev) => ({ ...prev, [item.id]: !prev[item.id] }))
-            }}
-            className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/80 cursor-pointer"
-          >
-            <Heart className={cn('h-4 w-4', liked[item.id] && 'fill-rose text-rose')} />
-          </motion.button>
-          <button className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/40 cursor-not-allowed" disabled>
-            <MessageCircle className="h-4 w-4" />
-            <span className="text-xs">Comments soon</span>
-          </button>
-          {onDelete && (
+        {onDelete && (
+          <div className="flex items-center gap-3">
             <AnimatePresence mode="wait">
               {confirmingDelete ? (
                 <motion.div
@@ -196,8 +183,8 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
                 </motion.button>
               )}
             </AnimatePresence>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </motion.div>
   )
