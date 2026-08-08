@@ -12,6 +12,7 @@ import {
 
 export const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
 export const MAX_VIDEO_BYTES = 500 * 1024 * 1024 // 500MB raw upload cap
+export const MAX_VIDEO_DURATION_SECONDS = 15
 
 export class VideoValidationError extends Error {}
 
@@ -21,6 +22,35 @@ export function validateVideoFile(file: File) {
   }
   if (file.size > MAX_VIDEO_BYTES) {
     throw new VideoValidationError(`Video is too large (${Math.round(file.size / 1024 / 1024)}MB). Max is 500MB.`)
+  }
+}
+
+/** Reads real video metadata (via an offscreen <video> element) to enforce
+ *  the 15-second story-clip limit — actual duration, not a filename/size
+ *  heuristic. */
+function readVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(url)
+      resolve(video.duration)
+    }
+    video.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new VideoValidationError('Could not read this video file. It may be corrupted.'))
+    }
+    video.src = url
+  })
+}
+
+async function validateVideoDuration(file: File) {
+  const duration = await readVideoDuration(file)
+  if (duration > MAX_VIDEO_DURATION_SECONDS + 0.5) {
+    throw new VideoValidationError(
+      `Videos must be ${MAX_VIDEO_DURATION_SECONDS} seconds or shorter (this one is ${Math.round(duration)}s). Trim it and try again.`
+    )
   }
 }
 
@@ -68,6 +98,7 @@ export async function uploadImageMedia(uid: string, file: File, category: string
  *  subscription — no polling. */
 export async function uploadVideoMedia(uid: string, file: File, category: string, order: number): Promise<MediaDoc> {
   validateVideoFile(file)
+  await validateVideoDuration(file)
   const id = newMediaId(uid)
   const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4'
   const incomingRef = ref(storage, `users/${uid}/media/${id}/incoming.${ext}`)

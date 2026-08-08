@@ -9,10 +9,20 @@ interface MasonryGalleryProps {
   items: DisplayMediaItem[]
   categories: DisplayCategory[]
   initialCategory?: string
+  /** Controlled active tab — pass this + onCategoryChange when the parent
+   *  needs to know/drive which category is being viewed (e.g. so an
+   *  "Upload Media" button targets whatever category is on screen). */
+  activeCategory?: string
+  onCategoryChange?: (id: string) => void
 }
 
-export function MasonryGallery({ items, categories, initialCategory }: MasonryGalleryProps) {
-  const [activeTab, setActiveTab] = useState(initialCategory ?? categories[0]?.id ?? '')
+export function MasonryGallery({ items, categories, initialCategory, activeCategory, onCategoryChange }: MasonryGalleryProps) {
+  const [internalTab, setInternalTab] = useState(initialCategory ?? categories[0]?.id ?? '')
+  const activeTab = activeCategory ?? internalTab
+  const setActiveTab = (id: string) => {
+    if (onCategoryChange) onCategoryChange(id)
+    else setInternalTab(id)
+  }
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
 
   const filtered = items.filter((i) => i.category === activeTab)

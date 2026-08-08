@@ -31,6 +31,12 @@ interface Rendition {
   height: number
 }
 
+// Mirrors MAX_VIDEO_DURATION_SECONDS in src/lib/media/mediaService.ts — the
+// client already enforces this, but a direct/bypassed upload should still
+// be rejected server-side rather than silently transcoding an over-length
+// clip.
+const MAX_DURATION_SECONDS = 15.5
+
 const RENDITIONS: Rendition[] = [
   { name: '480p', height: 480 },
   { name: '720p', height: 720 },
@@ -119,8 +125,14 @@ export async function processUploadedVideo(objectPath: string, bucketName: strin
 
   try {
     await bucket.file(objectPath).download({ destination: inputPath })
-    const { height } = await probe(inputPath)
+    const { height, duration } = await probe(inputPath)
     if (!height) throw new Error('ffprobe could not read video dimensions')
+    if (duration > MAX_DURATION_SECONDS) {
+      await mediaRef.update({ processingStatus: 'error' })
+      await bucket.file(objectPath).delete({ ignoreNotFound: true })
+      log.warn('video_rejected_too_long', { uid, mediaId, duration })
+      return
+    }
 
     const posterPath = path.join(workDir, 'poster.jpg')
     await extractPoster(inputPath, posterPath, 0.5)

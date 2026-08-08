@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
-  Settings, Pencil, Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
+  Pencil, Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
   GripVertical, Loader2, ImageIcon, VideoIcon,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -191,9 +191,6 @@ export function MyProfile() {
           )}
         </AnimatePresence>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="glass" size="icon" onClick={() => navigate('/settings')}>
-            <Settings className="h-4 w-4" />
-          </Button>
           {editMode ? (
             <Button onClick={saveExtras}>
               <Check className="h-4 w-4" /> Save
@@ -253,22 +250,6 @@ export function MyProfile() {
         )}
       </div>
 
-      {/* My World — quick category strip */}
-      <div className="mt-10">
-        <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">My World</p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {orbitCategories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => handleCategorySelect(c.id)}
-              className="glass flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs text-white/60 hover:text-champagne cursor-pointer"
-            >
-              <span>{c.emoji}</span> {c.label} <span className="text-white/30">· {c.count}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Moments — the gallery */}
       <div className="mt-10">
         <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
@@ -284,7 +265,7 @@ export function MyProfile() {
             <Upload className="h-3.5 w-3.5" /> Upload Media
           </Button>
         </div>
-        <MasonryGallery key={activeCategory} items={displayItems} categories={categories} initialCategory={activeCategory} />
+        <MasonryGallery items={displayItems} categories={categories} activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
       </div>
 
       {/* Manage media (edit mode) */}
@@ -520,7 +501,7 @@ export function MyProfile() {
               >
                 {uploadBusy ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <Upload className="h-6 w-6" />}
                 <span className="text-sm">{uploadBusy ? 'Uploading…' : 'Select photos or videos'}</span>
-                <span className="text-[10px] text-white/30">JPG, PNG, WebP, HEIC · MP4, MOV, WebM</span>
+                <span className="text-[10px] text-white/30">JPG, PNG, WebP, HEIC · MP4, MOV, WebM (max 15s)</span>
               </button>
               {uploadError && <p className="mt-3 text-xs text-rose">{uploadError}</p>}
               <Button variant="glass" className="mt-4 w-full" onClick={() => setUploadOpen(false)} disabled={uploadBusy}>
