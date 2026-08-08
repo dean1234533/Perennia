@@ -156,6 +156,14 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
               <motion.img
                 src={item.url}
                 alt={item.caption ?? ''}
+                onClick={(e) => {
+                  // Portrait photos often fill the whole media area with no
+                  // exposed black background to tap, unlike video which
+                  // usually letterboxes — so tapping the photo itself also
+                  // toggles the delete bar, not just the space around it.
+                  e.stopPropagation()
+                  if (!zoomed) setControlsVisible((v) => !v)
+                }}
                 onDoubleClick={() => setZoomed((z) => !z)}
                 animate={{ scale: zoomed ? 1.8 : 1 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
