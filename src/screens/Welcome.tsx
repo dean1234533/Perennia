@@ -63,14 +63,13 @@ export function Welcome() {
       </header>
 
       {/* ============ HERO ============ */}
-      <section className="relative flex min-h-[92vh] flex-col items-center justify-end overflow-hidden px-6 pb-10 text-center sm:min-h-screen sm:pb-14">
-        {/* Full-bleed cover, exactly like before — the artwork's own text
-            sits in the upper ~2/3, with a generous empty starfield margin
-            below it. Instead of guessing a percentage of the (cropped,
-            variably-scaled) image where that text ends, the button scrim
-            below is a FIXED pixel height anchored to the true bottom edge
-            of the screen — that stays predictable regardless of viewport
-            aspect ratio or how much the browser crops/scales the image. */}
+      <section className="relative min-h-[92vh] overflow-hidden sm:min-h-screen">
+        {/* Full-bleed cover — the artwork's own text sits in the upper
+            ~60-65%. The button block below is positioned at a fixed
+            PERCENTAGE of the section (not a fixed pixel height glued to
+            the bottom edge), so it scales with viewport height instead of
+            leaving a growing gap on tall/wide desktop screens while still
+            clearing the text on short mobile ones. */}
         <img
           src="/landingPage-Mobile1.JPG"
           alt=""
@@ -81,13 +80,13 @@ export function Welcome() {
           alt=""
           className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
         />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-midnight via-midnight/85 to-transparent sm:h-64" />
+        <div className="absolute inset-x-0 bottom-0 top-[58%] bg-gradient-to-b from-transparent via-midnight/75 to-midnight" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 flex flex-col items-center"
+          className="absolute inset-x-0 top-[70%] z-10 flex flex-col items-center px-6 text-center"
         >
           <h1 className="sr-only">Perennia</h1>
           <p className="sr-only">For Love That Fits, Naturally.</p>
