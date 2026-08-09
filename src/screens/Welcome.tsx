@@ -142,22 +142,6 @@ export function Welcome() {
         </div>
       </section>
 
-      {/* ============ COMPATIBILITY FIRST ============ */}
-      <section className="relative z-10 mx-auto max-w-2xl px-6 py-24 text-center md:py-32">
-        <FadeUp>
-          <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/70">Compatibility First</p>
-          <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
-            Meet fewer people.
-            <br />
-            Meet <span className="text-gradient-gold italic">people who fit</span>.
-          </h2>
-          <p className="text-white/55 leading-relaxed">
-            Perennia is designed to introduce you to people with stronger natural compatibility
-            and genuine potential for something lasting.
-          </p>
-        </FadeUp>
-      </section>
-
       {/* ============ RARE ALIGNMENT ============ */}
       <section className="relative z-10">
         <div className="relative h-[55vh] min-h-[380px] w-full overflow-hidden">
