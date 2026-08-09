@@ -146,7 +146,8 @@ export function Welcome() {
           button sits there, in real open space rather than over any
           baked-in text. */}
       <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden bg-midnight sm:min-h-[80vh]">
-        <img src="/5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover" />
+        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover md:hidden" />
+        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." className="absolute inset-0 hidden h-full w-full object-cover md:block" />
         <div className="absolute inset-x-0 top-[78%] z-10 flex justify-center px-6">
           <Button size="lg" onClick={() => navigate('/signup')} className="group">
             Begin Your Story
