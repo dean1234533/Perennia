@@ -1,26 +1,8 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, ArrowRight, Heart, Infinity as InfinityIcon, ShieldCheck } from 'lucide-react'
+import { Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
-
-const principles = [
-  {
-    icon: Heart,
-    title: 'Meaningful Connections',
-    body: 'Focused on genuine compatibility and lasting bonds.',
-  },
-  {
-    icon: InfinityIcon,
-    title: 'Built for Lasting Love',
-    body: 'Not simply matches, but relationships with the potential to grow and endure.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Intentional and Safe',
-    body: 'A trusted environment for people serious about building a future.',
-  },
-]
 
 function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
@@ -143,63 +125,28 @@ export function Welcome() {
       </section>
 
       {/* ============ RARE ALIGNMENT ============ */}
-      <section className="relative z-10">
-        <div className="relative h-[55vh] min-h-[380px] w-full overflow-hidden">
-          <img src="/landingPage-Mobile3.JPG" alt="" className="h-full w-full object-cover object-top md:hidden" />
-          <img src="/landingPage-Desktop3.JPG" alt="" className="hidden h-full w-full object-cover object-top md:block" />
-          <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/10 to-transparent" />
-        </div>
-
-        <div className="mx-auto max-w-4xl px-6 pb-24 pt-4 text-center md:pb-32">
-          <FadeUp>
-            <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/70">Rare Alignment</p>
-            <h2 className="font-serif-display mb-16 text-3xl leading-snug italic md:text-5xl">
-              Rare alignment isn't a feature.
-              <br />
-              <span className="text-gradient-gold">It's a feeling.</span>
-            </h2>
-          </FadeUp>
-
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-6">
-            {principles.map((p, i) => (
-              <FadeUp key={p.title} delay={i * 0.1} className="flex flex-col items-center sm:border-l sm:border-white/10 sm:first:border-l-0 sm:px-4">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 bg-gold/5">
-                  <p.icon className="h-5 w-5 text-gold" />
-                </div>
-                <h3 className="font-serif-display mb-2 text-lg text-champagne">{p.title}</h3>
-                <p className="text-sm leading-relaxed text-white/50">{p.body}</p>
-              </FadeUp>
-            ))}
-          </div>
-
-          <FadeUp delay={0.3} className="mt-16">
-            <p className="text-xs uppercase tracking-[0.25em] text-white/35">
-              Every member is identity verified before appearing in Discovery.
-            </p>
-          </FadeUp>
-        </div>
+      {/* Background image only, shown in full (no cropping) — the artwork
+          carries this section on its own. */}
+      <section className="relative z-10 flex w-full items-center justify-center bg-midnight">
+        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="w-full md:hidden" />
+        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="hidden w-full md:block" />
       </section>
 
-      {/* ============ FINAL CTA — cinematic city skyline, full bleed ============ */}
-      <section className="relative z-10 h-[70vh] min-h-[480px] w-full overflow-hidden">
-        <img src="/landingPage-Mobile4.JPG" alt="" className="h-full w-full object-cover md:hidden" />
-        <img src="/landingPage-Desktop4.JPG" alt="" className="hidden h-full w-full object-cover md:block" />
-        <div className="absolute inset-0 bg-midnight/55" />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-transparent" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <FadeUp>
-            <h2 className="font-serif-display mb-5 max-w-2xl text-4xl leading-tight [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] md:text-6xl">
-              Your Story Deserves a <span className="text-gradient-gold italic">Beautiful Beginning</span>
-            </h2>
-            <p className="mx-auto mb-10 max-w-md text-white/65 [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-              Ready to discover a different way to meet someone?
-            </p>
-            <Button size="lg" onClick={() => navigate('/signup')} className="group">
-              Begin Your Story
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Button>
-          </FadeUp>
-        </div>
+      {/* ============ FINAL CTA ============ */}
+      {/* Background image only, shown in full (no cropping) — this artwork
+          already carries its own complete message. */}
+      <section className="relative z-10 flex w-full items-center justify-center bg-midnight">
+        <img src="/landingPage-Mobile4.JPG" alt="Your story deserves a beautiful beginning." className="w-full md:hidden" />
+        <img src="/landingPage-Desktop4.JPG" alt="Your story deserves a beautiful beginning." className="hidden w-full md:block" />
+      </section>
+
+      {/* One real, functional close — the artwork above no longer carries
+          a clickable action. */}
+      <section className="relative z-10 flex flex-col items-center px-6 py-16 text-center">
+        <Button size="lg" onClick={() => navigate('/signup')} className="group">
+          Begin Your Story
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Button>
       </section>
 
       <footer className="relative z-10 border-t border-white/5 px-6 py-8 text-center text-xs text-white/30">
