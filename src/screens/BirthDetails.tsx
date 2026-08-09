@@ -79,7 +79,7 @@ function LockedSummary() {
           <span className="text-white/40">Current location · </span>{onboarding.city}, {countryName(onboarding.country)}
         </p>
       </div>
-      <Button size="lg" className="w-full" onClick={() => navigate('/about-you')}>
+      <Button size="lg" className="w-full" onClick={() => navigate('/relationship-goals')}>
         Continue <ArrowRight className="h-4 w-4" />
       </Button>
     </motion.div>
@@ -166,7 +166,7 @@ function BirthDetailsForm() {
           currentLocationLon: currentCity!.lon,
         })
       }
-      navigate('/about-you')
+      navigate('/relationship-goals')
     } catch (err) {
       const message = (err as { message?: string })?.message ?? ''
       setError(message || 'Could not confirm your birth details. Please check your entries and try again.')
@@ -178,17 +178,17 @@ function BirthDetailsForm() {
   return (
     <>
       <div className="mb-8 text-center">
-        <h1 className="font-serif-display text-3xl sm:text-4xl">Birth Details</h1>
-        <p className="mt-2 text-sm text-white/55">For accurate compatibility calculations</p>
+        <h1 className="font-serif-display bg-gradient-to-r from-blue-200 via-white to-fuchsia-200 bg-clip-text text-4xl text-transparent sm:text-6xl">Birth Details</h1>
+        <p className="mt-2 text-base text-white/65 sm:text-lg">For accurate compatibility calculations</p>
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-strong w-full max-w-md rounded-[2rem] p-8 md:p-10"
+        className="birth-details-card glass-strong w-full max-w-2xl rounded-[2rem] border-blue-200/30 p-6 shadow-[0_0_48px_rgba(76,96,220,.18)] sm:p-9 md:p-12"
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-8">
           {needsManualBirthDate && (
             <div className="flex flex-col gap-2">
               <p className="text-xs uppercase tracking-[0.2em] text-lavender/70">Birth Date</p>
@@ -203,7 +203,7 @@ function BirthDetailsForm() {
           )}
 
           <div className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-lavender/70">Time of Birth</p>
+            <h2 className="font-serif-display text-2xl text-blue-100 sm:text-3xl">Time of Birth</h2>
             <Select
               icon={<Clock className="h-4 w-4" />}
               value={time}
@@ -228,18 +228,16 @@ function BirthDetailsForm() {
               />
               I don't know my birth time
             </label>
-            {timeUnknown && (
-              <p className="text-xs leading-relaxed text-white/40">
-                You may be able to find it in family records or request it from the hospital or
-                records service where you were born, where available.
-              </p>
-            )}
+            <p className="text-xs leading-relaxed text-white/40 sm:text-sm">
+              You may be able to find it in family records or request it from the hospital or
+              records service where you were born, where available.
+            </p>
           </div>
 
           <div className="h-px bg-white/10" />
 
           <div className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-lavender/70">Place of Birth</p>
+            <h2 className="font-serif-display text-2xl text-blue-100 sm:text-3xl">Place of Birth</h2>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/45">Country</label>
               <Select
@@ -268,7 +266,7 @@ function BirthDetailsForm() {
           <div className="h-px bg-white/10" />
 
           <div className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-lavender/70">Current Location</p>
+            <h2 className="font-serif-display text-2xl text-blue-100 sm:text-3xl">Current Location</h2>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/45">Country</label>
               <Select
@@ -324,7 +322,7 @@ function BirthDetailsForm() {
             </motion.p>
           )}
 
-          <Button type="submit" size="lg" className="mt-1 w-full" disabled={!isValid || saving}>
+          <Button type="submit" size="lg" className="birth-details-cta mt-1 min-h-14 w-full font-serif-display text-xl sm:text-2xl" disabled={!isValid || saving}>
             {saving ? (<><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>) : 'Confirm Birth Details'}
           </Button>
         </form>

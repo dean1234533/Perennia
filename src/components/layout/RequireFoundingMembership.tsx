@@ -6,6 +6,7 @@ import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
+import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
 
 interface MembershipState {
   uid: string
@@ -29,7 +30,7 @@ interface MembershipState {
 export function RequireFoundingMembership({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { user, authReady } = useAuth()
-  const { onboardingComplete, profileLoaded } = useApp()
+  const { onboarding, profileExtras, onboardingComplete, profileLoaded } = useApp()
   const [membershipState, setMembershipState] = useState<MembershipState | null>(null)
 
   useEffect(() => {
@@ -84,6 +85,27 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
   // there's a real gap where someone could pay, skip straight to
   // /discovery by URL, and never confirm birth details, profile info, etc.
   if (!onboardingComplete) {
+    // Resume at the earliest objectively incomplete required step. In
+    // particular, a just-verified member always lands on Birth Details —
+    // never Discovery or a screen containing the app navigation.
+    if (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt) {
+      return <Navigate to="/verify" replace />
+    }
+    if (!onboarding.birthCity || !onboarding.country || !onboarding.city) {
+      return <Navigate to="/birth-details" replace />
+    }
+    if (!onboarding.relationshipGoal) {
+      return <Navigate to="/relationship-goals" replace />
+    }
+    if (profileExtras.interests.length < MIN_ONBOARDING_INTERESTS) {
+      return <Navigate to="/interests" replace />
+    }
+    if (!onboarding.aboutYouCompletedAt) {
+      return <Navigate to="/about-you" replace />
+    }
+    if (!onboarding.profilePhotoUrl) {
+      return <Navigate to="/profile-photo" replace />
+    }
     return <Navigate to="/cosmic-profile" replace />
   }
 

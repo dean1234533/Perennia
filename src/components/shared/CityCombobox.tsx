@@ -77,7 +77,7 @@ export function CityCombobox({
           setOpen(true)
         }}
         onFocus={() => setOpen(true)}
-        className="h-12 w-full rounded-xl border border-white/15 bg-navy/40 pl-11 pr-9 text-sm text-white backdrop-blur-sm placeholder:text-white/35 focus:border-gold/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-14 w-full rounded-xl border border-blue-200/35 bg-navy/40 pl-11 pr-9 text-base text-white backdrop-blur-sm placeholder:text-white/35 transition focus:border-blue-200/70 focus:outline-none focus:shadow-[0_0_18px_rgba(111,135,255,.16)] disabled:cursor-not-allowed disabled:opacity-50"
       />
       {loading && <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-white/40" />}
 

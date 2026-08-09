@@ -33,7 +33,7 @@ function YourStoryForm() {
     const storyPrompts = STORY_PROMPTS.filter((q) => answers[q]?.trim()).map((q) => ({ question: q, answer: answers[q].trim() }))
     updateOnboarding({ storyPrompts })
     setSaving(false)
-    navigate('/preferences')
+    navigate('/cosmic-profile')
   }
 
   return (
@@ -43,9 +43,9 @@ function YourStoryForm() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="glass-strong w-full max-w-lg rounded-[2rem] p-8 md:p-10"
     >
-      <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">06 — Your Story</p>
-      <h1 className="font-serif-display mb-2 text-3xl">Tell your story</h1>
-      <p className="mb-6 text-sm text-white/55">Everything here is optional — answer what feels right.</p>
+      <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Your introduction</p>
+      <h1 className="font-serif-display mb-2 text-3xl">Short Intro &amp; Bio</h1>
+      <p className="mb-6 text-sm text-white/55">Share a little personality before previewing your profile. Everything here is optional.</p>
 
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">

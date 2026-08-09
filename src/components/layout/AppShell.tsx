@@ -1,9 +1,10 @@
 import { type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Compass, Heart, MessageCircle, Settings, Sparkles, UserRound, Star } from 'lucide-react'
+import { Compass, Heart, MessageCircle, Settings, UserRound, Star } from 'lucide-react'
 import { Starfield } from '@/components/shared/Starfield'
 import { SelfAvatar } from '@/components/shared/SelfAvatar'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 
@@ -46,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           onClick={() => navigate('/discovery')}
           className="mb-6 flex items-center gap-2 xl:px-2 cursor-pointer"
         >
-          <Sparkles className="h-7 w-7 text-gold" />
+          <CelestialHeart className="h-10 w-10 shrink-0" />
           <span className="hidden font-serif-display text-xl text-gradient-gold xl:inline">Perennia</span>
         </button>
 

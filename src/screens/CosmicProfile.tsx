@@ -8,12 +8,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ZodiacWheel } from '@/components/shared/ZodiacWheel'
 import { useApp } from '@/context/AppContext'
+import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
 
 const traits = ['Intuitive', 'Loyal', 'Passionate', 'Idealistic', 'Warm', 'Determined']
 
 function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
   const navigate = useNavigate()
-  const { onboarding, completeOnboarding } = useApp()
+  const { onboarding, profileExtras, completeOnboarding } = useApp()
   const sunSign = onboarding.sunSign || '—'
   const moonSign = onboarding.moonSign || '—'
   const risingSign = onboarding.risingSign || '—'
@@ -22,6 +23,32 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
     : '—'
 
   const finish = async () => {
+    // The final screen is addressable by URL, so it also validates the
+    // required onboarding milestones instead of trusting page order alone.
+    if (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt) {
+      navigate('/verify')
+      return
+    }
+    if (!onboarding.birthCity || !onboarding.country || !onboarding.city) {
+      navigate('/birth-details')
+      return
+    }
+    if (!onboarding.relationshipGoal) {
+      navigate('/relationship-goals')
+      return
+    }
+    if (profileExtras.interests.length < MIN_ONBOARDING_INTERESTS) {
+      navigate('/interests')
+      return
+    }
+    if (!onboarding.aboutYouCompletedAt) {
+      navigate('/about-you')
+      return
+    }
+    if (!onboarding.profilePhotoUrl) {
+      navigate('/profile-photo')
+      return
+    }
     await completeOnboarding()
     // Perennia is Founding-500-gated end to end — finishing onboarding
     // doesn't grant app access by itself, it hands off to the real paywall.

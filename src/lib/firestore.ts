@@ -27,6 +27,7 @@ export interface VerificationState {
   provider: 'stripe_identity' | null
   verificationReference: string | null
   verifiedAt: string | null
+  detailsConfirmedAt?: string | null
 }
 
 export type LifestyleVisibility = 'public' | 'private' | 'matching-only'
@@ -56,6 +57,8 @@ export interface UserDoc {
   /** Real legal name extracted from the member's government ID during
    *  identity verification (Stripe Identity `verified_outputs`). */
   legalName: string
+  /** Records completion even when all three optional About You answers are blank. */
+  aboutYouCompletedAt: string
   birthDate: string
   birthTime: string
   /** True when the member confirmed they don't know their birth time —
@@ -80,6 +83,10 @@ export interface UserDoc {
   city: string
   religion: string
   relationshipGoal: string
+  relationshipGoalSelectedAt: string
+  relationshipDealBreakers: string[]
+  partnerValues: string[]
+  prioritiseSameRelationshipGoal: boolean
   /** Real current-location coordinates (distinct from birthPlace, which is
    *  only used for astrology) — geocoded via the geocodeLocation Cloud
    *  Function so distance-based discovery filtering is real, not guessed. */
@@ -105,6 +112,7 @@ const defaultVerification: VerificationState = {
   provider: null,
   verificationReference: null,
   verifiedAt: null,
+  detailsConfirmedAt: null,
 }
 
 export const defaultPreferences: MatchingPreferences = {
@@ -121,6 +129,7 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   verification: defaultVerification,
   onboardingComplete: false,
   legalName: '',
+  aboutYouCompletedAt: '',
   birthDate: '',
   birthTime: '',
   birthTimeUnknown: false,
@@ -141,6 +150,10 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   city: '',
   religion: '',
   relationshipGoal: '',
+  relationshipGoalSelectedAt: '',
+  relationshipDealBreakers: [],
+  partnerValues: [],
+  prioritiseSameRelationshipGoal: true,
   currentLocationLat: null,
   currentLocationLon: null,
   storyPrompts: [],

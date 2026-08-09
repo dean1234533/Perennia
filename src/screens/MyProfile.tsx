@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
   Pencil, Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
-  GripVertical, Loader2, ImageIcon, VideoIcon,
+  GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MapPinned, Sparkles, MoreHorizontal,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
@@ -186,9 +186,9 @@ export function MyProfile() {
   const photoUrl = onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
 
   return (
-    <div className="mx-auto max-w-4xl px-6 pb-32 pt-16 md:px-0 md:pt-8">
+    <div className="profile-page mx-auto max-w-[980px] px-4 pb-32 pt-5 sm:px-6 md:pt-8">
       {/* Top bar */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-0 flex min-h-10 items-center justify-between">
         <AnimatePresence>
           {savedPulse && (
             <motion.span
@@ -202,6 +202,9 @@ export function MyProfile() {
           )}
         </AnimatePresence>
         <div className="ml-auto flex items-center gap-2">
+          <button aria-label="More profile options" className="mr-1 flex h-11 w-16 items-center justify-center rounded-full border border-white/20 bg-midnight/50 text-white/90 transition hover:border-gold/40">
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
           {editMode ? (
             <Button size="sm" onClick={saveExtras}>
               <Check className="h-3.5 w-3.5" /> Save
@@ -244,8 +247,38 @@ export function MyProfile() {
         </motion.button>
       )}
 
+      <div className="mx-auto mt-4 max-w-3xl text-center">
+        <p className="font-serif-display text-lg tracking-wide text-champagne/90 sm:text-2xl">
+          <span className="mr-2 text-gold">☾</span>
+          {onboarding.sunSign || 'Sun'} <span className="mx-2 text-white/35">•</span>
+          {onboarding.moonSign ? `${onboarding.moonSign} Moon` : 'Moon'} <span className="mx-2 text-white/35">•</span>
+          {onboarding.risingSign ? `${onboarding.risingSign} Rising` : 'Rising'}
+        </p>
+        {!editMode && (
+          <p className="mx-auto mt-3 max-w-2xl font-serif-display text-xl leading-snug text-white/75 sm:text-2xl">
+            {draft.about || 'Add a few words that capture your spirit, your story, and the kind of connection you hope to find.'}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-7 grid grid-cols-3 gap-2 sm:gap-4">
+        {[
+          { label: 'Bio', icon: Feather, target: 'profile-bio' },
+          { label: 'Favourite Places', icon: MapPinned, target: 'profile-details' },
+          { label: 'Dream Destinations', icon: Sparkles, target: 'profile-details' },
+        ].map(({ label, icon: Icon, target }, index) => (
+          <button
+            key={label}
+            onClick={() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className={`flex min-h-14 items-center justify-center gap-2 rounded-full border px-2 font-serif-display text-sm transition sm:text-lg ${index === 0 ? 'border-champagne/70 bg-white/[.04] text-ivory shadow-[0_0_20px_rgba(243,226,186,.12)]' : 'border-white/12 bg-midnight/35 text-white/75 hover:border-gold/35'}`}
+          >
+            <Icon className="h-4 w-4 shrink-0" /> <span>{label}</span>
+          </button>
+        ))}
+      </div>
+
       {/* About */}
-      <div className="mt-10">
+      <div id="profile-bio" className="mt-10 scroll-mt-6">
         <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About Me</p>
         {editMode ? (
           <textarea
@@ -255,18 +288,14 @@ export function MyProfile() {
             rows={4}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-lg text-white/90 outline-none focus:border-gold/40"
           />
-        ) : (
-          <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">
-            {draft.about || <span className="text-lg font-sans italic text-white/30">Add a bio so people know who you are.</span>}
-          </p>
-        )}
+        ) : <p className="text-sm leading-relaxed text-white/55">Your profile story, interests, and intentions live below your visual highlights.</p>}
       </div>
 
       {/* Moments — the gallery */}
       <div className="mt-10">
-        <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
+        <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Your Universe</p>
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="font-serif-display text-2xl text-champagne">Your Gallery</h2>
+          <h2 className="font-serif-display text-3xl text-champagne">Photos &amp; Videos</h2>
           <Button
             size="sm"
             onClick={() => {
@@ -444,7 +473,7 @@ export function MyProfile() {
       </div>
 
       {/* Premium detail sections */}
-      <div className="mt-12">
+      <div id="profile-details" className="mt-12 scroll-mt-6">
         <p className="mb-5 text-xs uppercase tracking-[0.25em] text-gold/70">More About You</p>
         {editMode ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

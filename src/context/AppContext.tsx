@@ -25,6 +25,7 @@ export interface OnboardingData {
   password: string
   verification: VerificationState
   legalName: string
+  aboutYouCompletedAt: string
   birthDate: string
   birthTime: string
   birthTimeUnknown: boolean
@@ -48,6 +49,10 @@ export interface OnboardingData {
   city: string
   religion: string
   relationshipGoal: string
+  relationshipGoalSelectedAt: string
+  relationshipDealBreakers: string[]
+  partnerValues: string[]
+  prioritiseSameRelationshipGoal: boolean
   currentLocationLat: number | null
   currentLocationLon: number | null
   storyPrompts: StoryPrompt[]
@@ -96,8 +101,9 @@ const defaultOnboarding: OnboardingData = {
   email: '',
   phone: '',
   password: '',
-  verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null },
+  verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null, detailsConfirmedAt: null },
   legalName: '',
+  aboutYouCompletedAt: '',
   birthDate: '',
   birthTime: '',
   birthTimeUnknown: false,
@@ -121,6 +127,10 @@ const defaultOnboarding: OnboardingData = {
   city: '',
   religion: '',
   relationshipGoal: '',
+  relationshipGoalSelectedAt: '',
+  relationshipDealBreakers: [],
+  partnerValues: [],
+  prioritiseSameRelationshipGoal: true,
   currentLocationLat: null,
   currentLocationLon: null,
   storyPrompts: [],
@@ -158,6 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         phone: data.phone ?? '',
         verification: data.verification ?? prev.verification,
         legalName: data.legalName ?? '',
+        aboutYouCompletedAt: data.aboutYouCompletedAt ?? '',
         birthDate: data.birthDate,
         birthTime: data.birthTime,
         birthTimeUnknown: data.birthTimeUnknown ?? false,
@@ -181,6 +192,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         city: data.city ?? '',
         religion: data.religion ?? '',
         relationshipGoal: data.relationshipGoal ?? '',
+        relationshipGoalSelectedAt: data.relationshipGoalSelectedAt ?? '',
+        relationshipDealBreakers: data.relationshipDealBreakers ?? [],
+        partnerValues: data.partnerValues ?? [],
+        prioritiseSameRelationshipGoal: data.prioritiseSameRelationshipGoal ?? true,
         currentLocationLat: data.currentLocationLat ?? null,
         currentLocationLon: data.currentLocationLon ?? null,
         storyPrompts: data.storyPrompts ?? [],

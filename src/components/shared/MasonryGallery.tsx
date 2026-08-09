@@ -33,16 +33,16 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
   return (
     <div>
       {/* Tabs */}
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
+      <div className="mb-5 flex gap-1 rounded-full border border-champagne/45 bg-midnight/50 p-1 overflow-x-auto">
         {categories.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors cursor-pointer',
+              'flex min-w-[9rem] flex-1 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors cursor-pointer',
               activeTab === tab.id
-                ? 'bg-gold/15 text-champagne border border-gold/30'
-                : 'glass text-white/50 hover:text-white/80'
+                ? 'bg-white/[.08] text-champagne shadow-inner'
+                : 'text-white/45 hover:text-white/80'
             )}
           >
             <span>{tab.emoji}</span> {tab.label}
@@ -70,7 +70,7 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4"
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:gap-3"
           >
             {filtered.map((item, i) => (
               <motion.button
@@ -81,12 +81,12 @@ export function MasonryGallery({ items, categories, initialCategory, activeCateg
                 whileHover={{ scale: 1.02 }}
                 onClick={() => item.processingStatus !== 'processing' && setViewerIndex(viewable.indexOf(item))}
                 disabled={item.processingStatus === 'processing'}
-                className="group relative block w-full overflow-hidden rounded-2xl bg-white/[0.08] cursor-pointer disabled:cursor-wait"
+                className="group relative block w-full overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[0.08] cursor-pointer disabled:cursor-wait"
               >
                 <GalleryImage
                   src={item.thumbnailUrl || item.url}
                   alt={item.caption ?? ''}
-                  aspectRatio={i % 5 === 0 ? '3/4' : i % 3 === 0 ? '1/1' : '4/5'}
+                  aspectRatio="4/3"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 {item.processingStatus === 'processing' && (

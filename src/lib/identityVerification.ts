@@ -45,3 +45,11 @@ export async function startIdentityVerification(): Promise<void> {
   const { error } = await stripe.verifyIdentity(clientSecret)
   if (error) throw new Error(error.message ?? 'Verification was cancelled.')
 }
+
+/** Records the member's explicit confirmation of the trusted legal name and
+ * DOB returned by Stripe. The server refuses this unless the session is
+ * already verified and both extracted values are present. */
+export async function confirmIdentityDetails(): Promise<void> {
+  const confirmDetails = httpsCallable<unknown, { confirmed: true }>(functions, 'confirmIdentityVerificationDetails')
+  await confirmDetails()
+}

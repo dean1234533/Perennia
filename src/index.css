@@ -52,6 +52,82 @@
   50% { transform: translate(2%, -2%) scale(1.06); opacity: 1; }
 }
 
+@keyframes celestial-twinkle {
+  0%, 100% { opacity: 0.18; transform: scale(0.82); }
+  46% { opacity: 0.7; transform: scale(1); }
+  58% { opacity: 0.35; transform: scale(0.9); }
+}
+
+@keyframes celestial-soft-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); box-shadow: 0 0 7px 1px rgba(205,216,255,.28); }
+  50% { opacity: 0.72; transform: scale(1.15); box-shadow: 0 0 14px 3px rgba(205,216,255,.42); }
+}
+
+@keyframes celestial-drift {
+  0%, 100% { transform: translate3d(-0.15%, 0.1%, 0) scale(1.015); }
+  50% { transform: translate3d(0.25%, -0.2%, 0) scale(1.019); }
+}
+
+@keyframes celestial-shoot {
+  0%, 91%, 100% { opacity: 0; transform: translate3d(0, 0, 0); }
+  92% { opacity: 0; }
+  93% { opacity: .28; }
+  96% { opacity: 0; transform: translate3d(28vw, 9vw, 0); }
+}
+
+.celestial-artwork {
+  background-image: url('/perennia-celestial-background.jpg');
+  background-color: #030a1c;
+}
+
+.celestial-drift {
+  animation: celestial-drift 110s ease-in-out infinite;
+  will-change: transform;
+}
+
+.celestial-twinkle {
+  animation-name: celestial-twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: opacity, transform;
+}
+
+.celestial-glow-star {
+  animation: celestial-soft-pulse 11s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.celestial-shooting-star {
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(224,231,255,.55), transparent);
+  filter: drop-shadow(0 0 3px rgba(195,209,255,.35));
+  animation: celestial-shoot 34s ease-out 9s infinite;
+  will-change: opacity, transform;
+}
+
+.birth-details-card {
+  background:
+    linear-gradient(145deg, rgba(27, 47, 101, .42), rgba(4, 14, 40, .72)),
+    radial-gradient(circle at 78% 8%, rgba(139, 92, 246, .14), transparent 34%);
+}
+
+.about-you-card {
+  background:
+    linear-gradient(150deg, rgba(25, 45, 94, .42), rgba(5, 15, 42, .76)),
+    radial-gradient(circle at 82% 10%, rgba(124, 96, 238, .14), transparent 38%);
+}
+
+.birth-details-cta {
+  border: 1px solid rgba(218, 225, 255, .72);
+  background: linear-gradient(105deg, #4f8ff7 0%, #d9e7ff 47%, #b269ef 100%);
+  color: #071027;
+  box-shadow: 0 0 26px rgba(103, 134, 255, .38), inset 0 1px rgba(255,255,255,.65);
+}
+
+.birth-details-cta:hover:not(:disabled) {
+  box-shadow: 0 0 36px rgba(128, 146, 255, .52), inset 0 1px rgba(255,255,255,.75);
+}
+
 /* Ambient celestial motion (twinkling stars, drifting nebula, floating
  * particles) should stop for anyone who's asked for reduced motion —
  * content, buttons and page-transition animations are untouched, this
@@ -65,6 +141,16 @@
   .animate-haze {
     animation: none !important;
   }
+
+  .celestial-drift,
+  .celestial-twinkle,
+  .celestial-glow-star,
+  .celestial-shooting-star {
+    animation: none !important;
+    will-change: auto;
+  }
+
+  .celestial-shooting-star { display: none; }
 }
 
 * {
@@ -158,4 +244,27 @@ input, textarea, select {
 
 button {
   font-family: inherit;
+}
+
+.profile-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(45, 79, 143, .19), transparent 25%),
+    radial-gradient(circle at 9% 32%, rgba(68, 43, 117, .13), transparent 22%),
+    linear-gradient(180deg, rgba(2, 8, 24, .05), rgba(2, 7, 21, .7));
+}
+
+.profile-orbit::after {
+  content: '';
+  position: absolute;
+  inset: 8% 4%;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,.8) 0 1px, transparent 1.4px);
+  background-size: 47px 43px;
+  opacity: .17;
+  mask-image: radial-gradient(circle, transparent 0 32%, #000 55%, transparent 78%);
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { BadgeCheck, ShieldQuestion, Clock, ImagePlus } from 'lucide-react'
+import { BadgeCheck, ShieldQuestion, Clock, ImagePlus, Plus, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface OrbitCategory {
@@ -85,7 +85,10 @@ export function ProfileOrbit({
 }: ProfileOrbitProps) {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative mx-auto mb-4 h-[340px] w-full max-w-[420px] sm:h-[420px] sm:max-w-[480px] md:h-[500px] md:max-w-[560px]">
+      <div className="profile-orbit relative mx-auto h-[320px] w-full max-w-[410px] sm:h-[410px] sm:max-w-[500px] md:h-[470px] md:max-w-[560px]">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[76%] w-[76%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/16" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[91%] w-[91%] -translate-x-1/2 -translate-y-1/2 rotate-12 rounded-[50%] border border-gold/20" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[58%] w-[102%] -translate-x-1/2 -translate-y-1/2 -rotate-6 rounded-[50%] border border-gold/14" />
         {/* Satellite media circles */}
         {categories.slice(0, ORBIT_POSITIONS.length).map((cat, i) => {
           const pos = ORBIT_POSITIONS[i]
@@ -107,12 +110,12 @@ export function ProfileOrbit({
               whileHover={{ scale: 1.12 }}
               whileTap={{ scale: 0.94 }}
               onClick={() => onCategorySelect(cat.id)}
-              className="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 cursor-pointer"
+              className="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center cursor-pointer"
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
             >
               <div
                 className={cn(
-                  'relative flex items-center justify-center overflow-hidden rounded-full border-2 shadow-lg transition-colors',
+                  'relative flex items-center justify-center overflow-hidden rounded-full border shadow-[0_0_24px_rgba(229,192,123,.12)] transition-colors',
                   cat.count > 0 ? 'border-gold/50 bg-white/[0.03] group-hover:border-gold' : 'border-white/15 bg-white/[0.02] group-hover:border-white/30'
                 )}
                 style={{ width: sizePx, height: sizePx }}
@@ -120,17 +123,13 @@ export function ProfileOrbit({
                 {cat.coverUrl ? (
                   <img src={cat.coverUrl} alt={cat.label} className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-lg opacity-60">{cat.emoji}</span>
+                  <span className="text-2xl opacity-75">{cat.emoji}</span>
                 )}
-                {cat.count > 0 && (
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-midnight px-1 text-[9px] font-semibold text-champagne ring-1 ring-gold/40">
-                    {cat.count}
-                  </span>
-                )}
+                <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border border-gold/60 bg-midnight/90 text-champagne shadow-lg">
+                  {cat.count > 0 ? <Play className="h-2.5 w-2.5 fill-current" /> : <Plus className="h-3 w-3" />}
+                </span>
               </div>
-              <span className="glass rounded-full px-1.5 py-0.5 text-[8px] uppercase tracking-wide text-white/55 group-hover:text-champagne whitespace-nowrap">
-                {cat.label}
-              </span>
+              <span className="sr-only">{cat.label}</span>
             </motion.button>
           )
         })}
@@ -153,9 +152,9 @@ export function ProfileOrbit({
               animate={{ opacity: [0.5, 0.9, 0.5] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <div className="relative flex h-[124px] w-[124px] items-center justify-center overflow-hidden rounded-full border-[3px] border-gold/60 bg-white/[0.03] shadow-2xl sm:h-[152px] sm:w-[152px] md:h-[176px] md:w-[176px]">
+            <div className="relative flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-2 border-champagne/80 bg-white/[0.03] p-1 shadow-[0_0_0_9px_rgba(255,255,255,.04),0_0_0_10px_rgba(229,192,123,.35),0_0_55px_rgba(39,83,168,.5)] sm:h-[210px] sm:w-[210px] md:h-[244px] md:w-[244px]">
               {photoUrl ? (
-                <img src={photoUrl} alt={name} className="h-full w-full object-cover" />
+                <img src={photoUrl} alt={name} className="h-full w-full rounded-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-1.5 text-white/35">
                   <ImagePlus className="h-7 w-7" />
@@ -176,14 +175,14 @@ export function ProfileOrbit({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="mt-2 flex flex-col items-center gap-2 text-center"
+        className="-mt-1 flex flex-col items-center gap-2 text-center sm:-mt-3"
       >
-        <h1 className="font-serif-display text-2xl text-white sm:text-3xl">
+        <h1 className="font-serif-display text-4xl font-medium tracking-wide text-ivory sm:text-6xl">
           {name}
           {age ? `, ${age}` : ''}
         </h1>
         {location && <p className="text-sm text-white/55">{location}</p>}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <VerificationBadge status={verificationStatus} />
           {extraBadge}
         </div>

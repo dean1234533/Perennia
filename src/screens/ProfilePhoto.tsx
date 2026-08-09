@@ -14,7 +14,7 @@ export function ProfilePhoto() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={2} totalSteps={12}>
+    <OnboardingShell step={8} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <ProfilePhotoForm />}
     </OnboardingShell>
   )
@@ -70,10 +70,9 @@ function ProfilePhotoForm() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="glass-strong w-full max-w-md rounded-[2rem] p-8 text-center md:p-10"
       >
-        <h1 className="font-serif-display mb-2 text-3xl">Add Your Photo</h1>
+        <h1 className="font-serif-display mb-2 text-3xl">Profile Media</h1>
         <p className="mb-8 text-sm leading-relaxed text-white/55">
-          This becomes the centre of your Perennia orbit — the first thing people see. Choose a
-          clear, recent photo of your face.
+          Start with a clear, recent profile photo. You can add more photos and videos from your finished profile.
         </p>
 
         <label className="mx-auto mb-6 flex h-40 w-40 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gold/30 bg-white/[0.02] transition-colors hover:border-gold/50">
@@ -94,7 +93,10 @@ function ProfilePhotoForm() {
           </p>
         )}
 
-        <Button size="lg" className="w-full" disabled={!preview || saving} onClick={() => navigate('/verify')}>
+        <Button
+          size="lg" className="w-full" disabled={!preview || saving}
+          onClick={() => navigate(onboarding.verification.status === 'verified' && onboarding.verification.detailsConfirmedAt ? '/your-story' : '/verify')}
+        >
           {saving ? 'Saving…' : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
         </Button>
       </motion.div>

@@ -4,6 +4,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { RequireFoundingMembership } from '@/components/layout/RequireFoundingMembership'
+import { RequireVerifiedIdentity } from '@/components/layout/RequireVerifiedIdentity'
 import { Welcome } from '@/screens/Welcome'
 import { SignUp } from '@/screens/SignUp'
 import { Login } from '@/screens/Login'
@@ -48,15 +49,15 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/profile-photo" element={<ProfilePhoto />} />
             <Route path="/verify" element={<Verify />} />
-            <Route path="/birth-details" element={<BirthDetails />} />
-            <Route path="/about-you" element={<AboutYouDetails />} />
-            <Route path="/relationship-goals" element={<RelationshipGoalsStep />} />
-            <Route path="/lifestyle" element={<LifestyleStep />} />
-            <Route path="/interests" element={<InterestsStep />} />
-            <Route path="/values" element={<ValuesStep />} />
-            <Route path="/your-story" element={<YourStoryStep />} />
-            <Route path="/preferences" element={<Preferences />} />
-            <Route path="/cosmic-profile" element={<CosmicProfile />} />
+            <Route path="/birth-details" element={<RequireVerifiedIdentity><BirthDetails /></RequireVerifiedIdentity>} />
+            <Route path="/about-you" element={<RequireVerifiedIdentity><AboutYouDetails /></RequireVerifiedIdentity>} />
+            <Route path="/relationship-goals" element={<RequireVerifiedIdentity><RelationshipGoalsStep /></RequireVerifiedIdentity>} />
+            <Route path="/lifestyle" element={<RequireVerifiedIdentity><LifestyleStep /></RequireVerifiedIdentity>} />
+            <Route path="/interests" element={<RequireVerifiedIdentity><InterestsStep /></RequireVerifiedIdentity>} />
+            <Route path="/values" element={<RequireVerifiedIdentity><ValuesStep /></RequireVerifiedIdentity>} />
+            <Route path="/your-story" element={<RequireVerifiedIdentity><YourStoryStep /></RequireVerifiedIdentity>} />
+            <Route path="/preferences" element={<RequireVerifiedIdentity><Preferences /></RequireVerifiedIdentity>} />
+            <Route path="/cosmic-profile" element={<RequireVerifiedIdentity><CosmicProfile /></RequireVerifiedIdentity>} />
 
             <Route path="/discovery" element={<RequireFoundingMembership><AppShell><Discovery /></AppShell></RequireFoundingMembership>} />
             <Route path="/profile/:id" element={<RequireFoundingMembership><AppShell><ProfileDetail /></AppShell></RequireFoundingMembership>} />

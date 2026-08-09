@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
+import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 
 function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
@@ -29,14 +30,14 @@ export function Welcome() {
   return (
     <div className="relative overflow-hidden bg-midnight text-white">
       <div className="fixed inset-0 z-0">
-        <AtmosphericBackground />
+        <LandingCelestialBackground />
       </div>
 
       {/* Nav — wordmark + the one login action. No signup button here; the
           only place to join is the hero's primary CTA. */}
       <header className="relative z-20 flex items-center justify-between px-6 py-6 md:px-12">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-gold" />
+          <CelestialHeart className="h-10 w-10" />
           <span className="font-serif-display text-2xl text-gradient-gold">Perennia</span>
         </div>
         <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
@@ -46,34 +47,17 @@ export function Welcome() {
 
       {/* ============ HERO ============ */}
       <section className="relative min-h-[92vh] overflow-hidden sm:min-h-screen">
-        {/* Full-bleed cover — the artwork's own text sits in the upper
-            ~60-65%, with a naturally dark, empty starfield below it
-            already — no extra darkening overlay needed there, the buttons'
-            own backgrounds give them plenty of contrast on their own. The
-            button block is positioned at a fixed PERCENTAGE of the section
-            (not a pixel height glued to the bottom edge), so it scales
-            with viewport height instead of leaving a growing/shrinking gap
-            on different screens, with real margin left below it. */}
-        <img
-          src="/landingPage-Mobile1.JPG"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
-        />
-        <img
-          src="/landingPage-Desktop1.JPG"
-          alt=""
-          className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
-        />
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-x-0 top-[75%] z-10 flex flex-col items-center px-6 text-center"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 pb-10 text-center"
         >
-          <h1 className="sr-only">Perennia</h1>
-          <p className="sr-only">For Love That Fits, Naturally.</p>
-          <p className="sr-only">
+          <CelestialHeart className="mb-2 h-32 w-32 sm:h-40 sm:w-40" />
+          <p className="mb-4 text-xs uppercase tracking-[.42em] text-gold/80">Written in the stars. Chosen by you.</p>
+          <h1 className="font-serif-display text-6xl tracking-wide text-ivory [text-shadow:0_4px_32px_rgba(0,0,0,.8)] sm:text-8xl">Perennia</h1>
+          <p className="mt-2 font-serif-display text-2xl italic text-champagne/90 sm:text-3xl">For Love That Fits, Naturally.</p>
+          <p className="mx-auto mb-9 mt-5 max-w-xl text-sm leading-relaxed text-white/60 sm:text-base">
             Perennia combines a structured compatibility system with astrological insight to
             introduce you to people with genuine long-term potential.
           </p>

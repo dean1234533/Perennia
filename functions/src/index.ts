@@ -40,7 +40,7 @@ import { likeUserInputSchema } from './validation/matching.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
-import { createVerificationSession, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
+import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted } from './services/founding500.service'
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
@@ -244,6 +244,11 @@ export const createIdentityVerificationSession = onCall(
     }
   }
 )
+
+export const confirmIdentityVerificationDetails = onCall(async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in to confirm your identity details.')
+  return confirmVerificationDetails(request.auth.uid)
+})
 
 // ---------------------------------------------------------------------------
 // stripeIdentityWebhook — one shared Stripe webhook endpoint for this app.

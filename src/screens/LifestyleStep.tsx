@@ -38,11 +38,11 @@ export function LifestyleStep() {
       .map(([label, value]) => ({ label, value }))
     await updatePrivateLifestyle(user.uid, { items, visibility })
     setSaving(false)
-    navigate('/interests')
+    navigate('/values')
   }
 
   return (
-    <OnboardingShell step={7} totalSteps={12}>
+    <OnboardingShell step={8} totalSteps={12}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

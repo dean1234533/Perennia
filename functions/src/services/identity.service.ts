@@ -37,6 +37,7 @@ export async function createVerificationSession(params: { uid: string; secretKey
       metadata: { uid: params.uid },
       options: {
         document: {
+          allowed_types: ['passport', 'driving_license', 'id_card'],
           require_matching_selfie: true,
         },
       },
@@ -56,6 +57,18 @@ export async function createVerificationSession(params: { uid: string; secretKey
     }
     throw err
   }
+}
+
+export async function confirmVerificationDetails(uid: string) {
+  const userRef = getFirestore().collection('users').doc(uid)
+  const snapshot = await userRef.get()
+  if (!snapshot.exists) throw failedPrecondition('Your account profile could not be found.')
+  const data = snapshot.data()
+  if (data?.verification?.status !== 'verified' || !data?.legalName || !data?.birthDate) {
+    throw failedPrecondition('Verified identity details are not ready to confirm.')
+  }
+  await userRef.update({ 'verification.detailsConfirmedAt': new Date().toISOString() })
+  return { confirmed: true as const }
 }
 
 export function constructWebhookEvent(params: { rawBody: Buffer; signature: string; secretKey: string; webhookSecret: string }) {
@@ -102,6 +115,7 @@ export async function handleVerificationWebhookEvent(event: Stripe.Event, secret
         const userRef = db.collection('users').doc(uid)
         const existing = await userRef.get()
         const hasBirthDate = !!existing.get('birthDate')
+        const hasDisplayName = !!existing.get('name')
 
         if (dob?.year && dob.month && dob.day && !hasBirthDate) {
           const mm = String(dob.month).padStart(2, '0')
@@ -111,6 +125,10 @@ export async function handleVerificationWebhookEvent(event: Stripe.Event, secret
 
         const legalName = [outputs?.first_name, outputs?.last_name].filter(Boolean).join(' ')
         if (legalName) update.legalName = legalName
+        // About You is intentionally short and no longer asks the member to
+        // re-enter a name Stripe has already verified. Seed the public first
+        // name only when the account does not already have one.
+        if (outputs?.first_name && !hasDisplayName) update.name = outputs.first_name
       } catch (err) {
         log.warn('identity_verified_outputs_fetch_failed', {
           uid,

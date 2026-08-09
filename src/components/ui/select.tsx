@@ -12,7 +12,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
       <select
         ref={ref}
         className={cn(
-          'h-12 w-full appearance-none rounded-xl border border-white/15 bg-navy/40 pr-10 text-sm text-white backdrop-blur-sm focus:border-gold/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          'h-14 w-full appearance-none rounded-xl border border-blue-200/35 bg-navy/40 pr-10 text-base text-white backdrop-blur-sm transition focus:border-blue-200/70 focus:outline-none focus:shadow-[0_0_18px_rgba(111,135,255,.16)] disabled:cursor-not-allowed disabled:opacity-50',
           icon ? 'pl-11' : 'pl-4',
           className
         )}

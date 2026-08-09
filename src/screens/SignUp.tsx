@@ -39,7 +39,7 @@ export function SignUp() {
   // verification (per the Founding 500 flow spec) instead of forcing new
   // members through the full dating-profile onboarding chain. `next` is
   // re-attached to /verify so it still lands on the real destination after.
-  const destination = next ? `/verify?next=${encodeURIComponent(next)}` : '/profile-photo'
+  const destination = next ? `/verify?next=${encodeURIComponent(next)}` : '/verify'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
