@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Camera, ArrowRight } from 'lucide-react'
+import { Camera, ArrowRight, Loader2 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
 import { CircularCropper } from '@/components/shared/CircularCropper'
@@ -11,6 +11,19 @@ import { firebaseConfigured } from '@/lib/firebase'
 import { uploadProfilePhoto } from '@/lib/media/mediaService'
 
 export function ProfilePhoto() {
+  const { profileLoaded } = useApp()
+
+  return (
+    <OnboardingShell step={2} totalSteps={12}>
+      {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <ProfilePhotoForm />}
+    </OnboardingShell>
+  )
+}
+
+// Only mounted once profileLoaded — otherwise a refresh after already
+// uploading a photo would seed `preview` blank (real data hasn't arrived
+// yet), forcing a redundant re-upload before Continue re-enables.
+function ProfilePhotoForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { updateOnboarding, onboarding } = useApp()
@@ -50,7 +63,7 @@ export function ProfilePhoto() {
   }
 
   return (
-    <OnboardingShell step={2} totalSteps={12}>
+    <>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,7 +100,7 @@ export function ProfilePhoto() {
       </motion.div>
 
       {file && <CircularCropper file={file} onConfirm={handleConfirm} onCancel={() => setFile(null)} />}
-    </OnboardingShell>
+    </>
   )
 }
 

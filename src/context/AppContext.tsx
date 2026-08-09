@@ -70,6 +70,14 @@ interface AppContextValue {
   profileExtras: SelfProfile
   updateProfileExtras: (extras: SelfProfile) => Promise<void>
   updatePreferences: (preferences: MatchingPreferences) => Promise<void>
+  /** True once the real Firestore user doc has been fetched at least once
+   *  (or immediately, in local-demo mode). Onboarding screens that seed
+   *  editable local state from `onboarding`/`profileExtras` at mount MUST
+   *  wait for this before rendering their form — otherwise a page refresh
+   *  mid-onboarding seeds inputs from the still-empty default before the
+   *  real data arrives, and hitting Continue silently overwrites genuinely
+   *  saved answers with blanks. */
+  profileLoaded: boolean
   /** Set while a fullscreen overlay (media viewer, etc.) is open so
    *  AppShell can hide the bottom nav underneath it and bring it back on
    *  close, rather than leaving it sitting there under the overlay. */
@@ -123,11 +131,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
   const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
   const [hideBottomNav, setHideBottomNav] = useState(false)
+  const [profileLoaded, setProfileLoaded] = useState(!firebaseConfigured)
 
   // Sync the signed-in user's doc (onboarding fields + like/pass/match state).
   useEffect(() => {
     if (!firebaseConfigured || !user) return
     const unsub = subscribeUserDoc(user.uid, (data: UserDoc | null) => {
+      setProfileLoaded(true)
       if (!data) return
       setOnboarding((prev) => ({
         ...prev,
@@ -266,6 +276,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         profileExtras,
         updateProfileExtras,
         updatePreferences,
+        profileLoaded,
         hideBottomNav,
         setHideBottomNav,
       }}
