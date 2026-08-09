@@ -34,7 +34,7 @@ import {
   likeRateLimitMaxRequests,
   likeRateLimitWindowSeconds,
 } from './config/env'
-import { getCompatibilityInputSchema, computeNatalChartInputSchema } from './validation/compatibility.validation'
+import { getCompatibilityInputSchema, computeNatalChartInputSchema, geocodeLocationInputSchema } from './validation/compatibility.validation'
 import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema } from './validation/founding500.validation'
 import { likeUserInputSchema } from './validation/matching.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
@@ -44,7 +44,8 @@ import { createVerificationSession, constructWebhookEvent, handleVerificationWeb
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted } from './services/founding500.service'
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
-import { computeFullNatalChart, AstrologyError } from './services/astrology.service'
+import { deleteAccount as deleteAccountService } from './services/account.service'
+import { computeFullNatalChart, geocodePlace, AstrologyError } from './services/astrology.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
 import { log } from './utils/logger'
 import type { FusionTable } from './types/compatibility'
@@ -172,6 +173,28 @@ export const computeNatalChart = onCall({}, async (request) => {
   } catch (err) {
     if (err instanceof AstrologyError) throw invalidArgument(err.message)
     throw internal('computeNatalChart failed', err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// geocodeLocation — real city/country -> coordinates for a member's CURRENT
+// location (distance-based discovery filtering), reusing the same ~138k-city
+// dataset lookup as astrology's birth-place geocoding. No hardcoded/guessed
+// coordinates.
+// ---------------------------------------------------------------------------
+export const geocodeLocation = onCall({}, async (request) => {
+  if (!request.auth) {
+    throw unauthenticated('Sign in to set your location.')
+  }
+  const parsed = geocodeLocationInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+  try {
+    return geocodePlace(parsed.data.place)
+  } catch (err) {
+    if (err instanceof AstrologyError) throw invalidArgument(err.message)
+    throw internal('geocodeLocation failed', err)
   }
 })
 
@@ -322,6 +345,22 @@ export const likeUser = onCall({ cors: true }, async (request) => {
   } catch (err) {
     if (err instanceof HttpsError) throw err
     throw internal('likeUser failed', err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// deleteAccount — a real deletion: the member's Firestore doc, uploaded
+// media (docs + Storage files), Founding 500 record, and their Firebase
+// Auth account. Always deletes the CALLER's own account — there is no
+// target-uid parameter, so this can never be used to delete someone else's.
+// ---------------------------------------------------------------------------
+export const deleteAccount = onCall({}, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  try {
+    await deleteAccountService(request.auth.uid)
+    return { deleted: true }
+  } catch (err) {
+    throw internal('deleteAccount failed', err)
   }
 })
 

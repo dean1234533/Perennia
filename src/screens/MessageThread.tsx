@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Mic, Send, Check, CheckCheck, Smile, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
-import { getMatch, getUserDoc, subscribeMessages, sendMessageRemote, type Message, type DiscoveryCandidate } from '@/lib/firestore'
+import { getMatch, getUserDoc, subscribeMessages, sendMessageRemote, markConversationRead, type Message, type DiscoveryCandidate } from '@/lib/firestore'
 
 interface ThreadLocationState {
   otherUid?: string
@@ -43,6 +43,15 @@ export function MessageThread() {
     if (!matchId) return
     return subscribeMessages(matchId, setMessages)
   }, [matchId])
+
+  // Real read receipts: mark the other person's messages read once this
+  // thread has actually been viewed.
+  useEffect(() => {
+    if (!matchId || !user || messages.length === 0) return
+    markConversationRead(matchId, user.uid, messages).catch((err) =>
+      console.warn('[Perennia] Failed to mark conversation read:', err)
+    )
+  }, [matchId, user, messages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

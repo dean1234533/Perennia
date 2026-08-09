@@ -149,9 +149,9 @@ export function ProfileDetail() {
           compatibility={result?.compatibility}
         />
 
-        {(extras?.location || extras?.profession || extras?.education) && (
+        {((extras?.location && profile.showDistance) || extras?.profession || extras?.education) && (
           <div className="mb-8 mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60">
-            {extras?.location && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {extras.location}</span>}
+            {extras?.location && profile.showDistance && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {extras.location}</span>}
             {extras?.profession && <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {extras.profession}</span>}
             {extras?.education && <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {extras.education}</span>}
           </div>

@@ -44,7 +44,13 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
         && request.resource.data.senderId == request.auth.uid;
-      allow update, delete: if false;
+      // Real read receipts: only the RECIPIENT (never the sender) can mark a
+      // message read, and only that one field — they can't edit its content.
+      allow update: if request.auth != null
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
+        && request.auth.uid != resource.data.senderId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if false;
     }
 
     // Real uploaded media (photos/videos). Any signed-in member can view

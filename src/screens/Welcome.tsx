@@ -1,29 +1,32 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Moon, ArrowRight } from 'lucide-react'
+import { Sparkles, Moon, ArrowRight, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { editorial } from '@/data/editorial-images'
+import { subscribeFounding500Config } from '@/lib/founding500'
+import type { Founding500Config } from '@/types/founding500'
 import {
   CosmicProfileMockup, CompatibilityMockup, MessagingMockup,
   VerificationMockup, ProfileMockup, MatchesMockup,
 } from '@/components/shared/ProductMockups'
 
-const testimonials = [
+const howItWorks = [
   {
-    quote: 'I had given up on dating apps entirely. Perennia felt like the first one that actually understood what I was looking for — not just who.',
-    name: 'Charlotte, 31',
-    role: 'Married her match in 2025',
+    n: '01',
+    title: 'Build Your Real Profile',
+    body: 'Your birth details, lifestyle, values, and story — real information, not a swipe deck of photos.',
   },
   {
-    quote: 'The compatibility report before our first date told me more than three months of messaging on other apps ever did.',
-    name: 'Daniel, 34',
-    role: 'In a relationship since 2024',
+    n: '02',
+    title: 'Verify Your Identity',
+    body: 'A real document scan and liveness check through Stripe Identity, so a verified badge always means a real person.',
   },
   {
-    quote: 'It felt less like swiping and more like being introduced by someone who actually knew us both.',
-    name: 'Priya, 29',
-    role: 'Engaged, 2026',
+    n: '03',
+    title: 'See Your Real Compatibility',
+    body: 'Six weighted dimensions — astrological and personal — calculated for every real introduction, never a random number.',
   },
 ]
 
@@ -43,6 +46,9 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
 
 export function Welcome() {
   const navigate = useNavigate()
+  const [founding500Config, setFounding500Config] = useState<Founding500Config | null>(null)
+
+  useEffect(() => subscribeFounding500Config(setFounding500Config), [])
 
   return (
     <div className="relative overflow-hidden bg-midnight text-white">
@@ -239,8 +245,8 @@ export function Welcome() {
             Say something <span className="text-gradient-gold italic">worth reading</span>
           </h2>
           <p className="mb-8 max-w-md text-white/55 leading-relaxed">
-            A messaging experience built for intention — read receipts, voice notes, and reactions
-            that feel like a conversation, not a transaction.
+            A messaging experience built for intention — real conversations with real read
+            receipts, only ever between people who've actually matched.
           </p>
           <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
             Start Talking <ArrowRight className="h-4 w-4" />
@@ -261,7 +267,26 @@ export function Welcome() {
         </FadeUp>
       </section>
 
-      {/* ============ LUXURY CITY — relationship insights, oversized stats ============ */}
+      {/* ============ HOW IT WORKS ============ */}
+      <section className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:py-32">
+        <FadeUp className="mb-16 text-center">
+          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">How Perennia Works</p>
+          <h2 className="font-serif-display text-4xl md:text-5xl">
+            Perennia gets to know <span className="text-gradient-gold italic">you</span> first.
+          </h2>
+        </FadeUp>
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
+          {howItWorks.map((step, i) => (
+            <FadeUp key={step.n} delay={i * 0.12}>
+              <p className="font-serif-display text-gradient-gold mb-4 text-3xl">{step.n}</p>
+              <h3 className="font-serif-display mb-3 text-xl text-champagne">{step.title}</h3>
+              <p className="text-sm leading-relaxed text-white/55">{step.body}</p>
+            </FadeUp>
+          ))}
+        </div>
+      </section>
+
+      {/* ============ LUXURY CITY — real, live Founding 500 numbers ============ */}
       <section className="relative z-10 w-full overflow-hidden">
         <div className="relative min-h-[70vh]">
           <img src={editorial.citySkyline} alt="City at golden hour" className="absolute inset-0 h-full w-full object-cover" />
@@ -272,40 +297,38 @@ export function Welcome() {
               <p className="mb-6 text-xs uppercase tracking-[0.3em] text-gold/80">Built On Intention</p>
             </FadeUp>
             <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-16">
-              {[
-                { n: '12,000+', l: 'Verified Members' },
-                { n: '94%', l: 'Report Genuine Compatibility' },
-                { n: '6', l: 'Dimensions Analyzed Per Match' },
-              ].map((stat, i) => (
-                <FadeUp key={stat.l} delay={i * 0.12}>
-                  <p className="font-serif-display text-gradient-gold text-5xl md:text-6xl">{stat.n}</p>
-                  <p className="mt-3 text-xs uppercase tracking-widest text-white/50">{stat.l}</p>
-                </FadeUp>
-              ))}
+              <FadeUp>
+                <p className="font-serif-display text-gradient-gold text-5xl md:text-6xl">
+                  {founding500Config ? founding500Config.currentMemberCount : '—'}
+                </p>
+                <p className="mt-3 text-xs uppercase tracking-widest text-white/50">
+                  Founding Members{founding500Config ? ` of ${founding500Config.memberLimit}` : ''}
+                </p>
+              </FadeUp>
+              <FadeUp delay={0.12}>
+                <ShieldCheck className="mx-auto h-9 w-9 text-gold md:h-11 md:w-11" />
+                <p className="mt-3 text-xs uppercase tracking-widest text-white/50">Real Identity Verification</p>
+              </FadeUp>
+              <FadeUp delay={0.24}>
+                <p className="font-serif-display text-gradient-gold text-5xl md:text-6xl">6</p>
+                <p className="mt-3 text-xs uppercase tracking-widest text-white/50">Dimensions Analyzed Per Match</p>
+              </FadeUp>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============ TESTIMONIALS — magazine pull-quotes ============ */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 py-24 md:py-32">
-        <FadeUp className="mb-16 text-center">
-          <h2 className="font-serif-display text-4xl md:text-5xl">
-            Stories, Not <span className="text-gradient-gold italic">Statistics</span>
+      {/* ============ OUR PROMISE ============ */}
+      <section className="relative z-10 mx-auto max-w-4xl px-6 py-24 text-center md:py-32">
+        <FadeUp>
+          <Sparkles className="mx-auto mb-6 h-6 w-6 text-gold/60" />
+          <h2 className="font-serif-display mb-6 text-3xl leading-snug md:text-4xl">
+            "We're building Perennia as our own first members —
+            <br className="hidden md:block" />
+            every introduction has to be one we'd want ourselves."
           </h2>
+          <p className="text-sm text-white/40">The Perennia Team</p>
         </FadeUp>
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <FadeUp key={t.name} delay={i * 0.12}>
-              <Sparkles className="mb-5 h-5 w-5 text-gold/60" />
-              <p className="font-serif-display mb-6 text-xl italic leading-snug text-white/90">
-                "{t.quote}"
-              </p>
-              <p className="text-sm text-champagne">{t.name}</p>
-              <p className="text-xs text-white/40">{t.role}</p>
-            </FadeUp>
-          ))}
-        </div>
       </section>
 
       {/* ============ FINAL CTA — cinematic sunset, full bleed ============ */}
@@ -319,8 +342,7 @@ export function Welcome() {
               Your Story Deserves a <span className="text-gradient-gold italic">Beautiful Beginning</span>
             </h2>
             <p className="mx-auto mb-10 max-w-md text-white/65 [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-              Join thousands who have found a love that truly fits — written in the stars,
-              grounded in reality.
+              Join the Founding 500 — written in the stars, grounded in reality.
             </p>
             <Button size="lg" onClick={() => navigate('/signup')}>
               Begin Your Story

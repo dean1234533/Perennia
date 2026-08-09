@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { BadgeCheck, MapPin, SlidersHorizontal, Sparkles, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { BadgeCheck, MapPin, SlidersHorizontal, Sparkles, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { MatchingPreferencesPanel } from '@/components/shared/MatchingPreferencesPanel'
 import { fetchDiscoveryCandidates, type DiscoveryCandidate } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { calculateAge } from '@/lib/age'
+import { milesBetween } from '@/lib/distance'
 
 export function Discovery() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { passedIds, likedIds, onboarding } = useApp()
   const [filter, setFilter] = useState<'all' | 'nearby'>('all')
+  const [filterOpen, setFilterOpen] = useState(false)
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
   const [loadingCandidates, setLoadingCandidates] = useState(true)
   const [scores, setScores] = useState<Record<string, CompatibilityResult>>({})
@@ -36,10 +39,30 @@ export function Discovery() {
   }, [user])
 
   const interestedIn = onboarding.gender === 'male' ? 'female' : onboarding.gender === 'female' ? 'male' : null
+  const { ageMin, ageMax, maxDistanceMiles } = onboarding.preferences
+  const selfLocation = onboarding.currentLocationLat !== null && onboarding.currentLocationLon !== null
+    ? { lat: onboarding.currentLocationLat, lon: onboarding.currentLocationLon }
+    : null
 
-  const eligible = candidates.filter(
-    (c) => !passedIds.includes(c.uid) && !likedIds.includes(c.uid) && (!interestedIn || c.gender === interestedIn)
-  )
+  function distanceTo(c: DiscoveryCandidate): number | null {
+    if (!selfLocation || c.currentLocationLat === null || c.currentLocationLon === null) return null
+    return milesBetween(selfLocation, { lat: c.currentLocationLat, lon: c.currentLocationLon })
+  }
+
+  const eligible = candidates.filter((c) => {
+    if (passedIds.includes(c.uid) || likedIds.includes(c.uid)) return false
+    if (c.incognito) return false
+    if (interestedIn && c.gender !== interestedIn) return false
+    const age = calculateAge(c.birthDate)
+    if (age !== null && (age < ageMin || age > ageMax)) return false
+    // Fail open on distance when either side hasn't set a real location yet
+    // — we'd rather show someone than hide them over missing data.
+    if (maxDistanceMiles !== null) {
+      const distance = distanceTo(c)
+      if (distance !== null && distance > maxDistanceMiles) return false
+    }
+    return true
+  })
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
@@ -96,8 +119,11 @@ export function Discovery() {
 
   const visible = eligible
     .filter((c) => scores[c.uid])
-    .map((c) => ({ ...c, compatibility: scores[c.uid].compatibility, compatibilityLabel: scores[c.uid].band }))
-    .sort((a, b) => b.compatibility - a.compatibility)
+    .map((c) => ({ ...c, compatibility: scores[c.uid].compatibility, compatibilityLabel: scores[c.uid].band, distance: distanceTo(c) }))
+    .sort((a, b) => {
+      if (filter === 'nearby' && a.distance !== null && b.distance !== null) return a.distance - b.distance
+      return b.compatibility - a.compatibility
+    })
 
   const [featured, ...rest] = visible
   const loading = loadingCandidates || (eligible.length > 0 && selfChartComplete && visible.length === 0 && eligible.some((c) => !scores[c.uid]))
@@ -130,7 +156,7 @@ export function Discovery() {
           >
             Nearby
           </button>
-          <Button variant="glass" size="icon">
+          <Button variant="glass" size="icon" onClick={() => setFilterOpen(true)}>
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
         </div>
@@ -274,6 +300,32 @@ export function Discovery() {
           )}
         </>
       )}
+
+      <AnimatePresence>
+        {filterOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && setFilterOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass-strong max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl p-6"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="font-serif-display text-xl text-champagne">Discovery Filters</h3>
+                <button onClick={() => setFilterOpen(false)} className="text-white/50 hover:text-white cursor-pointer">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <MatchingPreferencesPanel onSaved={() => setFilterOpen(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

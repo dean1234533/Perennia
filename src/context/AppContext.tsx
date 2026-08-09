@@ -10,8 +10,13 @@ import {
   passProfileRemote,
   completeOnboardingRemote,
   updateProfileExtrasRemote,
+  updatePreferencesRemote,
+  defaultPreferences,
   type UserDoc,
   type VerificationState,
+  type MatchingPreferences,
+  type StoryPrompt,
+  type LifestyleVisibility,
 } from '@/lib/firestore'
 
 export interface OnboardingData {
@@ -33,6 +38,19 @@ export interface OnboardingData {
   profilePhotoUrl: string
   profilePhotoThumbUrl: string
   categories: { id: string; label: string }[]
+  heightCm: number | null
+  country: string
+  city: string
+  religion: string
+  relationshipGoal: string
+  currentLocationLat: number | null
+  currentLocationLon: number | null
+  lifestyleVisibility: LifestyleVisibility
+  storyPrompts: StoryPrompt[]
+  preferences: MatchingPreferences
+  incognito: boolean
+  showDistance: boolean
+  pushNotificationsEnabled: boolean
 }
 
 interface AppContextValue {
@@ -53,6 +71,7 @@ interface AppContextValue {
   clearLastMatch: () => void
   profileExtras: SelfProfile
   updateProfileExtras: (extras: SelfProfile) => Promise<void>
+  updatePreferences: (preferences: MatchingPreferences) => Promise<void>
   /** Set while a fullscreen overlay (media viewer, etc.) is open so
    *  AppShell can hide the bottom nav underneath it and bring it back on
    *  close, rather than leaving it sitting there under the overlay. */
@@ -79,6 +98,19 @@ const defaultOnboarding: OnboardingData = {
   profilePhotoUrl: '',
   profilePhotoThumbUrl: '',
   categories: DEFAULT_MEDIA_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+  heightCm: null,
+  country: '',
+  city: '',
+  religion: '',
+  relationshipGoal: '',
+  currentLocationLat: null,
+  currentLocationLon: null,
+  lifestyleVisibility: 'public',
+  storyPrompts: [],
+  preferences: defaultPreferences,
+  incognito: false,
+  showDistance: true,
+  pushNotificationsEnabled: true,
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -119,6 +151,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         profilePhotoUrl: data.profilePhotoUrl ?? '',
         profilePhotoThumbUrl: data.profilePhotoThumbUrl ?? '',
         categories: data.categories?.length ? data.categories : prev.categories,
+        heightCm: data.heightCm ?? null,
+        country: data.country ?? '',
+        city: data.city ?? '',
+        religion: data.religion ?? '',
+        relationshipGoal: data.relationshipGoal ?? '',
+        currentLocationLat: data.currentLocationLat ?? null,
+        currentLocationLon: data.currentLocationLon ?? null,
+        lifestyleVisibility: data.lifestyleVisibility ?? 'public',
+        storyPrompts: data.storyPrompts ?? [],
+        preferences: data.preferences ?? defaultPreferences,
+        incognito: data.incognito ?? false,
+        showDistance: data.showDistance ?? true,
+        pushNotificationsEnabled: data.pushNotificationsEnabled ?? true,
       }))
       setLikedIds(data.likedIds ?? [])
       setPassedIds(data.passedIds ?? [])
@@ -134,6 +179,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProfileExtras(extras)
       if (firebaseConfigured && user) {
         await updateProfileExtrasRemote(user.uid, extras)
+      }
+    },
+    [user]
+  )
+
+  const updatePreferences = useCallback(
+    async (preferences: MatchingPreferences) => {
+      setOnboarding((prev) => ({ ...prev, preferences }))
+      if (firebaseConfigured && user) {
+        await updatePreferencesRemote(user.uid, preferences)
       }
     },
     [user]
@@ -214,6 +269,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearLastMatch,
         profileExtras,
         updateProfileExtras,
+        updatePreferences,
         hideBottomNav,
         setHideBottomNav,
       }}

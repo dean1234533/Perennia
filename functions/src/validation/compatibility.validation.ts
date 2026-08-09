@@ -129,3 +129,12 @@ export const computeNatalChartInputSchema = z.object({
 })
 
 export type ComputeNatalChartInput = z.infer<typeof computeNatalChartInputSchema>
+
+/** Input for geocodeLocation — real city/country -> coordinates, used for
+ *  a member's current location (distance-based matching), not their birth
+ *  place (which is geocoded separately for astrology). */
+export const geocodeLocationInputSchema = z.object({
+  place: z.string().trim().min(1, 'place is required'),
+})
+
+export type GeocodeLocationInput = z.infer<typeof geocodeLocationInputSchema>

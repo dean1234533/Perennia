@@ -22,6 +22,7 @@ import { MessageThread } from '@/screens/MessageThread'
 import { CompatibilityReport } from '@/screens/CompatibilityReport'
 import { CompatibilityHub } from '@/screens/CompatibilityHub'
 import { Settings } from '@/screens/Settings'
+import { MatchingPreferences } from '@/screens/MatchingPreferences'
 import { Founding500 } from '@/screens/Founding500'
 import { Founding500Checkout } from '@/screens/Founding500Checkout'
 import { Founding500Success } from '@/screens/Founding500Success'
@@ -55,6 +56,7 @@ function App() {
             <Route path="/compatibility" element={<RequireFoundingMembership><AppShell><CompatibilityHub /></AppShell></RequireFoundingMembership>} />
             <Route path="/compatibility/:id" element={<RequireFoundingMembership><AppShell><CompatibilityReport /></AppShell></RequireFoundingMembership>} />
             <Route path="/settings" element={<RequireFoundingMembership><AppShell><Settings /></AppShell></RequireFoundingMembership>} />
+            <Route path="/matching-preferences" element={<RequireFoundingMembership><AppShell><MatchingPreferences /></AppShell></RequireFoundingMembership>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

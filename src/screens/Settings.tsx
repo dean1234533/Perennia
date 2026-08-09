@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Moon, Eye, MapPin, Heart, X, Check, Crown,
+  User, Bell, Shield, Sparkles, LogOut, ChevronRight, Eye, MapPin, Heart, X, Check, Crown,
+  SlidersHorizontal, Images, KeyRound, Trash2, AlertTriangle, Loader2,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -57,17 +58,24 @@ function Row({
 export function Settings() {
   const navigate = useNavigate()
   const { setAuthenticated, onboarding, updateOnboarding } = useApp()
-  const { user, logOut } = useAuth()
-  const [notifications, setNotifications] = useState(true)
-  const [showDistance, setShowDistance] = useState(true)
-  const [incognito, setIncognito] = useState(false)
-  const [darkCosmic, setDarkCosmic] = useState(true)
+  const { user, logOut, changePassword, deleteAccount } = useAuth()
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false)
   const [nameDraft, setNameDraft] = useState(onboarding.name)
   const [phoneDraft, setPhoneDraft] = useState(onboarding.phone)
   const [savingInfo, setSavingInfo] = useState(false)
   const [savedPulse, setSavedPulse] = useState(false)
   const [foundingRecord, setFoundingRecord] = useState<FoundingMemberRecord | null>(null)
+
+  const [securityOpen, setSecurityOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [securityError, setSecurityError] = useState('')
+  const [securityStatus, setSecurityStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!firebaseConfigured || !user) return
@@ -98,6 +106,40 @@ export function Settings() {
     setPersonalInfoOpen(false)
     setSavedPulse(true)
     setTimeout(() => setSavedPulse(false), 2000)
+  }
+
+  const handleChangePassword = async () => {
+    setSecurityError('')
+    if (newPassword.length < 6) {
+      setSecurityError('New password must be at least 6 characters.')
+      return
+    }
+    setSecurityStatus('saving')
+    try {
+      await changePassword(currentPassword, newPassword)
+      setSecurityStatus('saved')
+      setCurrentPassword('')
+      setNewPassword('')
+      setTimeout(() => {
+        setSecurityOpen(false)
+        setSecurityStatus('idle')
+      }, 1200)
+    } catch (err) {
+      setSecurityError(err instanceof Error ? err.message : 'Could not change your password.')
+      setSecurityStatus('idle')
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('')
+    setDeleting(true)
+    try {
+      await deleteAccount(deletePassword)
+      navigate('/')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Could not delete your account.')
+      setDeleting(false)
+    }
   }
 
   return (
@@ -142,6 +184,20 @@ export function Settings() {
               />
               <div className="h-px bg-white/5" />
               <Row
+                icon={Images}
+                label="Manage Photos & Videos"
+                description="Edit your profile media"
+                onClick={() => navigate('/my-profile')}
+              />
+              <div className="h-px bg-white/5" />
+              <Row
+                icon={SlidersHorizontal}
+                label="Matching Preferences"
+                description="Age range, distance & location"
+                onClick={() => navigate('/matching-preferences')}
+              />
+              <div className="h-px bg-white/5" />
+              <Row
                 icon={Shield}
                 label="Verification"
                 description={
@@ -174,7 +230,7 @@ export function Settings() {
               <div className="h-px bg-white/5" />
               <Row
                 icon={Crown}
-                label="Founding 500"
+                label="Founding 500 Membership"
                 description={
                   foundingRecord
                     ? `Founding Member #${foundingRecord.memberNumber} · ${foundingRecord.tier === 'premium' ? 'Premium' : 'Essential'}`
@@ -220,9 +276,19 @@ export function Settings() {
           delay: 0.16,
           content: (
             <>
-              <Row icon={Eye} label="Incognito Mode" description="Browse without being seen" right={<Switch checked={incognito} onCheckedChange={setIncognito} />} />
+              <Row
+                icon={Eye}
+                label="Incognito Mode"
+                description="Hide your profile from Discovery"
+                right={<Switch checked={onboarding.incognito} onCheckedChange={(v) => updateOnboarding({ incognito: v })} />}
+              />
               <div className="h-px bg-white/5" />
-              <Row icon={MapPin} label="Show Distance" description="Display your location to matches" right={<Switch checked={showDistance} onCheckedChange={setShowDistance} />} />
+              <Row
+                icon={MapPin}
+                label="Show Location"
+                description="Display your location on your profile"
+                right={<Switch checked={onboarding.showDistance} onCheckedChange={(v) => updateOnboarding({ showDistance: v })} />}
+              />
             </>
           ),
         },
@@ -230,14 +296,28 @@ export function Settings() {
           title: 'Notifications',
           delay: 0.22,
           content: (
-            <Row icon={Bell} label="Push Notifications" description="New matches & messages" right={<Switch checked={notifications} onCheckedChange={setNotifications} />} />
+            <Row
+              icon={Bell}
+              label="Push Notifications"
+              description="New matches & messages"
+              right={<Switch checked={onboarding.pushNotificationsEnabled} onCheckedChange={(v) => updateOnboarding({ pushNotificationsEnabled: v })} />}
+            />
           ),
         },
         {
-          title: 'Appearance',
+          title: 'Security',
           delay: 0.28,
           content: (
-            <Row icon={Moon} label="Cosmic Dark Mode" description="Deep midnight theme" right={<Switch checked={darkCosmic} onCheckedChange={setDarkCosmic} />} />
+            <>
+              <Row icon={KeyRound} label="Change Password" onClick={() => setSecurityOpen(true)} />
+              <div className="h-px bg-white/5" />
+              <Row
+                icon={Trash2}
+                label="Delete Account"
+                description="Permanently remove your account and data"
+                onClick={() => setDeleteOpen(true)}
+              />
+            </>
           ),
         },
       ].map((section) => (
@@ -255,6 +335,7 @@ export function Settings() {
         </Button>
       </motion.div>
 
+      {/* Personal Info modal */}
       <AnimatePresence>
         {personalInfoOpen && (
           <motion.div
@@ -307,6 +388,85 @@ export function Settings() {
               <Button className="mt-6 w-full" onClick={savePersonalInfo} disabled={savingInfo}>
                 <Check className="h-4 w-4" /> {savingInfo ? 'Saving…' : 'Save Changes'}
               </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Change password modal */}
+      <AnimatePresence>
+        {securityOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && !deleting && setSecurityOpen(false)}
+          >
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-strong w-full max-w-sm rounded-2xl p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="font-serif-display text-xl text-champagne">Change Password</h3>
+                <button onClick={() => setSecurityOpen(false)} className="cursor-pointer text-white/40 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="current-password">Current Password</Label>
+                  <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                </div>
+                {securityError && <p className="text-xs text-rose-300">{securityError}</p>}
+              </div>
+              <Button className="mt-6 w-full" onClick={handleChangePassword} disabled={securityStatus === 'saving' || !currentPassword || !newPassword}>
+                {securityStatus === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : securityStatus === 'saved' ? <Check className="h-4 w-4" /> : 'Update Password'}
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete account modal */}
+      <AnimatePresence>
+        {deleteOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && !deleting && setDeleteOpen(false)}
+          >
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-strong w-full max-w-sm rounded-2xl p-6">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-500/15">
+                  <AlertTriangle className="h-5 w-5 text-rose-300" />
+                </div>
+                <h3 className="font-serif-display text-xl text-champagne">Delete Account</h3>
+              </div>
+              <p className="mb-5 text-sm leading-relaxed text-white/55">
+                This permanently deletes your profile, photos, videos, and account. This cannot be undone.
+                Confirm your password to continue.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="delete-password">Password</Label>
+                <Input id="delete-password" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
+              </div>
+              {deleteError && <p className="mt-3 text-xs text-rose-300">{deleteError}</p>}
+              <div className="mt-6 flex gap-3">
+                <Button variant="glass" className="flex-1" onClick={() => setDeleteOpen(false)} disabled={deleting}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-rose-500/20 text-rose-200 hover:bg-rose-500/30"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting || !deletePassword}
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Forever'}
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}

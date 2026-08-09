@@ -29,6 +29,20 @@ export interface VerificationState {
   verifiedAt: string | null
 }
 
+export type LifestyleVisibility = 'public' | 'private' | 'matching-only'
+
+export interface MatchingPreferences {
+  ageMin: number
+  ageMax: number
+  /** null = "Anywhere" — no distance filtering applied. */
+  maxDistanceMiles: number | null
+}
+
+export interface StoryPrompt {
+  question: string
+  answer: string
+}
+
 export interface UserDoc {
   name: string
   email: string
@@ -45,6 +59,26 @@ export interface UserDoc {
   chineseElement: string
   yinYang: 'Yin' | 'Yang' | ''
   gender: 'male' | 'female' | ''
+  /** Real "About You" fields collected during onboarding. */
+  heightCm: number | null
+  country: string
+  city: string
+  religion: string
+  relationshipGoal: string
+  /** Real current-location coordinates (distinct from birthPlace, which is
+   *  only used for astrology) — geocoded via the geocodeLocation Cloud
+   *  Function so distance-based discovery filtering is real, not guessed. */
+  currentLocationLat: number | null
+  currentLocationLon: number | null
+  /** Whether lifestyle info (profileExtras.lifestyle) is shown to everyone,
+   *  no one, or only people this member has actually matched with. */
+  lifestyleVisibility: LifestyleVisibility
+  storyPrompts: StoryPrompt[]
+  preferences: MatchingPreferences
+  /** Real, persisted privacy/notification settings — not decorative. */
+  incognito: boolean
+  showDistance: boolean
+  pushNotificationsEnabled: boolean
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
@@ -61,6 +95,12 @@ const defaultVerification: VerificationState = {
   verifiedAt: null,
 }
 
+export const defaultPreferences: MatchingPreferences = {
+  ageMin: 21,
+  ageMax: 55,
+  maxDistanceMiles: null,
+}
+
 const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   phone: '',
   verification: defaultVerification,
@@ -75,6 +115,19 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   chineseElement: '',
   yinYang: '',
   gender: '',
+  heightCm: null,
+  country: '',
+  city: '',
+  religion: '',
+  relationshipGoal: '',
+  currentLocationLat: null,
+  currentLocationLon: null,
+  lifestyleVisibility: 'public',
+  storyPrompts: [],
+  preferences: defaultPreferences,
+  incognito: false,
+  showDistance: true,
+  pushNotificationsEnabled: true,
   likedIds: [],
   passedIds: [],
   matchedIds: [],
@@ -114,6 +167,14 @@ export async function updateUserDoc(uid: string, data: Partial<UserDoc>) {
 
 export async function completeOnboardingRemote(uid: string) {
   await updateDoc(doc(db, 'users', uid), { onboardingComplete: true })
+}
+
+export async function updatePreferencesRemote(uid: string, preferences: MatchingPreferences) {
+  await updateDoc(doc(db, 'users', uid), { preferences })
+}
+
+export async function setCurrentLocationRemote(uid: string, lat: number, lon: number) {
+  await updateDoc(doc(db, 'users', uid), { currentLocationLat: lat, currentLocationLon: lon })
 }
 
 export async function passProfileRemote(uid: string, targetUid: string) {
@@ -202,6 +263,19 @@ export async function sendMessageRemote(matchId: string, senderId: string, text:
     lastMessagePreview: text.slice(0, 140),
     lastMessageSenderId: senderId,
   })
+}
+
+/** Real read receipts: marks every message NOT sent by `uid` as read, once
+ *  they've actually viewed the thread. Rules only allow a recipient to flip
+ *  this one field on someone else's message — see firestore.rules. */
+export async function markConversationRead(matchId: string, uid: string, messages: Message[]) {
+  const unread = messages.filter((m) => m.senderId !== uid && !m.read)
+  if (unread.length === 0) return
+  const batch = writeBatch(db)
+  for (const m of unread) {
+    batch.update(doc(db, 'conversations', matchId, 'messages', m.id), { read: true })
+  }
+  await batch.commit()
 }
 
 // --- Real user-uploaded media -----------------------------------------------
