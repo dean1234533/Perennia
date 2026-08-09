@@ -12,7 +12,7 @@ import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
-import { getUserDoc, subscribeUserMedia, type DiscoveryCandidate, type MediaDoc } from '@/lib/firestore'
+import { getUserDoc, subscribeUserMedia, getPrivateLifestyle, type DiscoveryCandidate, type MediaDoc, type PrivateLifestyle } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { calculateAge } from '@/lib/age'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
@@ -28,12 +28,23 @@ export function ProfileDetail() {
   const [result, setResult] = useState<CompatibilityResult | null>(null)
   const [liked, setLiked] = useState(false)
   const [videoViewerCategory, setVideoViewerCategory] = useState<string | null>(null)
+  // A successful read here already means access was allowed (public, or a
+  // real match — see firestore.rules) — a denied/missing read is treated
+  // identically to "nothing set," never surfaced as an error.
+  const [lifestyle, setLifestyle] = useState<PrivateLifestyle | null>(null)
+  const [selfLifestyle, setSelfLifestyle] = useState<PrivateLifestyle | null>(null)
 
   useEffect(() => {
     if (!id) return
     getUserDoc(id).then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
+    getPrivateLifestyle(id).then(setLifestyle)
     return subscribeUserMedia(id, setMedia)
   }, [id])
+
+  useEffect(() => {
+    if (!user) return
+    getPrivateLifestyle(user.uid).then(setSelfLifestyle)
+  }, [user])
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
@@ -170,7 +181,14 @@ export function ProfileDetail() {
               <Loader2 className="h-5 w-5 animate-spin text-gold" />
             </div>
           ) : (
-            <CompatibilitySnapshot profile={profile} self={profileExtras} compatibility={result.compatibility} compatibilityLabel={result.band} />
+            <CompatibilitySnapshot
+              profile={profile}
+              self={profileExtras}
+              otherLifestyle={lifestyle?.items ?? []}
+              selfLifestyle={selfLifestyle?.items ?? []}
+              compatibility={result.compatibility}
+              compatibilityLabel={result.band}
+            />
           )}
         </div>
 
@@ -213,15 +231,14 @@ export function ProfileDetail() {
           </motion.div>
         ))}
 
-        {/* Lifestyle — respects the member's chosen visibility: public,
-            matches-only, or never shown. */}
-        {!!extras?.lifestyle.length &&
-          profile.lifestyleVisibility !== 'private' &&
-          (profile.lifestyleVisibility === 'public' || isMatched) && (
+        {/* Lifestyle — a successful read already means visibility allowed it
+            (public, or a real match); private/unmatched reads come back
+            null from getPrivateLifestyle and simply render nothing. */}
+        {!!lifestyle?.items.length && (
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
             <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
             <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-              {extras.lifestyle.map((item) => (
+              {lifestyle.items.map((item) => (
                 <div key={item.label}>
                   <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
                   <p className="text-sm text-white/80">{item.value}</p>

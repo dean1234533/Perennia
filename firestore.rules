@@ -3,15 +3,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Order-independent match id, e.g. matchId("b","a") == "a_b" — lets a
+    // rule check "does a real match exist between these two uids" without
+    // knowing which order the match doc used.
+    function matchId(a, b) {
+      return a < b ? a + '_' + b : b + '_' + a;
+    }
+
     // Each member's own account doc: onboarding data, likes/passes/matches.
     // Any signed-in member can READ any other member's doc — real Discovery/
     // ProfileDetail browsing needs to see other people's profile fields.
-    // Firestore rules can't restrict by field, so likedIds/passedIds/
-    // matchedIds are technically readable too; acceptable at pre-launch
-    // scale (no PII beyond other uids, not enumerable) — revisit with a
-    // private subdoc split before public scale. Only the owner can write.
+    // Firestore rules can't restrict by field, so most fields here are
+    // technically readable by anyone signed in; acceptable at pre-launch
+    // scale for non-sensitive fields (no PII beyond other uids, not
+    // enumerable). Anything actually sensitive (lifestyle) lives in the
+    // gated private/ subcollection below instead of on this doc.
+    //
+    // Writes: the owner can create/update their own doc, but can NEVER
+    // touch verification, likedIds, or matchedIds themselves — those are
+    // written exclusively by the Admin SDK (the Stripe Identity webhook and
+    // the likeUser Cloud Function). Without this, a member could write
+    // `verification.status: 'verified'` or a fabricated `matchedIds` entry
+    // straight into their own doc from the browser console.
     match /users/{uid} {
       allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds']);
+      allow delete: if false; // only the deleteAccount Cloud Function (Admin SDK)
+    }
+
+    // Sensitive profile fields a member has explicitly chosen to keep
+    // private or matches-only (currently: lifestyle). Only the owner, or —
+    // when the member chose "matching-only" — someone with a real, existing
+    // match with them can read it. "private" is never readable by anyone
+    // but the owner, enforced here rather than just hidden in the UI.
+    match /users/{uid}/private/{docId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == uid ||
+        resource.data.visibility == 'public' ||
+        (resource.data.visibility == 'matching-only' &&
+          exists(/databases/$(database)/documents/matches/$(matchId(uid, request.auth.uid))))
+      );
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 

@@ -181,3 +181,22 @@ export async function handleFoundingCheckoutCompleted(session: Stripe.Checkout.S
     })
   }
 }
+
+/** Real subscription cancellation via the Stripe API — called from account
+ *  deletion so a deleted member stops being billed, not just stops being
+ *  able to log in. Treats "already gone" as success rather than an error,
+ *  since a member might delete their account after already canceling
+ *  through the Stripe customer portal. */
+export async function cancelFoundingSubscription(subscriptionId: string, secretKey: string): Promise<void> {
+  const stripe = getStripe(secretKey)
+  try {
+    await stripe.subscriptions.cancel(subscriptionId)
+    log.info('founding500_subscription_canceled', { subscriptionId })
+  } catch (err) {
+    if (err instanceof Stripe.errors.StripeError && err.code === 'resource_missing') {
+      log.info('founding500_subscription_already_gone', { subscriptionId })
+      return
+    }
+    throw internal(`Failed to cancel Stripe subscription: ${err instanceof Error ? err.message : String(err)}`, err)
+  }
+}

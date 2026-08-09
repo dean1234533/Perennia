@@ -349,15 +349,18 @@ export const likeUser = onCall({ cors: true }, async (request) => {
 })
 
 // ---------------------------------------------------------------------------
-// deleteAccount — a real deletion: the member's Firestore doc, uploaded
-// media (docs + Storage files), Founding 500 record, and their Firebase
-// Auth account. Always deletes the CALLER's own account — there is no
-// target-uid parameter, so this can never be used to delete someone else's.
+// deleteAccount — a real deletion: cancels any active Stripe subscription,
+// scrubs every real reference to this uid (likes, matches, conversations,
+// other members' likedIds/passedIds/matchedIds), then deletes the member's
+// Firestore doc, uploaded media (docs + Storage files), Founding 500
+// record, and their Firebase Auth account. Always deletes the CALLER's own
+// account — there is no target-uid parameter, so this can never be used to
+// delete someone else's.
 // ---------------------------------------------------------------------------
-export const deleteAccount = onCall({}, async (request) => {
+export const deleteAccount = onCall({ secrets: [stripeSecretKey] }, async (request) => {
   if (!request.auth) throw unauthenticated('Sign in required.')
   try {
-    await deleteAccountService(request.auth.uid)
+    await deleteAccountService(request.auth.uid, stripeSecretKey.value())
     return { deleted: true }
   } catch (err) {
     throw internal('deleteAccount failed', err)

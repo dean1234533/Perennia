@@ -19,19 +19,25 @@ interface CompatibilityProfile {
 export function CompatibilitySnapshot({
   profile,
   self,
+  otherLifestyle,
+  selfLifestyle,
   compatibility,
   compatibilityLabel,
 }: {
   profile: CompatibilityProfile
   self: SelfProfile
+  /** Lifestyle lives in the privacy-gated `private/lifestyle` subdoc, not on
+   *  SelfProfile — a successful fetch already means visibility allowed it. */
+  otherLifestyle: { label: string; value: string }[]
+  selfLifestyle: { label: string; value: string }[]
   compatibility: number
   compatibilityLabel: string
 }) {
   const otherExtras = profile.profileExtras
   const sharedInterests = overlap(otherExtras?.interests ?? [], self.interests)
   const sharedValues = overlap(otherExtras?.values ?? [], self.values)
-  const sharedLifestyle = (otherExtras?.lifestyle ?? []).filter((item) =>
-    self.lifestyle.some((s) => s.label === item.label && s.value === item.value)
+  const sharedLifestyle = otherLifestyle.filter((item) =>
+    selfLifestyle.some((s) => s.label === item.label && s.value === item.value)
   )
 
   const chips = [

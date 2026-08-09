@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
-import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { LIFESTYLE_CATEGORIES } from '@/data/lifestyleOptions'
-import type { LifestyleVisibility } from '@/lib/firestore'
+import { getPrivateLifestyle, updatePrivateLifestyle, type LifestyleVisibility } from '@/lib/firestore'
 
 const VISIBILITY_OPTIONS: { value: LifestyleVisibility; label: string; description: string }[] = [
   { value: 'public', label: 'Public', description: 'Visible on your profile to everyone' },
@@ -16,17 +16,28 @@ const VISIBILITY_OPTIONS: { value: LifestyleVisibility; label: string; descripti
 
 export function LifestyleStep() {
   const navigate = useNavigate()
-  const { onboarding, updateOnboarding, profileExtras, updateProfileExtras } = useApp()
-  const initial = Object.fromEntries(profileExtras.lifestyle.map((l) => [l.label, l.value]))
-  const [values, setValues] = useState<Record<string, string>>(initial)
-  const [visibility, setVisibility] = useState<LifestyleVisibility>(onboarding.lifestyleVisibility)
+  const { user } = useAuth()
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [visibility, setVisibility] = useState<LifestyleVisibility>('public')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    getPrivateLifestyle(user.uid).then((existing) => {
+      if (!existing) return
+      setValues(Object.fromEntries(existing.items.map((l) => [l.label, l.value])))
+      setVisibility(existing.visibility)
+    })
+  }, [user])
 
   const handleContinue = async () => {
-    const lifestyle = Object.entries(values)
+    if (!user) return
+    setSaving(true)
+    const items = Object.entries(values)
       .filter(([, v]) => v)
       .map(([label, value]) => ({ label, value }))
-    await updateProfileExtras({ ...profileExtras, lifestyle })
-    updateOnboarding({ lifestyleVisibility: visibility })
+    await updatePrivateLifestyle(user.uid, { items, visibility })
+    setSaving(false)
     navigate('/interests')
   }
 
@@ -78,8 +89,8 @@ export function LifestyleStep() {
           ))}
         </div>
 
-        <Button size="lg" className="mt-8 w-full" onClick={handleContinue}>
-          Continue <ArrowRight className="h-4 w-4" />
+        <Button size="lg" className="mt-8 w-full" onClick={handleContinue} disabled={saving}>
+          {saving ? 'Saving…' : <>Continue <ArrowRight className="h-4 w-4" /></>}
         </Button>
       </motion.div>
     </OnboardingShell>

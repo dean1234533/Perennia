@@ -16,7 +16,6 @@ import {
   type VerificationState,
   type MatchingPreferences,
   type StoryPrompt,
-  type LifestyleVisibility,
 } from '@/lib/firestore'
 
 export interface OnboardingData {
@@ -45,7 +44,6 @@ export interface OnboardingData {
   relationshipGoal: string
   currentLocationLat: number | null
   currentLocationLon: number | null
-  lifestyleVisibility: LifestyleVisibility
   storyPrompts: StoryPrompt[]
   preferences: MatchingPreferences
   incognito: boolean
@@ -105,7 +103,6 @@ const defaultOnboarding: OnboardingData = {
   relationshipGoal: '',
   currentLocationLat: null,
   currentLocationLon: null,
-  lifestyleVisibility: 'public',
   storyPrompts: [],
   preferences: defaultPreferences,
   incognito: false,
@@ -158,7 +155,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         relationshipGoal: data.relationshipGoal ?? '',
         currentLocationLat: data.currentLocationLat ?? null,
         currentLocationLon: data.currentLocationLon ?? null,
-        lifestyleVisibility: data.lifestyleVisibility ?? 'public',
         storyPrompts: data.storyPrompts ?? [],
         preferences: data.preferences ?? defaultPreferences,
         incognito: data.incognito ?? false,

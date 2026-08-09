@@ -7,7 +7,7 @@ import { useApp } from '@/context/AppContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MatchingPreferencesPanel } from '@/components/shared/MatchingPreferencesPanel'
-import { fetchDiscoveryCandidates, type DiscoveryCandidate } from '@/lib/firestore'
+import { fetchDiscoveryCandidates, getPrivateLifestyle, type DiscoveryCandidate, type PrivateLifestyle } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { calculateAge } from '@/lib/age'
 import { milesBetween } from '@/lib/distance'
@@ -21,6 +21,7 @@ export function Discovery() {
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
   const [loadingCandidates, setLoadingCandidates] = useState(true)
   const [scores, setScores] = useState<Record<string, CompatibilityResult>>({})
+  const [lifestyles, setLifestyles] = useState<Record<string, PrivateLifestyle | null>>({})
 
   useEffect(() => {
     if (!user) return
@@ -63,12 +64,33 @@ export function Discovery() {
     }
     if (relationshipGoal && c.relationshipGoal && c.relationshipGoal !== relationshipGoal) return false
     if (wantsChildren) {
-      const theirAnswer = c.profileExtras?.lifestyle.find((l) => l.label === 'Wants Children')?.value
+      // A candidate's lifestyle is only in `lifestyles` once fetched — and
+      // only fetchable at all if they made it public/matching-only (private
+      // reads fail closed server-side, see firestore.rules). Fails open
+      // when we simply don't have an answer yet.
+      const theirAnswer = lifestyles[c.uid]?.items.find((l) => l.label === 'Wants Children')?.value
       if (theirAnswer && theirAnswer !== wantsChildren) return false
     }
     if (religion.trim() && c.religion && c.religion.toLowerCase() !== religion.trim().toLowerCase()) return false
     return true
   })
+
+  // Best-effort real lifestyle lookup for the "Wants Children" filter,
+  // capped and batched the same way as compatibility scoring below.
+  useEffect(() => {
+    if (!wantsChildren) return
+    const toFetch = eligible.filter((c) => !(c.uid in lifestyles)).slice(0, 30)
+    if (toFetch.length === 0) return
+    let cancelled = false
+    Promise.all(toFetch.map((c) => getPrivateLifestyle(c.uid).then((l) => [c.uid, l] as const))).then((results) => {
+      if (cancelled) return
+      setLifestyles((prev) => ({ ...prev, ...Object.fromEntries(results) }))
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantsChildren, eligible.map((c) => c.uid).join(',')])
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&

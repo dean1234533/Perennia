@@ -1,9 +1,12 @@
-/** Mock "your own" profile content — the editable side of the profile experience. */
+/** Mock "your own" profile content — the editable side of the profile experience.
+ *  Lifestyle lives separately (users/{uid}/private/lifestyle, see
+ *  lib/firestore.ts) since it's the one field with a real privacy setting —
+ *  keeping it off this doc is what makes "private" actually private at the
+ *  Firestore-rules level, not just hidden in the UI. */
 export interface SelfProfile {
   about: string
   interests: string[]
   values: string[]
-  lifestyle: { label: string; value: string }[]
   music: string[]
   languages: string[]
   favoritePlaces: string[]
@@ -24,7 +27,6 @@ export const emptySelfProfile: SelfProfile = {
   about: '',
   interests: [],
   values: [],
-  lifestyle: [],
   music: [],
   languages: [],
   favoritePlaces: [],

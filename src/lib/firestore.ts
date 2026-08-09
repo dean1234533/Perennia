@@ -74,9 +74,6 @@ export interface UserDoc {
    *  Function so distance-based discovery filtering is real, not guessed. */
   currentLocationLat: number | null
   currentLocationLon: number | null
-  /** Whether lifestyle info (profileExtras.lifestyle) is shown to everyone,
-   *  no one, or only people this member has actually matched with. */
-  lifestyleVisibility: LifestyleVisibility
   storyPrompts: StoryPrompt[]
   preferences: MatchingPreferences
   /** Real, persisted privacy/notification settings — not decorative. */
@@ -129,7 +126,6 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   relationshipGoal: '',
   currentLocationLat: null,
   currentLocationLon: null,
-  lifestyleVisibility: 'public',
   storyPrompts: [],
   preferences: defaultPreferences,
   incognito: false,
@@ -357,6 +353,32 @@ export async function renameCategoryRemote(uid: string, categoryId: string, labe
 
 export async function updateProfileExtrasRemote(uid: string, extras: SelfProfile) {
   await updateDoc(doc(db, 'users', uid), { profileExtras: extras })
+}
+
+// --- Lifestyle (privacy-gated) ----------------------------------------------
+// Lives in a separate `users/{uid}/private/lifestyle` doc, not on the main
+// `users/{uid}` doc, because the main doc is readable by any signed-in
+// member. Firestore rules can't hide individual fields on one doc, so a
+// genuinely private/matches-only field has to live somewhere with its own
+// read rule — see firestore.rules. A permission-denied read (private, or
+// matching-only without a real match) is treated the same as "not set".
+
+export interface PrivateLifestyle {
+  items: { label: string; value: string }[]
+  visibility: LifestyleVisibility
+}
+
+export async function getPrivateLifestyle(uid: string): Promise<PrivateLifestyle | null> {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid, 'private', 'lifestyle'))
+    return snap.exists() ? (snap.data() as PrivateLifestyle) : null
+  } catch {
+    return null
+  }
+}
+
+export async function updatePrivateLifestyle(uid: string, lifestyle: PrivateLifestyle) {
+  await setDoc(doc(db, 'users', uid, 'private', 'lifestyle'), lifestyle)
 }
 
 export async function setVerificationState(uid: string, state: Partial<VerificationState>) {
