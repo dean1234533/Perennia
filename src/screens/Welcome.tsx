@@ -63,35 +63,21 @@ export function Welcome() {
       </header>
 
       {/* ============ HERO ============ */}
-      <section className="relative flex min-h-[92vh] flex-col items-center justify-end overflow-hidden px-6 pb-16 pt-8 text-center sm:min-h-screen">
+      <section className="relative flex flex-col items-center px-6 pb-16 pt-10 text-center sm:pt-14">
         {/* The supplied artwork already bakes in the heart, "Perennia"
-            wordmark, divider, tagline, and description — the real text
-            below is sr-only (screen readers/SEO still get it as real text,
-            not just JPG pixels) rather than rendered twice on screen. Only
-            the two real, functional buttons render visibly, positioned
-            beneath where the artwork's own description ends. */}
-        <img
-          src="/landingPage-Mobile1.JPG"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
-        />
-        <img
-          src="/landingPage-Desktop1.JPG"
-          alt=""
-          className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
-        />
-        {/* Stays clear over the artwork's own baked text, then darkens
-            lower down to give the real buttons a clean, legible zone. */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 60%, rgba(6,11,29,0.45) 74%, rgba(6,11,29,0.96) 92%)' }}
-        />
+            wordmark, divider, tagline, and description — shown at its
+            natural aspect ratio (never cropped) so nothing in it is ever
+            hidden or guessed at. The real buttons live in genuinely
+            separate space below, not overlaid on top of it, so they can
+            never collide with the artwork's own text on any device. */}
+        <img src="/landingPage-Mobile1.JPG" alt="" className="w-full max-w-[420px] md:hidden" />
+        <img src="/landingPage-Desktop1.JPG" alt="" className="hidden w-full max-w-2xl md:block" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 flex flex-col items-center"
+          className="relative z-10 -mt-2 flex flex-col items-center sm:-mt-4"
         >
           <h1 className="sr-only">Perennia</h1>
           <p className="sr-only">For Love That Fits, Naturally.</p>
@@ -100,11 +86,11 @@ export function Welcome() {
             introduce you to people with genuine long-term potential.
           </p>
 
-          <div className="mt-6 flex w-full max-w-xs flex-col items-center gap-3">
+          <div className="flex w-full max-w-xs flex-col items-center gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4">
             <Button
               size="lg"
               onClick={() => navigate('/signup')}
-              className="group w-full uppercase tracking-wide"
+              className="group w-full uppercase tracking-wide sm:w-auto"
             >
               Begin Your Story
               <motion.span
@@ -119,7 +105,7 @@ export function Welcome() {
               size="lg"
               variant="ghost"
               onClick={() => navigate('/login')}
-              className="w-full border border-lavender/30 bg-navy/50 uppercase tracking-wide text-white/85 backdrop-blur-sm shadow-[0_0_24px_-10px_rgba(142,108,246,0.5)] hover:bg-navy/65 hover:border-lavender/50 hover:text-white"
+              className="w-full border border-lavender/30 bg-navy/50 uppercase tracking-wide text-white/85 backdrop-blur-sm shadow-[0_0_24px_-10px_rgba(142,108,246,0.5)] hover:bg-navy/65 hover:border-lavender/50 hover:text-white sm:w-auto"
             >
               Log In
             </Button>
