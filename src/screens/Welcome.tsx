@@ -140,13 +140,19 @@ export function Welcome() {
         <img src="/landingPage-Desktop4.JPG" alt="Your story deserves a beautiful beginning." className="hidden w-full md:block" />
       </section>
 
-      {/* One real, functional close — the artwork above no longer carries
-          a clickable action. */}
-      <section className="relative z-10 flex flex-col items-center px-6 py-16 text-center">
-        <Button size="lg" onClick={() => navigate('/signup')} className="group">
-          Begin Your Story
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </Button>
+      {/* ============ BEGIN YOUR STORY ============ */}
+      {/* "Stories, Not Statistics" artwork carries its own message in the
+          upper portion, with genuinely empty starfield below it — the
+          button sits there, in real open space rather than over any
+          baked-in text. */}
+      <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden bg-midnight sm:min-h-[80vh]">
+        <img src="/5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-x-0 top-[78%] z-10 flex justify-center px-6">
+          <Button size="lg" onClick={() => navigate('/signup')} className="group">
+            Begin Your Story
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Button>
+        </div>
       </section>
 
       <footer className="relative z-10 border-t border-white/5 px-6 py-8 text-center text-xs text-white/30">
