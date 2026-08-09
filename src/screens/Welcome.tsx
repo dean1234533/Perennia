@@ -90,15 +90,15 @@ export function Welcome() {
       </section>
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
-      <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
-        <img src="/landingPage-Mobile2.JPG" alt="" className="h-full w-full object-cover md:hidden" />
-        <img src="/landingPage-Desktop2.JPG" alt="" className="hidden h-full w-full object-cover md:block" />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
-        <div className="absolute inset-0 flex items-center">
-          <div className="max-w-xl px-6 md:px-16">
+      <section className="relative z-10 w-full overflow-hidden">
+        <img src="/landingPage-Mobile2.JPG" alt="A romantic bouquet in soft light" className="landing-artwork w-full md:hidden" />
+        <img src="/landingPage-Desktop2.JPG" alt="A romantic bouquet in soft light" className="landing-artwork hidden w-full md:block" />
+        <div className="pointer-events-none absolute inset-y-[12%] left-0 z-[2] w-[72%] bg-gradient-to-r from-[#030b22]/80 via-[#030b22]/38 to-transparent blur-2xl md:w-[58%]" />
+        <div className="absolute inset-0 z-[3] flex items-center">
+          <div className="max-w-xl px-6 md:px-16 lg:px-24">
             <FadeUp>
-              <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/80 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)]">A Different Kind of Beginning</p>
-              <h2 className="font-serif-display text-4xl leading-[1.1] [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] md:text-6xl">
+              <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold [text-shadow:0_2px_16px_rgba(0,0,0,1)]">A Different Kind of Beginning</p>
+              <h2 className="font-serif-display text-4xl leading-[1.1] text-white [text-shadow:0_4px_28px_rgba(0,0,0,1)] md:text-6xl">
                 Some connections aren't <span className="text-gradient-gold italic">found</span>.
                 <br />
                 They're recognized.
@@ -111,17 +111,17 @@ export function Welcome() {
       {/* ============ RARE ALIGNMENT ============ */}
       {/* Background image only, shown in full (no cropping) — the artwork
           carries this section on its own. */}
-      <section className="relative z-10 flex w-full items-center justify-center bg-midnight">
-        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="w-full md:hidden" />
-        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="hidden w-full md:block" />
+      <section className="relative z-10 flex w-full items-center justify-center py-8 md:py-14">
+        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="landing-artwork w-full md:hidden" />
+        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="landing-artwork hidden w-full md:block" />
       </section>
 
       {/* ============ FINAL CTA ============ */}
       {/* Background image only, shown in full (no cropping) — this artwork
           already carries its own complete message. */}
-      <section className="relative z-10 flex w-full items-center justify-center bg-midnight">
-        <img src="/landingPage-Mobile4.JPG" alt="Your story deserves a beautiful beginning." className="w-full md:hidden" />
-        <img src="/landingPage-Desktop4.JPG" alt="Your story deserves a beautiful beginning." className="hidden w-full md:block" />
+      <section className="relative z-10 flex w-full items-center justify-center py-8 md:py-14">
+        <img src="/landingPage-Mobile4.JPG" alt="Perennia is built on intention with verified members and six compatibility dimensions." className="landing-artwork w-full md:hidden" />
+        <img src="/landingPage-Desktop4.JPG" alt="Perennia is built on intention with verified members and six compatibility dimensions." className="landing-artwork hidden w-full md:block" />
       </section>
 
       {/* ============ BEGIN YOUR STORY ============ */}
@@ -129,10 +129,10 @@ export function Welcome() {
           upper portion, with genuinely empty starfield below it — the
           button sits there, in real open space rather than over any
           baked-in text. */}
-      <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden bg-midnight sm:min-h-[80vh]">
-        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover md:hidden" />
-        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." className="absolute inset-0 hidden h-full w-full object-cover md:block" />
-        <div className="absolute inset-x-0 top-[77%] z-10 flex justify-center px-6 md:top-[57%]">
+      <section className="relative z-10 flex w-full flex-col items-center justify-center overflow-hidden pb-20 pt-8 md:pb-28 md:pt-14">
+        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." className="landing-artwork w-full md:hidden" />
+        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." className="landing-artwork hidden w-full md:block" />
+        <div className="relative z-10 -mt-[14%] flex justify-center px-6 md:-mt-[20%]">
           <Button size="lg" onClick={() => navigate('/signup')} className="group">
             Begin Your Story
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

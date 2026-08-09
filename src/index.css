@@ -117,6 +117,24 @@
     radial-gradient(circle at 82% 10%, rgba(124, 96, 238, .14), transparent 38%);
 }
 
+.landing-artwork {
+  position: relative;
+  z-index: 1;
+  display: block;
+  mix-blend-mode: screen;
+  filter: contrast(1.04) brightness(1.03);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 4%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 4%, #000 96%, transparent 100%);
+}
+
+@media (max-width: 767px) {
+  .landing-artwork {
+    filter: contrast(1.06) brightness(1.04);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2%, #000 98%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 2%, #000 98%, transparent 100%);
+  }
+}
+
 .birth-details-cta {
   border: 1px solid rgba(218, 225, 255, .72);
   background: linear-gradient(105deg, #4f8ff7 0%, #d9e7ff 47%, #b269ef 100%);
