@@ -64,23 +64,28 @@ export function Welcome() {
 
       {/* ============ HERO ============ */}
       <section className="relative flex min-h-[92vh] flex-col items-center justify-end overflow-hidden px-6 pb-16 pt-8 text-center sm:min-h-screen">
-        {/* The supplied artwork already bakes in the heart + "Perennia"
-            wordmark + divider, so the real h1 below is visually hidden
-            (sr-only) rather than duplicated on screen — screen readers and
-            search engines still get real text, not just a JPG. */}
+        {/* The supplied artwork already bakes in the heart, "Perennia"
+            wordmark, divider, tagline, and description — the real text
+            below is sr-only (screen readers/SEO still get it as real text,
+            not just JPG pixels) rather than rendered twice on screen. Only
+            the two real, functional buttons render visibly, positioned
+            beneath where the artwork's own description ends. */}
         <img
           src="/landingPage-Mobile1.JPG"
-          alt="Perennia"
+          alt=""
           className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
         />
         <img
           src="/landingPage-Desktop1.JPG"
-          alt="Perennia"
+          alt=""
           className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
         />
-        {/* Fades the artwork's lower empty starfield into solid midnight so
-            real, accessible copy renders there instead. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-midnight/55 to-midnight" />
+        {/* Stays clear over the artwork's own baked text, then darkens
+            lower down to give the real buttons a clean, legible zone. */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 60%, rgba(6,11,29,0.45) 74%, rgba(6,11,29,0.96) 92%)' }}
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -89,18 +94,18 @@ export function Welcome() {
           className="relative z-10 flex flex-col items-center"
         >
           <h1 className="sr-only">Perennia</h1>
-
-          <p className="mt-5 text-sm uppercase tracking-[0.3em] text-gold/80 md:text-base">
-            For Love That Fits, Naturally.
-          </p>
-
-          <p className="mt-6 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
+          <p className="sr-only">For Love That Fits, Naturally.</p>
+          <p className="sr-only">
             Perennia combines a structured compatibility system with astrological insight to
             introduce you to people with genuine long-term potential.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
-            <Button size="lg" onClick={() => navigate('/signup')} className="group">
+          <div className="mt-6 flex w-full max-w-xs flex-col items-center gap-3">
+            <Button
+              size="lg"
+              onClick={() => navigate('/signup')}
+              className="group w-full uppercase tracking-wide"
+            >
               Begin Your Story
               <motion.span
                 className="inline-block"
@@ -110,7 +115,12 @@ export function Welcome() {
                 →
               </motion.span>
             </Button>
-            <Button size="lg" variant="ghost" onClick={() => navigate('/login')}>
+            <Button
+              size="lg"
+              variant="ghost"
+              onClick={() => navigate('/login')}
+              className="w-full border border-lavender/30 bg-navy/50 uppercase tracking-wide text-white/85 backdrop-blur-sm shadow-[0_0_24px_-10px_rgba(142,108,246,0.5)] hover:bg-navy/65 hover:border-lavender/50 hover:text-white"
+            >
               Log In
             </Button>
           </div>
