@@ -45,6 +45,10 @@ export function CompatibilityReport() {
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
     onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
   )
+  const otherChartComplete = Boolean(
+    profile?.sunSign && profile.moonSign && profile.risingSign &&
+    profile.chineseAnimal && profile.chineseElement && profile.yinYang
+  )
 
   useEffect(() => {
     if (!id) return
@@ -52,7 +56,9 @@ export function CompatibilityReport() {
   }, [id])
 
   useEffect(() => {
-    if (!profile || !selfChartComplete) {
+    // getCompatibility rejects (400) an incomplete birth chart — only call
+    // it once both sides genuinely have one.
+    if (!profile || !selfChartComplete || !otherChartComplete) {
       setLoading(false)
       return
     }
@@ -79,7 +85,7 @@ export function CompatibilityReport() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load your compatibility report.'))
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.uid, selfChartComplete])
+  }, [profile?.uid, selfChartComplete, otherChartComplete])
 
   if (profile === undefined) {
     return (
@@ -152,6 +158,15 @@ export function CompatibilityReport() {
               Sun, Moon, Rising, and Chinese zodiac.
             </p>
             <Button onClick={() => navigate('/birth-details')}>Add Birth Details</Button>
+          </div>
+        ) : !otherChartComplete ? (
+          <div className="glass-strong mb-16 flex flex-col items-center gap-4 rounded-[2rem] px-8 py-14 text-center">
+            <AlertTriangle className="h-8 w-8 text-gold" />
+            <p className="font-serif-display text-2xl text-champagne">Not Ready Yet</p>
+            <p className="max-w-sm text-sm text-white/55">
+              {profile.name.split(' ')[0]} hasn't finished their cosmic profile yet, so a real
+              compatibility report isn't possible until they do.
+            </p>
           </div>
         ) : loading ? (
           <div className="mb-16 flex flex-col items-center gap-3 py-14">

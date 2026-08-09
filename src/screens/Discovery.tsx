@@ -21,6 +21,7 @@ export function Discovery() {
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
   const [loadingCandidates, setLoadingCandidates] = useState(true)
   const [scores, setScores] = useState<Record<string, CompatibilityResult>>({})
+  const [failedUids, setFailedUids] = useState<Set<string>>(new Set())
   const [lifestyles, setLifestyles] = useState<Record<string, PrivateLifestyle | null>>({})
 
   useEffect(() => {
@@ -98,10 +99,17 @@ export function Discovery() {
   )
 
   // Real per-candidate compatibility from the Fusion System backend, cached
-  // so re-renders don't re-call. Capped per pass to keep this cheap.
+  // so re-renders don't re-call. Capped per pass to keep this cheap. Only
+  // ever called for candidates with a genuinely complete birth chart —
+  // getCompatibility validates each sign against a fixed vocabulary and
+  // rejects (400) an empty/incomplete one, which happens for any real
+  // member who hasn't finished their own birth details yet.
+  const hasCompleteChart = (c: DiscoveryCandidate) =>
+    !!(c.sunSign && c.moonSign && c.risingSign && c.chineseAnimal && c.chineseElement && c.yinYang)
+
   useEffect(() => {
     if (!selfChartComplete) return
-    const toFetch = eligible.filter((c) => !scores[c.uid]).slice(0, 20)
+    const toFetch = eligible.filter((c) => hasCompleteChart(c) && !(c.uid in scores) && !failedUids.has(c.uid)).slice(0, 20)
     if (toFetch.length === 0) return
 
     const personA: PersonBirthProfile = {
@@ -128,16 +136,18 @@ export function Discovery() {
               yinYang: c.yinYang,
             },
           })
-          return [c.uid, result] as const
+          return { uid: c.uid, result }
         } catch (err) {
           console.warn(`[Perennia] Failed to compute compatibility for ${c.uid}:`, err)
-          return null
+          return { uid: c.uid, result: null }
         }
       })
     ).then((results) => {
       if (cancelled) return
-      const resolved = results.filter((r): r is readonly [string, CompatibilityResult] => r !== null)
-      if (resolved.length) setScores((prev) => ({ ...prev, ...Object.fromEntries(resolved) }))
+      const resolved = results.filter((r): r is { uid: string; result: CompatibilityResult } => r.result !== null)
+      const failed = results.filter((r) => r.result === null).map((r) => r.uid)
+      if (resolved.length) setScores((prev) => ({ ...prev, ...Object.fromEntries(resolved.map((r) => [r.uid, r.result])) }))
+      if (failed.length) setFailedUids((prev) => new Set([...prev, ...failed]))
     })
     return () => {
       cancelled = true
@@ -154,7 +164,13 @@ export function Discovery() {
     })
 
   const [featured, ...rest] = visible
-  const loading = loadingCandidates || (eligible.length > 0 && selfChartComplete && visible.length === 0 && eligible.some((c) => !scores[c.uid]))
+  // "Still loading" only while at least one eligible candidate could still
+  // resolve to a real score — candidates with an incomplete chart or a
+  // failed lookup never will, and shouldn't keep the spinner up forever.
+  const loading = loadingCandidates || (
+    eligible.length > 0 && selfChartComplete && visible.length === 0 &&
+    eligible.some((c) => hasCompleteChart(c) && !failedUids.has(c.uid) && !scores[c.uid])
+  )
 
   return (
     <div className="px-6 pt-8 pb-16 md:px-10 md:pt-12 lg:px-14">

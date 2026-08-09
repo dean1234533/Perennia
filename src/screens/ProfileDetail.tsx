@@ -50,9 +50,16 @@ export function ProfileDetail() {
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
     onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
   )
+  const otherChartComplete = Boolean(
+    profile?.sunSign && profile.moonSign && profile.risingSign &&
+    profile.chineseAnimal && profile.chineseElement && profile.yinYang
+  )
 
   useEffect(() => {
-    if (!profile || !selfChartComplete) return
+    // getCompatibility rejects (400) an incomplete birth chart — only call
+    // it once both sides genuinely have one, real for any member who
+    // hasn't finished their own birth details yet.
+    if (!profile || !selfChartComplete || !otherChartComplete) return
     const personA: PersonBirthProfile = {
       sunSign: onboarding.sunSign,
       moonSign: onboarding.moonSign,
@@ -75,7 +82,7 @@ export function ProfileDetail() {
       .then(setResult)
       .catch((err) => console.warn('[Perennia] Failed to load compatibility:', err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.uid, selfChartComplete])
+  }, [profile?.uid, selfChartComplete, otherChartComplete])
 
   if (profile === undefined) {
     return (
@@ -175,6 +182,11 @@ export function ProfileDetail() {
               <Sparkles className="h-6 w-6 text-gold/60" />
               <p className="text-sm text-white/60">Complete your cosmic profile to see real compatibility here.</p>
               <Button size="sm" onClick={() => navigate('/birth-details')}>Add Birth Details</Button>
+            </div>
+          ) : !otherChartComplete ? (
+            <div className="glass flex flex-col items-center gap-3 rounded-[1.75rem] px-8 py-10 text-center">
+              <Sparkles className="h-6 w-6 text-gold/60" />
+              <p className="text-sm text-white/60">{profile.name.split(' ')[0]} hasn't finished their cosmic profile yet.</p>
             </div>
           ) : !result ? (
             <div className="glass flex items-center justify-center rounded-[1.75rem] px-8 py-10">

@@ -15,12 +15,18 @@ export function CompatibilityHub() {
 
   const [profiles, setProfiles] = useState<Record<string, DiscoveryCandidate>>({})
   const [scores, setScores] = useState<Record<string, { compatibility: number; band: string }>>({})
+  const [failedUids, setFailedUids] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
     onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
   )
+
+  // getCompatibility rejects (400) an incomplete birth chart — real for any
+  // member who hasn't finished their own birth details yet.
+  const hasCompleteChart = (p: DiscoveryCandidate) =>
+    !!(p.sunSign && p.moonSign && p.risingSign && p.chineseAnimal && p.chineseElement && p.yinYang)
 
   useEffect(() => {
     if (relevantIds.length === 0) {
@@ -39,7 +45,7 @@ export function CompatibilityHub() {
 
   useEffect(() => {
     if (!selfChartComplete) return
-    const people = Object.values(profiles).filter((p) => !scores[p.uid])
+    const people = Object.values(profiles).filter((p) => hasCompleteChart(p) && !scores[p.uid] && !failedUids.has(p.uid))
     if (people.length === 0) return
     const personA: PersonBirthProfile = {
       sunSign: onboarding.sunSign,
@@ -63,14 +69,17 @@ export function CompatibilityHub() {
               yinYang: p.yinYang,
             },
           })
-          return [p.uid, { compatibility: result.compatibility, band: result.band }] as const
-        } catch {
-          return null
+          return { uid: p.uid, result: { compatibility: result.compatibility, band: result.band } }
+        } catch (err) {
+          console.warn(`[Perennia] Failed to compute compatibility for ${p.uid}:`, err)
+          return { uid: p.uid, result: null }
         }
       })
     ).then((results) => {
-      const resolved = results.filter((r): r is readonly [string, { compatibility: number; band: string }] => r !== null)
-      if (resolved.length) setScores((prev) => ({ ...prev, ...Object.fromEntries(resolved) }))
+      const resolved = results.filter((r): r is { uid: string; result: { compatibility: number; band: string } } => r.result !== null)
+      const failed = results.filter((r) => r.result === null).map((r) => r.uid)
+      if (resolved.length) setScores((prev) => ({ ...prev, ...Object.fromEntries(resolved.map((r) => [r.uid, r.result])) }))
+      if (failed.length) setFailedUids((prev) => new Set([...prev, ...failed]))
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profiles, selfChartComplete, onboarding.sunSign, onboarding.moonSign, onboarding.risingSign, onboarding.chineseAnimal, onboarding.chineseElement, onboarding.yinYang])
@@ -78,6 +87,13 @@ export function CompatibilityHub() {
   const relevant = relevantIds.map((uid) => profiles[uid]).filter((p): p is DiscoveryCandidate => !!p)
   const ranked = [...relevant].sort((a, b) => (scores[b.uid]?.compatibility ?? -1) - (scores[a.uid]?.compatibility ?? -1))
   const [featured, ...rest] = ranked
+
+  function statusFor(p: DiscoveryCandidate): string {
+    if (!selfChartComplete) return 'Complete your cosmic profile'
+    if (!hasCompleteChart(p)) return `${p.name.split(' ')[0]} hasn't finished their cosmic profile yet`
+    if (failedUids.has(p.uid)) return 'Compatibility unavailable right now'
+    return scores[p.uid]?.band ?? 'Calculating…'
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-6 pt-8 pb-16 md:pt-14">
@@ -122,17 +138,15 @@ export function CompatibilityHub() {
               <div className="flex-1">
                 <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Strongest Alignment</p>
                 <p className="font-serif-display text-2xl text-white">{featured.name}</p>
-                <p className="mt-1 text-sm text-white/50">
-                  {scores[featured.uid]?.band ?? (selfChartComplete ? 'Calculating…' : 'Complete your cosmic profile')}
-                </p>
+                <p className="mt-1 text-sm text-white/50">{statusFor(featured)}</p>
               </div>
               {scores[featured.uid] ? (
                 <p className="font-serif-display text-gradient-gold text-6xl">
                   {scores[featured.uid].compatibility}<span className="text-2xl text-white/40">%</span>
                 </p>
-              ) : (
+              ) : selfChartComplete && hasCompleteChart(featured) && !failedUids.has(featured.uid) ? (
                 <Loader2 className="h-6 w-6 animate-spin text-gold/50" />
-              )}
+              ) : null}
             </motion.button>
           )}
 
@@ -155,13 +169,13 @@ export function CompatibilityHub() {
                       <img src={p.profilePhotoUrl} alt={p.name} className="h-12 w-12 shrink-0 rounded-full object-cover" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-serif-display text-base text-white">{p.name}</p>
-                        <p className="truncate text-xs text-white/40">{score?.band ?? (selfChartComplete ? 'Calculating…' : 'Complete your cosmic profile')}</p>
+                        <p className="truncate text-xs text-white/40">{statusFor(p)}</p>
                       </div>
                       {score ? (
                         <span className="font-serif-display text-gradient-gold shrink-0 text-xl">{score.compatibility}%</span>
-                      ) : (
+                      ) : selfChartComplete && hasCompleteChart(p) && !failedUids.has(p.uid) ? (
                         <Loader2 className="h-4 w-4 shrink-0 animate-spin text-gold/40" />
-                      )}
+                      ) : null}
                     </motion.button>
                   )
                 })}
