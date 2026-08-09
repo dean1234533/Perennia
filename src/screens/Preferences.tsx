@@ -24,7 +24,7 @@ export function Preferences() {
   }
 
   return (
-    <OnboardingShell step={5} totalSteps={7}>
+    <OnboardingShell step={11} totalSteps={12}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

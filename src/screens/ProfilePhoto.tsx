@@ -50,7 +50,7 @@ export function ProfilePhoto() {
   }
 
   return (
-    <OnboardingShell step={2} totalSteps={7}>
+    <OnboardingShell step={2} totalSteps={12}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

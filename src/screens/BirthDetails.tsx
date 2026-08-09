@@ -41,7 +41,7 @@ export function BirthDetails() {
 
     if (!firebaseConfigured) {
       updateOnboarding({ birthDate: date, birthTime: time, birthPlace: place, sunSign })
-      navigate('/preferences')
+      navigate('/about-you')
       return
     }
 
@@ -59,7 +59,7 @@ export function BirthDetails() {
         chineseElement: chart.element,
         yinYang: chart.yinYang,
       })
-      navigate('/preferences')
+      navigate('/about-you')
     } catch (err) {
       const message = (err as { message?: string })?.message ?? ''
       setError(
@@ -75,7 +75,7 @@ export function BirthDetails() {
   const isValid = date && time && place.length > 1
 
   return (
-    <OnboardingShell step={4} totalSteps={7}>
+    <OnboardingShell step={4} totalSteps={12}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

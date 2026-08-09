@@ -194,16 +194,30 @@ export function ProfileDetail() {
           </motion.div>
         )}
 
-        {/* Goals */}
-        {extras?.goals && (
+        {/* Relationship goal + intentions */}
+        {(profile.relationshipGoal || extras?.goals) && (
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
-            <p className="max-w-2xl text-xl leading-relaxed text-white/70">{extras.goals}</p>
+            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Looking For</p>
+            {profile.relationshipGoal && (
+              <Badge variant="gold" className="mb-3">{profile.relationshipGoal}</Badge>
+            )}
+            {extras?.goals && <p className="max-w-2xl text-xl leading-relaxed text-white/70">{extras.goals}</p>}
           </motion.div>
         )}
 
-        {/* Lifestyle */}
-        {!!extras?.lifestyle.length && (
+        {/* Story prompts */}
+        {profile.storyPrompts.length > 0 && profile.storyPrompts.map((prompt, i) => (
+          <motion.div key={prompt.question} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="mb-8">
+            <p className="mb-3 text-xs uppercase tracking-widest text-gold/70">{prompt.question}</p>
+            <p className="font-serif-display text-3xl italic leading-snug text-white/95 md:text-4xl">"{prompt.answer}"</p>
+          </motion.div>
+        ))}
+
+        {/* Lifestyle — respects the member's chosen visibility: public,
+            matches-only, or never shown. */}
+        {!!extras?.lifestyle.length &&
+          profile.lifestyleVisibility !== 'private' &&
+          (profile.lifestyleVisibility === 'public' || isMatched) && (
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
             <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
             <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">

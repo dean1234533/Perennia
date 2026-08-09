@@ -55,7 +55,7 @@ export function Verify() {
   const showNotConfigured = stage === 'not-configured' || !identityVerificationConfigured
 
   return (
-    <OnboardingShell step={3} totalSteps={7}>
+    <OnboardingShell step={3} totalSteps={12}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

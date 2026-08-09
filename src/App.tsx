@@ -10,6 +10,12 @@ import { Login } from '@/screens/Login'
 import { Verify } from '@/screens/Verify'
 import { ProfilePhoto } from '@/screens/ProfilePhoto'
 import { BirthDetails } from '@/screens/BirthDetails'
+import { AboutYouDetails } from '@/screens/AboutYouDetails'
+import { RelationshipGoalsStep } from '@/screens/RelationshipGoalsStep'
+import { LifestyleStep } from '@/screens/LifestyleStep'
+import { InterestsStep } from '@/screens/InterestsStep'
+import { ValuesStep } from '@/screens/ValuesStep'
+import { YourStoryStep } from '@/screens/YourStoryStep'
 import { Preferences } from '@/screens/Preferences'
 import { CosmicProfile } from '@/screens/CosmicProfile'
 import { Discovery } from '@/screens/Discovery'
@@ -43,6 +49,12 @@ function App() {
             <Route path="/profile-photo" element={<ProfilePhoto />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/birth-details" element={<BirthDetails />} />
+            <Route path="/about-you" element={<AboutYouDetails />} />
+            <Route path="/relationship-goals" element={<RelationshipGoalsStep />} />
+            <Route path="/lifestyle" element={<LifestyleStep />} />
+            <Route path="/interests" element={<InterestsStep />} />
+            <Route path="/values" element={<ValuesStep />} />
+            <Route path="/your-story" element={<YourStoryStep />} />
             <Route path="/preferences" element={<Preferences />} />
             <Route path="/cosmic-profile" element={<CosmicProfile />} />
 

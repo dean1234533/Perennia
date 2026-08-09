@@ -58,7 +58,7 @@ export function SignUp() {
   const isValid = name.length > 1 && email.includes('@') && password.length >= 6
 
   return (
-    <OnboardingShell step={1} totalSteps={7}>
+    <OnboardingShell step={1} totalSteps={12}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,0 +1,69 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { ArrowRight } from 'lucide-react'
+import { OnboardingShell } from '@/components/layout/OnboardingShell'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { useApp } from '@/context/AppContext'
+import { STORY_PROMPTS } from '@/data/storyPrompts'
+
+export function YourStoryStep() {
+  const navigate = useNavigate()
+  const { onboarding, updateOnboarding, profileExtras, updateProfileExtras } = useApp()
+  const [about, setAbout] = useState(profileExtras.about)
+  const existingByQuestion = Object.fromEntries(onboarding.storyPrompts.map((p) => [p.question, p.answer]))
+  const [answers, setAnswers] = useState<Record<string, string>>(existingByQuestion)
+
+  const handleContinue = async () => {
+    await updateProfileExtras({ ...profileExtras, about: about.trim() })
+    const storyPrompts = STORY_PROMPTS.filter((q) => answers[q]?.trim()).map((q) => ({ question: q, answer: answers[q].trim() }))
+    updateOnboarding({ storyPrompts })
+    navigate('/preferences')
+  }
+
+  return (
+    <OnboardingShell step={10} totalSteps={12}>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="glass-strong w-full max-w-lg rounded-[2rem] p-8 md:p-10"
+      >
+        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">06 — Your Story</p>
+        <h1 className="font-serif-display mb-2 text-3xl">Tell your story</h1>
+        <p className="mb-6 text-sm text-white/55">Everything here is optional — answer what feels right.</p>
+
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="about">About You</Label>
+            <textarea
+              id="about"
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              rows={3}
+              placeholder="A short introduction..."
+              className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-gold/40"
+            />
+          </div>
+
+          {STORY_PROMPTS.map((question) => (
+            <div key={question} className="flex flex-col gap-2">
+              <Label>{question}</Label>
+              <textarea
+                value={answers[question] ?? ''}
+                onChange={(e) => setAnswers((prev) => ({ ...prev, [question]: e.target.value }))}
+                rows={2}
+                className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-gold/40"
+              />
+            </div>
+          ))}
+        </div>
+
+        <Button size="lg" className="mt-8 w-full" onClick={handleContinue}>
+          Continue <ArrowRight className="h-4 w-4" />
+        </Button>
+      </motion.div>
+    </OnboardingShell>
+  )
+}
