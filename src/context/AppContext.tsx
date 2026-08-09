@@ -24,9 +24,15 @@ export interface OnboardingData {
   phone: string
   password: string
   verification: VerificationState
+  legalName: string
   birthDate: string
   birthTime: string
+  birthTimeUnknown: boolean
   birthPlace: string
+  birthCountry: string
+  birthCity: string
+  birthPlaceLat: number | null
+  birthPlaceLon: number | null
   sunSign: string
   moonSign: string
   risingSign: string
@@ -91,9 +97,15 @@ const defaultOnboarding: OnboardingData = {
   phone: '',
   password: '',
   verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null },
+  legalName: '',
   birthDate: '',
   birthTime: '',
+  birthTimeUnknown: false,
   birthPlace: '',
+  birthCountry: '',
+  birthCity: '',
+  birthPlaceLat: null,
+  birthPlaceLon: null,
   sunSign: '',
   moonSign: '',
   risingSign: '',
@@ -145,9 +157,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         email: data.email,
         phone: data.phone ?? '',
         verification: data.verification ?? prev.verification,
+        legalName: data.legalName ?? '',
         birthDate: data.birthDate,
         birthTime: data.birthTime,
+        birthTimeUnknown: data.birthTimeUnknown ?? false,
         birthPlace: data.birthPlace,
+        birthCountry: data.birthCountry ?? '',
+        birthCity: data.birthCity ?? '',
+        birthPlaceLat: data.birthPlaceLat ?? null,
+        birthPlaceLon: data.birthPlaceLon ?? null,
         sunSign: data.sunSign,
         moonSign: data.moonSign ?? '',
         risingSign: data.risingSign ?? '',

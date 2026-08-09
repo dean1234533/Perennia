@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
 import type { OnboardingData } from '@/context/AppContext'
 import type { SelfProfile } from '@/data/selfProfile'
-import { geocodeLocation } from '@/lib/geocodeApi'
+import { countryName } from '@/data/countries'
 
 export function AboutYouDetails() {
   const { profileLoaded } = useApp()
@@ -34,14 +34,15 @@ function AboutYouForm() {
   const { onboarding, updateOnboarding, profileExtras, updateProfileExtras } = useApp()
   const [name, setName] = useState(onboarding.name)
   const [heightCm, setHeightCm] = useState(onboarding.heightCm ? String(onboarding.heightCm) : '')
-  const [country, setCountry] = useState(onboarding.country)
-  const [city, setCity] = useState(onboarding.city)
   const [profession, setProfession] = useState(profileExtras.profession)
   const [education, setEducation] = useState(profileExtras.education)
   const [religion, setReligion] = useState(onboarding.religion)
   const [saving, setSaving] = useState(false)
 
-  const canContinue = name.trim() && city.trim() && country.trim()
+  // Current location (city/country) was already collected as a real
+  // dropdown/typeahead selection on the Birth Details screen — reused here
+  // rather than asked again as free text.
+  const canContinue = name.trim() && onboarding.city && onboarding.country
 
   const handleContinue = async () => {
     if (!canContinue) return
@@ -50,8 +51,6 @@ function AboutYouForm() {
     const onboardingPatch: Partial<OnboardingData> = {
       name: name.trim(),
       heightCm: heightCm ? Number(heightCm) : null,
-      country: country.trim(),
-      city: city.trim(),
       religion: religion.trim(),
     }
     updateOnboarding(onboardingPatch)
@@ -59,18 +58,9 @@ function AboutYouForm() {
       ...profileExtras,
       profession: profession.trim(),
       education: education.trim(),
-      location: `${city.trim()}, ${country.trim()}`,
+      location: `${onboarding.city}, ${countryName(onboarding.country)}`,
     }
     await updateProfileExtras(extrasPatch)
-
-    // Best-effort real geocoding for distance-based discovery — never blocks
-    // onboarding if the place can't be matched.
-    try {
-      const geo = await geocodeLocation(`${city.trim()}, ${country.trim()}`)
-      updateOnboarding({ currentLocationLat: geo.lat, currentLocationLon: geo.lon })
-    } catch {
-      // Leave location unset — Discovery already fails open when it's missing.
-    }
 
     setSaving(false)
     navigate('/relationship-goals')
@@ -91,16 +81,6 @@ function AboutYouForm() {
         <div className="flex flex-col gap-2">
           <Label htmlFor="name">First Name</Label>
           <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Eleanor" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="city">City</Label>
-            <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="London" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="country">Country</Label>
-            <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="UK" />
-          </div>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="height">Height (cm)</Label>

@@ -53,9 +53,20 @@ export interface UserDoc {
   phone: string
   verification: VerificationState
   onboardingComplete: boolean
+  /** Real legal name extracted from the member's government ID during
+   *  identity verification (Stripe Identity `verified_outputs`). */
+  legalName: string
   birthDate: string
   birthTime: string
+  /** True when the member confirmed they don't know their birth time —
+   *  sun/moon signs still compute against a noon default, but rising sign
+   *  is genuinely unavailable (never fabricated) when this is set. */
+  birthTimeUnknown: boolean
   birthPlace: string
+  birthCountry: string
+  birthCity: string
+  birthPlaceLat: number | null
+  birthPlaceLon: number | null
   sunSign: string
   moonSign: string
   risingSign: string
@@ -109,9 +120,15 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   phone: '',
   verification: defaultVerification,
   onboardingComplete: false,
+  legalName: '',
   birthDate: '',
   birthTime: '',
+  birthTimeUnknown: false,
   birthPlace: '',
+  birthCountry: '',
+  birthCity: '',
+  birthPlaceLat: null,
+  birthPlaceLon: null,
   sunSign: '',
   moonSign: '',
   risingSign: '',

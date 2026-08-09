@@ -43,6 +43,30 @@ export interface GeocodeResult {
 
 export class AstrologyError extends Error {}
 
+export interface CityMatch {
+  name: string
+  country: string
+  lat: number
+  lon: number
+}
+
+/** Real ranked city matches from the same ~138k-city dataset `geocodePlace`
+ *  uses, for a typeahead dropdown rather than free-text entry. */
+export function searchCityMatches(query: string, countryCode?: string, limit = 8): CityMatch[] {
+  const q = query.trim().toLowerCase()
+  if (q.length < 2) return []
+
+  let matches = cities.filter((c) => c.name.toLowerCase().startsWith(q))
+  if (countryCode) {
+    matches = matches.filter((c) => c.country === countryCode)
+  }
+
+  return [...matches]
+    .sort((a, b) => b.population - a.population)
+    .slice(0, limit)
+    .map((c) => ({ name: c.name, country: c.country, lat: c.loc.coordinates[1], lon: c.loc.coordinates[0] }))
+}
+
 export function geocodePlace(placeText: string): GeocodeResult {
   const cityPart = placeText.split(',')[0].trim().toLowerCase()
   if (!cityPart) throw new AstrologyError('Birth place is required.')
@@ -125,9 +149,23 @@ export interface FullNatalChart extends NatalPositions, ChineseZodiacResult {
   matchedCountry: string
 }
 
-export function computeFullNatalChart(birthDate: string, birthTime: string, birthPlace: string): FullNatalChart {
+// When the member genuinely doesn't know their birth time, sun/moon signs
+// are computed against local noon as a real, documented best-effort default
+// (time-of-day rarely shifts sun sign and only occasionally shifts moon sign
+// near a transition) — but the Ascendant/rising sign is dropped entirely
+// rather than shown as if it were accurate, since it changes roughly every
+// two hours and cannot be honestly computed without a real birth time.
+export function computeFullNatalChart(
+  birthDate: string,
+  birthTime: string | undefined,
+  birthPlace: string,
+  birthTimeUnknown = false
+): FullNatalChart {
   const geo = geocodePlace(birthPlace)
-  const positions = computeNatalPositions(birthDate, birthTime, geo)
+  const positions = computeNatalPositions(birthDate, birthTimeUnknown ? '12:00' : birthTime!, geo)
+  if (birthTimeUnknown) {
+    positions.risingSign = ''
+  }
   const year = Number(birthDate.split('-')[0])
   const chinese = computeChineseZodiac(year)
   return { ...positions, ...chinese, matchedCity: geo.matchedCity, matchedCountry: geo.matchedCountry }

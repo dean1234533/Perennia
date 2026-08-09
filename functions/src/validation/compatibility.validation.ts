@@ -122,11 +122,17 @@ export function factorInsightRowSchema(kind: 'score' | 'yinYang') {
 export type ParsedFactorInsightRow = z.infer<ReturnType<typeof factorInsightRowSchema>>
 
 /** Input for computeNatalChart — real birth date/time/place, no defaults. */
-export const computeNatalChartInputSchema = z.object({
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'birthDate must be YYYY-MM-DD'),
-  birthTime: z.string().regex(/^\d{2}:\d{2}$/, 'birthTime must be HH:MM'),
-  birthPlace: z.string().trim().min(1, 'birthPlace is required'),
-})
+export const computeNatalChartInputSchema = z
+  .object({
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'birthDate must be YYYY-MM-DD'),
+    birthTime: z.string().regex(/^\d{2}:\d{2}$/, 'birthTime must be HH:MM').optional(),
+    birthTimeUnknown: z.boolean().optional(),
+    birthPlace: z.string().trim().min(1, 'birthPlace is required'),
+  })
+  .refine((data) => data.birthTimeUnknown || !!data.birthTime, {
+    message: 'birthTime is required unless birthTimeUnknown is true',
+    path: ['birthTime'],
+  })
 
 export type ComputeNatalChartInput = z.infer<typeof computeNatalChartInputSchema>
 
@@ -138,3 +144,12 @@ export const geocodeLocationInputSchema = z.object({
 })
 
 export type GeocodeLocationInput = z.infer<typeof geocodeLocationInputSchema>
+
+/** Input for searchCities — a real ranked-city typeahead, reusing the same
+ *  dataset geocodeLocation/computeNatalChart already geocode against. */
+export const searchCitiesInputSchema = z.object({
+  query: z.string().trim().min(2, 'query must be at least 2 characters'),
+  country: z.string().length(2).optional(),
+})
+
+export type SearchCitiesInput = z.infer<typeof searchCitiesInputSchema>

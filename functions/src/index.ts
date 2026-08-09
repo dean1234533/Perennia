@@ -34,7 +34,7 @@ import {
   likeRateLimitMaxRequests,
   likeRateLimitWindowSeconds,
 } from './config/env'
-import { getCompatibilityInputSchema, computeNatalChartInputSchema, geocodeLocationInputSchema } from './validation/compatibility.validation'
+import { getCompatibilityInputSchema, computeNatalChartInputSchema, geocodeLocationInputSchema, searchCitiesInputSchema } from './validation/compatibility.validation'
 import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema } from './validation/founding500.validation'
 import { likeUserInputSchema } from './validation/matching.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
@@ -45,7 +45,7 @@ import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, 
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { deleteAccount as deleteAccountService } from './services/account.service'
-import { computeFullNatalChart, geocodePlace, AstrologyError } from './services/astrology.service'
+import { computeFullNatalChart, geocodePlace, searchCityMatches, AstrologyError } from './services/astrology.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
 import { log } from './utils/logger'
 import type { FusionTable } from './types/compatibility'
@@ -167,12 +167,37 @@ export const computeNatalChart = onCall({}, async (request) => {
     throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
   }
   try {
-    const chart = computeFullNatalChart(parsed.data.birthDate, parsed.data.birthTime, parsed.data.birthPlace)
+    const chart = computeFullNatalChart(
+      parsed.data.birthDate,
+      parsed.data.birthTime,
+      parsed.data.birthPlace,
+      parsed.data.birthTimeUnknown
+    )
     log.info('natal_chart_computed', { uid: request.auth.uid, city: chart.matchedCity })
     return chart
   } catch (err) {
     if (err instanceof AstrologyError) throw invalidArgument(err.message)
     throw internal('computeNatalChart failed', err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// searchCities — real ranked city matches (same ~138k-city dataset as
+// geocodeLocation/computeNatalChart) for a live typeahead dropdown, instead
+// of free-text place entry.
+// ---------------------------------------------------------------------------
+export const searchCities = onCall({}, async (request) => {
+  if (!request.auth) {
+    throw unauthenticated('Sign in to search cities.')
+  }
+  const parsed = searchCitiesInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+  try {
+    return searchCityMatches(parsed.data.query, parsed.data.country)
+  } catch (err) {
+    throw internal('searchCities failed', err)
   }
 })
 
@@ -252,7 +277,7 @@ export const stripeIdentityWebhook = onRequest(
           )
         }
       } else {
-        await handleVerificationWebhookEvent(event)
+        await handleVerificationWebhookEvent(event, stripeSecretKey.value())
       }
 
       response.status(200).send('ok')

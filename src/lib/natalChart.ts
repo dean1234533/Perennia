@@ -17,7 +17,8 @@ export interface NatalChartResult {
 
 export interface ComputeNatalChartInput {
   birthDate: string
-  birthTime: string
+  birthTime?: string
+  birthTimeUnknown?: boolean
   birthPlace: string
 }
 

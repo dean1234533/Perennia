@@ -63,7 +63,7 @@ export function constructWebhookEvent(params: { rawBody: Buffer; signature: stri
   return stripe.webhooks.constructEvent(params.rawBody, params.signature, params.webhookSecret)
 }
 
-export async function handleVerificationWebhookEvent(event: Stripe.Event) {
+export async function handleVerificationWebhookEvent(event: Stripe.Event, secretKey: string) {
   const db = getFirestore()
 
   if (
@@ -78,15 +78,48 @@ export async function handleVerificationWebhookEvent(event: Stripe.Event) {
     }
 
     const verified = event.type === 'identity.verification_session.verified'
-    await db
-      .collection('users')
-      .doc(uid)
-      .update({
-        'verification.status': verified ? 'verified' : 'failed',
-        'verification.provider': 'stripe_identity',
-        'verification.verificationReference': session.id,
-        'verification.verifiedAt': verified ? new Date().toISOString() : null,
-      })
+    const update: Record<string, unknown> = {
+      'verification.status': verified ? 'verified' : 'failed',
+      'verification.provider': 'stripe_identity',
+      'verification.verificationReference': session.id,
+      'verification.verifiedAt': verified ? new Date().toISOString() : null,
+    }
+
+    // Real extracted legal name + DOB from the ID document Stripe just
+    // verified — this is what feeds the Birth Details step (the member no
+    // longer re-types their birth date; it's already confirmed against a
+    // government ID). Never overwrites a birth date the member has already
+    // locked in via the Birth Details screen.
+    if (verified) {
+      try {
+        const stripe = getStripe(secretKey)
+        const full = await stripe.identity.verificationSessions.retrieve(session.id, {
+          expand: ['verified_outputs'],
+        })
+        const outputs = full.verified_outputs
+        const dob = outputs?.dob
+
+        const userRef = db.collection('users').doc(uid)
+        const existing = await userRef.get()
+        const hasBirthDate = !!existing.get('birthDate')
+
+        if (dob?.year && dob.month && dob.day && !hasBirthDate) {
+          const mm = String(dob.month).padStart(2, '0')
+          const dd = String(dob.day).padStart(2, '0')
+          update.birthDate = `${dob.year}-${mm}-${dd}`
+        }
+
+        const legalName = [outputs?.first_name, outputs?.last_name].filter(Boolean).join(' ')
+        if (legalName) update.legalName = legalName
+      } catch (err) {
+        log.warn('identity_verified_outputs_fetch_failed', {
+          uid,
+          message: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
+    await db.collection('users').doc(uid).update(update)
 
     log.info('identity_verification_updated', { uid, status: verified ? 'verified' : 'failed' })
   }

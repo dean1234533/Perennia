@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
@@ -28,6 +29,7 @@ interface MembershipState {
 export function RequireFoundingMembership({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { user, authReady } = useAuth()
+  const { onboardingComplete, profileLoaded } = useApp()
   const [membershipState, setMembershipState] = useState<MembershipState | null>(null)
 
   useEffect(() => {
@@ -67,6 +69,22 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
 
   if (!membershipState.record) {
     return <Navigate to={`/founding-500?next=${encodeURIComponent(location.pathname)}`} replace />
+  }
+
+  if (!profileLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-midnight">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+      </div>
+    )
+  }
+
+  // A paid Founding 500 member still can't see Discovery/matches/the app's
+  // bottom nav until they've actually finished onboarding — otherwise
+  // there's a real gap where someone could pay, skip straight to
+  // /discovery by URL, and never confirm birth details, profile info, etc.
+  if (!onboardingComplete) {
+    return <Navigate to="/cosmic-profile" replace />
   }
 
   return <>{children}</>

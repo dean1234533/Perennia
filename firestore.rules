@@ -25,11 +25,26 @@ service cloud.firestore {
     // the likeUser Cloud Function). Without this, a member could write
     // `verification.status: 'verified'` or a fabricated `matchedIds` entry
     // straight into their own doc from the browser console.
+    //
+    // Birth fields (date/time/place + everything derived from them for the
+    // astrology/compatibility engine) can be written ONCE — the Birth
+    // Details onboarding screen — and are then locked: once `birthCity` is
+    // set, no further client write to any of these fields is allowed, since
+    // the UI promises "locked after confirmation, contact support to
+    // change" and that has to be real, not just a claim in the copy.
     match /users/{uid} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == uid;
       allow update: if request.auth != null && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'birthDate', 'birthTime', 'birthTimeUnknown', 'birthPlace',
+            'birthCountry', 'birthCity', 'birthPlaceLat', 'birthPlaceLon',
+            'sunSign', 'moonSign', 'risingSign', 'chineseAnimal', 'chineseElement', 'yinYang'
+          ])
+          || !('birthCity' in resource.data) || resource.data.birthCity == ''
+        );
       allow delete: if false; // only the deleteAccount Cloud Function (Admin SDK)
     }
 
