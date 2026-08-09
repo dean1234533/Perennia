@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { Sun, Moon, ArrowUpCircle, Sparkles } from 'lucide-react'
-import type { Profile } from '@/data/profiles'
 import type { SelfProfile } from '@/data/selfProfile'
 import { ProgressRing } from '@/components/ui/progress-ring'
 
@@ -9,10 +8,29 @@ function overlap(a: string[], b: string[]): string[] {
   return a.filter((x) => bLower.has(x.toLowerCase()))
 }
 
-export function CompatibilitySnapshot({ profile, self }: { profile: Profile; self: SelfProfile }) {
-  const sharedInterests = overlap(profile.interests, self.interests)
-  const sharedValues = overlap(profile.values, self.values)
-  const sharedLifestyle = profile.lifestyle.filter((item) =>
+interface CompatibilityProfile {
+  sunSign: string
+  moonSign: string
+  risingSign: string
+  chineseAnimal: string
+  profileExtras: SelfProfile | null
+}
+
+export function CompatibilitySnapshot({
+  profile,
+  self,
+  compatibility,
+  compatibilityLabel,
+}: {
+  profile: CompatibilityProfile
+  self: SelfProfile
+  compatibility: number
+  compatibilityLabel: string
+}) {
+  const otherExtras = profile.profileExtras
+  const sharedInterests = overlap(otherExtras?.interests ?? [], self.interests)
+  const sharedValues = overlap(otherExtras?.values ?? [], self.values)
+  const sharedLifestyle = (otherExtras?.lifestyle ?? []).filter((item) =>
     self.lifestyle.some((s) => s.label === item.label && s.value === item.value)
   )
 
@@ -32,11 +50,11 @@ export function CompatibilitySnapshot({ profile, self }: { profile: Profile; sel
     >
       <div className="flex flex-col items-center gap-6 p-6 md:flex-row md:p-8">
         <ProgressRing
-          value={profile.compatibility}
+          value={compatibility}
           size={140}
           strokeWidth={9}
-          label={`${profile.compatibility}%`}
-          sublabel={profile.compatibilityLabel}
+          label={`${compatibility}%`}
+          sublabel={compatibilityLabel}
         />
         <div className="flex-1">
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-gold/70">Cosmic Alignment</p>
@@ -46,9 +64,11 @@ export function CompatibilitySnapshot({ profile, self }: { profile: Profile; sel
                 <c.icon className="h-3 w-3 text-gold" /> {c.label} · {c.value}
               </div>
             ))}
-            <div className="flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-xs text-white/70">
-              <Sparkles className="h-3 w-3 text-gold" /> {profile.chineseZodiac}
-            </div>
+            {profile.chineseAnimal && (
+              <div className="flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-xs text-white/70">
+                <Sparkles className="h-3 w-3 text-gold" /> {profile.chineseAnimal}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-center">

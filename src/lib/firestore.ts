@@ -12,11 +12,11 @@ import {
   query,
   where,
   orderBy,
+  limit,
   writeBatch,
+  type Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { profiles as seedProfiles, type Profile } from '@/data/profiles'
-import { conversationSeeds, type Message } from '@/data/messages'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import type { SelfProfile } from '@/data/selfProfile'
 
@@ -97,6 +97,11 @@ export async function getUserDoc(uid: string): Promise<UserDoc | null> {
   return snap.exists() ? (snap.data() as UserDoc) : null
 }
 
+/** A real member's doc plus their uid — the shape used everywhere a screen
+ *  shows someone OTHER than the signed-in member (Discovery, Matches,
+ *  ProfileDetail, compatibility). Never fabricated client-side. */
+export type DiscoveryCandidate = UserDoc & { uid: string }
+
 export function subscribeUserDoc(uid: string, cb: (data: UserDoc | null) => void) {
   return onSnapshot(doc(db, 'users', uid), (snap) => {
     cb(snap.exists() ? (snap.data() as UserDoc) : null)
@@ -111,66 +116,92 @@ export async function completeOnboardingRemote(uid: string) {
   await updateDoc(doc(db, 'users', uid), { onboardingComplete: true })
 }
 
-export async function likeProfileRemote(uid: string, profileId: string, isMatch: boolean) {
-  const ref = doc(db, 'users', uid)
-  await updateDoc(ref, {
-    likedIds: arrayUnion(profileId),
-    ...(isMatch ? { matchedIds: arrayUnion(profileId) } : {}),
+export async function passProfileRemote(uid: string, targetUid: string) {
+  await updateDoc(doc(db, 'users', uid), { passedIds: arrayUnion(targetUid) })
+}
+
+// --- Real discovery, matches, messaging -------------------------------------
+// Liking (and the reciprocal-match check that goes with it) is NOT done here
+// — it goes through the real `likeUser` Cloud Function (see matchingApi.ts),
+// since a client can never safely read another user's likes to detect
+// mutual interest. Everything below is read-only from the client's side,
+// or writes that are already scoped to data the client is allowed to touch.
+
+/** A candidate pool for Discovery: real, onboarded members with a profile
+ *  photo. Excludes nobody by like/pass state — the caller filters that
+ *  client-side against its own likedIds/passedIds, since Firestore can't
+ *  express "not in this array" as a query. */
+export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCandidate[]> {
+  const q = query(
+    collection(db, 'users'),
+    where('onboardingComplete', '==', true),
+    where('profilePhotoUrl', '!=', ''),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs
+    .filter((d) => d.id !== uid)
+    .map((d) => ({ uid: d.id, ...(d.data() as UserDoc) }))
+}
+
+export interface MatchDoc {
+  id: string
+  users: [string, string]
+  createdAt: Timestamp | null
+}
+
+export function subscribeMyMatches(uid: string, cb: (matches: MatchDoc[]) => void) {
+  const q = query(collection(db, 'matches'), where('users', 'array-contains', uid))
+  return onSnapshot(q, (snap) => {
+    cb(snap.docs.map((d) => d.data() as MatchDoc))
   })
 }
 
-export async function passProfileRemote(uid: string, profileId: string) {
-  await updateDoc(doc(db, 'users', uid), { passedIds: arrayUnion(profileId) })
+export async function getMatch(matchId: string): Promise<MatchDoc | null> {
+  const snap = await getDoc(doc(db, 'matches', matchId))
+  return snap.exists() ? (snap.data() as MatchDoc) : null
 }
 
-/** Upserts the curated `profiles` collection with the bundled mock data on every
- *  load, so schema/content changes here always propagate. Prototype-only
- *  convenience — in production this would be done via the Admin SDK, not open
- *  client writes. */
-export async function seedProfilesIfNeeded() {
-  const batch = writeBatch(db)
-  for (const p of seedProfiles) {
-    batch.set(doc(db, 'profiles', p.id), p)
-  }
-  await batch.commit()
+export interface ConversationDoc {
+  matchId: string
+  participants: [string, string]
+  createdAt: Timestamp | null
+  lastMessageAt: Timestamp | null
+  lastMessagePreview: string | null
+  lastMessageSenderId: string | null
 }
 
-export async function fetchProfiles(): Promise<Profile[]> {
-  const snap = await getDocs(collection(db, 'profiles'))
-  if (snap.empty) return seedProfiles
-  return snap.docs.map((d) => d.data() as Profile)
-}
-
-function convoId(uid: string, profileId: string) {
-  return `${uid}_${profileId}`
-}
-
-export async function seedConversationIfNeeded(uid: string, profileId: string) {
-  const msgsRef = collection(db, 'conversations', convoId(uid, profileId), 'messages')
-  const snap = await getDocs(msgsRef)
-  if (!snap.empty) return
-  const seed = conversationSeeds[profileId]
-  if (!seed) return
-  const batch = writeBatch(db)
-  seed.forEach((m, i) => {
-    const ref = doc(msgsRef)
-    batch.set(ref, { ...m, order: i, createdAt: serverTimestamp() })
+export function subscribeConversation(matchId: string, cb: (conversation: ConversationDoc | null) => void) {
+  return onSnapshot(doc(db, 'conversations', matchId), (snap) => {
+    cb(snap.exists() ? (snap.data() as ConversationDoc) : null)
   })
-  await batch.commit()
 }
 
-export function subscribeMessages(uid: string, profileId: string, cb: (messages: Message[]) => void) {
-  const msgsRef = collection(db, 'conversations', convoId(uid, profileId), 'messages')
-  const q = query(msgsRef, orderBy('order', 'asc'))
+export interface Message {
+  id: string
+  senderId: string
+  text: string
+  createdAt: Timestamp | null
+  read: boolean
+}
+
+export function subscribeMessages(matchId: string, cb: (messages: Message[]) => void) {
+  const msgsRef = collection(db, 'conversations', matchId, 'messages')
+  const q = query(msgsRef, orderBy('createdAt', 'asc'))
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as Message))
   })
 }
 
-export async function sendMessageRemote(uid: string, profileId: string, message: Omit<Message, 'id'>, order: number) {
-  const msgsRef = collection(db, 'conversations', convoId(uid, profileId), 'messages')
+export async function sendMessageRemote(matchId: string, senderId: string, text: string) {
+  const msgsRef = collection(db, 'conversations', matchId, 'messages')
   const ref = doc(msgsRef)
-  await setDoc(ref, { ...message, id: ref.id, order, createdAt: serverTimestamp() })
+  await setDoc(ref, { id: ref.id, senderId, text, createdAt: serverTimestamp(), read: false })
+  await updateDoc(doc(db, 'conversations', matchId), {
+    lastMessageAt: serverTimestamp(),
+    lastMessagePreview: text.slice(0, 140),
+    lastMessageSenderId: senderId,
+  })
 }
 
 // --- Real user-uploaded media -----------------------------------------------

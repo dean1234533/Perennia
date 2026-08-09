@@ -1,4 +1,13 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "onboardingComplete", "order": "ASCENDING" },
+        { "fieldPath": "profilePhotoUrl", "order": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

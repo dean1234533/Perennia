@@ -23,20 +23,9 @@ import {
   ACCEPTED_VIDEO_TYPES,
 } from '@/lib/media/mediaService'
 import { ACCEPTED_IMAGE_TYPES } from '@/lib/media/imageProcessing'
+import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
 import type { SelfProfile } from '@/data/selfProfile'
-
-function toDisplayItem(m: MediaDoc): DisplayMediaItem {
-  return {
-    id: m.id,
-    url: m.url,
-    thumbnailUrl: m.thumbnailUrl || m.video?.poster || '',
-    category: m.category,
-    type: m.type,
-    caption: m.caption,
-    processingStatus: m.processingStatus,
-  }
-}
 
 export function MyProfile() {
   const navigate = useNavigate()

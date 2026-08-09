@@ -70,6 +70,11 @@ export const rateLimitMaxRequests = defineString('RATE_LIMIT_MAX_REQUESTS', { de
 export const rateLimitWindowSeconds = defineString('RATE_LIMIT_WINDOW_SECONDS', { default: '60' })
 export const cacheTtlSeconds = defineString('CACHE_TTL_SECONDS', { default: '300' })
 
+// Liking is a much higher-frequency action than a compatibility lookup
+// (swiping through candidates), so it gets its own, more generous bucket.
+export const likeRateLimitMaxRequests = defineString('LIKE_RATE_LIMIT_MAX_REQUESTS', { default: '120' })
+export const likeRateLimitWindowSeconds = defineString('LIKE_RATE_LIMIT_WINDOW_SECONDS', { default: '60' })
+
 export function normalizePrivateKey(raw: string): string {
   // Secret values are stored as single-line strings with literal "\n" —
   // the PEM parser needs real newlines.

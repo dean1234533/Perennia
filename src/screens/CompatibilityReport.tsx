@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Sparkles, MessageCircle, Loader2, AlertTriangle } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { ProgressRing } from '@/components/ui/progress-ring'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Starfield } from '@/components/shared/Starfield'
 import { SelfAvatar } from '@/components/shared/SelfAvatar'
+import { getUserDoc, type DiscoveryCandidate } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 
 const FACTOR_LABELS: Record<keyof CompatibilityResult['factors'], string> = {
@@ -31,8 +33,9 @@ const INSIGHT_LABELS: Record<keyof CompatibilityResult['insights'], string> = {
 export function CompatibilityReport() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profiles, onboarding } = useApp()
-  const profile = id ? profiles.find((p) => p.id === id) : undefined
+  const { user } = useAuth()
+  const { matchedIds, onboarding } = useApp()
+  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
 
   const [result, setResult] = useState<CompatibilityResult | null>(null)
   const [loading, setLoading] = useState(true)
@@ -42,6 +45,11 @@ export function CompatibilityReport() {
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
     onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
   )
+
+  useEffect(() => {
+    if (!id) return
+    getUserDoc(id).then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
+  }, [id])
 
   useEffect(() => {
     if (!profile || !selfChartComplete) {
@@ -62,7 +70,7 @@ export function CompatibilityReport() {
       sunSign: profile.sunSign,
       moonSign: profile.moonSign,
       risingSign: profile.risingSign,
-      chineseAnimal: profile.chineseZodiac,
+      chineseAnimal: profile.chineseAnimal,
       chineseElement: profile.chineseElement,
       yinYang: profile.yinYang,
     }
@@ -71,7 +79,15 @@ export function CompatibilityReport() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load your compatibility report.'))
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, selfChartComplete])
+  }, [profile?.uid, selfChartComplete])
+
+  if (profile === undefined) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+      </div>
+    )
+  }
 
   if (!profile) {
     return (
@@ -163,7 +179,7 @@ export function CompatibilityReport() {
             <div className="mb-16 flex items-center justify-center gap-4">
               <SelfAvatar className="h-12 w-12 rounded-full border-2 border-gold/40" />
               <Sparkles className="h-5 w-5 text-gold" />
-              <img src={profile.images[0]} alt={profile.name} className="h-12 w-12 rounded-full border-2 border-gold/40 object-cover" />
+              <img src={profile.profilePhotoUrl} alt={profile.name} className="h-12 w-12 rounded-full border-2 border-gold/40 object-cover" />
             </div>
           </>
         ) : null}
@@ -265,9 +281,15 @@ export function CompatibilityReport() {
             <p className="mb-8 max-w-md text-white/55">
               Compatibility this rare doesn't happen often. Perhaps it's time to say hello.
             </p>
-            <Button size="lg" onClick={() => navigate(`/messages/${profile.id}`)}>
-              <MessageCircle className="h-4 w-4" /> Message {profile.name.split(' ')[0]}
-            </Button>
+            {matchedIds.includes(profile.uid) && user ? (
+              <Button size="lg" onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}>
+                <MessageCircle className="h-4 w-4" /> Message {profile.name.split(' ')[0]}
+              </Button>
+            ) : (
+              <Button size="lg" onClick={() => navigate(`/profile/${profile.uid}`)}>
+                <MessageCircle className="h-4 w-4" /> View {profile.name.split(' ')[0]}'s Profile
+              </Button>
+            )}
           </motion.div>
         </div>
       )}

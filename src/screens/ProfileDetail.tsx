@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles } from 'lucide-react'
+import { ArrowLeft, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles, Loader2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
@@ -10,15 +11,68 @@ import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
-import { getProfileGallery, DEMO_GALLERY_CATEGORIES } from '@/data/gallery-media'
+import { toDisplayItem } from '@/lib/media/toDisplayItem'
+import { getUserDoc, subscribeUserMedia, type DiscoveryCandidate, type MediaDoc } from '@/lib/firestore'
+import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
+import { calculateAge } from '@/lib/age'
+import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
+import type { DisplayCategory } from '@/types/media'
 
 export function ProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { likeProfile, passProfile, profiles, profileExtras } = useApp()
-  const profile = id ? profiles.find((p) => p.id === id) : undefined
+  const { likeProfile, passProfile, matchedIds, profileExtras, onboarding } = useApp()
+  const { user } = useAuth()
+  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
+  const [media, setMedia] = useState<MediaDoc[]>([])
+  const [result, setResult] = useState<CompatibilityResult | null>(null)
   const [liked, setLiked] = useState(false)
   const [videoViewerCategory, setVideoViewerCategory] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    getUserDoc(id).then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
+    return subscribeUserMedia(id, setMedia)
+  }, [id])
+
+  const selfChartComplete = Boolean(
+    onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
+    onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
+  )
+
+  useEffect(() => {
+    if (!profile || !selfChartComplete) return
+    const personA: PersonBirthProfile = {
+      sunSign: onboarding.sunSign,
+      moonSign: onboarding.moonSign,
+      risingSign: onboarding.risingSign,
+      chineseAnimal: onboarding.chineseAnimal,
+      chineseElement: onboarding.chineseElement,
+      yinYang: onboarding.yinYang,
+    }
+    getCompatibility({
+      personA,
+      personB: {
+        sunSign: profile.sunSign,
+        moonSign: profile.moonSign,
+        risingSign: profile.risingSign,
+        chineseAnimal: profile.chineseAnimal,
+        chineseElement: profile.chineseElement,
+        yinYang: profile.yinYang,
+      },
+    })
+      .then(setResult)
+      .catch((err) => console.warn('[Perennia] Failed to load compatibility:', err))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.uid, selfChartComplete])
+
+  if (profile === undefined) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+      </div>
+    )
+  }
 
   if (!profile) {
     return (
@@ -29,36 +83,47 @@ export function ProfileDetail() {
     )
   }
 
-  // This bundled seed/demo profile's media — see data/gallery-media.ts for
-  // why this is clearly separated from real member uploads.
-  const gallery = getProfileGallery(profile.id)
-  // Gallery = photos only; orbit bubbles = videos only (same split as the
-  // real member-facing MyProfile screen).
-  const galleryImages = gallery.filter((g) => g.type === 'image')
+  const displayItems = media.map(toDisplayItem)
+  const galleryImages = displayItems.filter((i) => i.type === 'image')
 
-  const orbitCategories = DEMO_GALLERY_CATEGORIES.map((c) => {
-    const videos = gallery.filter((g) => g.category === c.id && g.type === 'video')
-    return { id: c.id, label: c.label, emoji: c.emoji, coverUrl: videos[0]?.thumbnailUrl ?? null, count: videos.length }
+  const categories: DisplayCategory[] = (profile.categories?.length ? profile.categories : DEFAULT_MEDIA_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))).map((c) => ({
+    id: c.id,
+    label: c.label,
+    emoji: DEFAULT_MEDIA_CATEGORIES.find((d) => d.id === c.id)?.emoji ?? '✨',
+  }))
+
+  const orbitCategories = categories.map((c) => {
+    const videos = media.filter((m) => m.category === c.id && m.type === 'video' && m.processingStatus === 'ready')
+    return {
+      id: c.id,
+      label: c.label,
+      emoji: c.emoji,
+      coverUrl: videos[0]?.video?.poster || videos[0]?.thumbnailUrl || null,
+      count: videos.length,
+    }
   })
 
   const handleOrbitSelect = (categoryId: string) => {
-    if (gallery.some((g) => g.category === categoryId && g.type === 'video')) {
+    if (media.some((m) => m.category === categoryId && m.type === 'video' && m.processingStatus === 'ready')) {
       setVideoViewerCategory(categoryId)
     }
   }
 
+  const isMatched = matchedIds.includes(profile.uid)
+  const extras = profile.profileExtras
+
   const handleLike = () => {
     setLiked(true)
-    likeProfile(profile.id).then((matched) => {
+    likeProfile(profile.uid).then((matchId) => {
       setTimeout(() => {
-        if (matched) navigate(`/match/${profile.id}`)
+        if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: profile.uid, compatibility: result?.compatibility ?? null } })
         else navigate('/discovery')
-      }, matched ? 600 : 900)
+      }, matchId ? 600 : 900)
     })
   }
 
   const handlePass = () => {
-    passProfile(profile.id)
+    passProfile(profile.uid)
     navigate('/discovery')
   }
 
@@ -75,95 +140,116 @@ export function ProfileDetail() {
 
       <div className="mx-auto max-w-4xl px-6 md:px-0">
         <ProfileOrbit
-          photoUrl={profile.images[0]}
+          photoUrl={profile.profilePhotoUrl || null}
           name={profile.name}
-          age={profile.age}
-          verificationStatus={profile.verified ? 'verified' : 'unverified'}
+          age={calculateAge(profile.birthDate) ?? undefined}
+          verificationStatus={profile.verification?.status ?? 'unverified'}
           categories={orbitCategories}
           onCategorySelect={handleOrbitSelect}
-          compatibility={profile.compatibility}
+          compatibility={result?.compatibility}
         />
 
-        <div className="mb-8 mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60">
-          <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {profile.location}</span>
-          <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {profile.profession}</span>
-          <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {profile.education}</span>
-        </div>
+        {(extras?.location || extras?.profession || extras?.education) && (
+          <div className="mb-8 mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60">
+            {extras?.location && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {extras.location}</span>}
+            {extras?.profession && <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {extras.profession}</span>}
+            {extras?.education && <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {extras.education}</span>}
+          </div>
+        )}
 
         {/* Compatibility snapshot */}
         <div className="mb-8">
-          <CompatibilitySnapshot profile={profile} self={profileExtras} />
+          {!selfChartComplete ? (
+            <div className="glass flex flex-col items-center gap-3 rounded-[1.75rem] px-8 py-10 text-center">
+              <Sparkles className="h-6 w-6 text-gold/60" />
+              <p className="text-sm text-white/60">Complete your cosmic profile to see real compatibility here.</p>
+              <Button size="sm" onClick={() => navigate('/birth-details')}>Add Birth Details</Button>
+            </div>
+          ) : !result ? (
+            <div className="glass flex items-center justify-center rounded-[1.75rem] px-8 py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-gold" />
+            </div>
+          ) : (
+            <CompatibilitySnapshot profile={profile} self={profileExtras} compatibility={result.compatibility} compatibilityLabel={result.band} />
+          )}
         </div>
 
         {/* Bio */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About {profile.name.split(' ')[0]}</p>
-          <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">{profile.about}</p>
-        </motion.div>
+        {extras?.about && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About {profile.name.split(' ')[0]}</p>
+            <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">{extras.about}</p>
+          </motion.div>
+        )}
 
         {/* Interests */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
-          <div className="flex flex-wrap gap-2">
-            {profile.interests.map((interest) => (
-              <Badge key={interest} variant="glass">{interest}</Badge>
-            ))}
-          </div>
-        </motion.div>
+        {!!extras?.interests.length && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+            <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
+            <div className="flex flex-wrap gap-2">
+              {extras.interests.map((interest) => (
+                <Badge key={interest} variant="glass">{interest}</Badge>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Goals */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
-          <p className="max-w-2xl text-xl leading-relaxed text-white/70">{profile.goals}</p>
-        </motion.div>
+        {extras?.goals && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
+            <p className="max-w-2xl text-xl leading-relaxed text-white/70">{extras.goals}</p>
+          </motion.div>
+        )}
 
         {/* Lifestyle */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-            {profile.lifestyle.map((item) => (
-              <div key={item.label}>
-                <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
-                <p className="text-sm text-white/80">{item.value}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        {!!extras?.lifestyle.length && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
+            <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+              {extras.lifestyle.map((item) => (
+                <div key={item.label}>
+                  <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
+                  <p className="text-sm text-white/80">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Gallery */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
-          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
-          <h2 className="font-serif-display mb-5 text-2xl text-champagne">Exploring {profile.name.split(' ')[0]}'s World</h2>
-          <MasonryGallery items={galleryImages} categories={DEMO_GALLERY_CATEGORIES} />
-        </motion.div>
+        {galleryImages.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
+            <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
+            <h2 className="font-serif-display mb-5 text-2xl text-champagne">Exploring {profile.name.split(' ')[0]}'s World</h2>
+            <MasonryGallery items={galleryImages} categories={categories} />
+          </motion.div>
+        )}
 
         {/* Premium detail sections */}
-        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
-          <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">More About {profile.name.split(' ')[0]}</p>
-          <div className="mb-5 flex flex-wrap gap-2">
-            {profile.values.map((value) => (
-              <Badge key={value} variant="gold">{value}</Badge>
-            ))}
-          </div>
-          <ProfileDetailSections
-            music={profile.music}
-            languages={profile.languages}
-            favoritePlaces={profile.favoritePlaces}
-            dreamDestinations={profile.dreamDestinations}
-            fitness={profile.fitness}
-            books={profile.books}
-            movies={profile.movies}
-          />
-        </motion.div>
-
-        {profile.prompts.map((prompt, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="mb-8">
-            <p className="mb-3 text-xs uppercase tracking-widest text-gold/70">{prompt.question}</p>
-            <p className="font-serif-display text-3xl italic leading-snug text-white/95 md:text-4xl">"{prompt.answer}"</p>
+        {(!!extras?.values.length || !!extras?.music.length || !!extras?.languages.length) && (
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
+            <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">More About {profile.name.split(' ')[0]}</p>
+            {!!extras?.values.length && (
+              <div className="mb-5 flex flex-wrap gap-2">
+                {extras.values.map((value) => (
+                  <Badge key={value} variant="gold">{value}</Badge>
+                ))}
+              </div>
+            )}
+            <ProfileDetailSections
+              music={extras?.music ?? []}
+              languages={extras?.languages ?? []}
+              favoritePlaces={extras?.favoritePlaces ?? []}
+              dreamDestinations={extras?.dreamDestinations ?? []}
+              fitness={extras?.fitness ?? ''}
+              books={extras?.books ?? ''}
+              movies={extras?.movies ?? ''}
+            />
           </motion.div>
-        ))}
+        )}
 
-        <Button variant="link" onClick={() => navigate(`/compatibility/${profile.id}`)} className="mx-auto flex text-sm">
+        <Button variant="link" onClick={() => navigate(`/compatibility/${profile.uid}`)} className="mx-auto flex text-sm">
           <Sparkles className="h-3.5 w-3.5" /> View Full Compatibility Report →
         </Button>
       </div>
@@ -178,14 +264,16 @@ export function ProfileDetail() {
         >
           <X className="h-6 w-6" />
         </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.08 }}
-          onClick={() => navigate(`/messages/${profile.id}`)}
-          className="glass-strong flex h-14 w-14 items-center justify-center rounded-full text-champagne shadow-xl cursor-pointer hover:text-white"
-        >
-          <MessageCircle className="h-5 w-5" />
-        </motion.button>
+        {isMatched && user && (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.08 }}
+            onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}
+            className="glass-strong flex h-14 w-14 items-center justify-center rounded-full text-champagne shadow-xl cursor-pointer hover:text-white"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </motion.button>
+        )}
         <motion.button
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.08 }}
@@ -199,7 +287,7 @@ export function ProfileDetail() {
 
       {videoViewerCategory && (
         <FullscreenMediaViewer
-          items={gallery.filter((g) => g.category === videoViewerCategory && g.type === 'video')}
+          items={displayItems.filter((i) => i.category === videoViewerCategory && i.type === 'video' && i.processingStatus === 'ready')}
           initialIndex={0}
           onClose={() => setVideoViewerCategory(null)}
         />

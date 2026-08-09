@@ -1,16 +1,12 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
-import { profiles as fallbackProfiles, type Profile } from '@/data/profiles'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { firebaseConfigured } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import { emptySelfProfile, type SelfProfile } from '@/data/selfProfile'
-import { getCompatibility, type PersonBirthProfile } from '@/lib/compatibilityApi'
+import { likeUser } from '@/lib/matchingApi'
 import {
-  fetchProfiles,
-  seedProfilesIfNeeded,
   subscribeUserDoc,
   updateUserDoc,
-  likeProfileRemote,
   passProfileRemote,
   completeOnboardingRemote,
   updateProfileExtrasRemote,
@@ -42,12 +38,13 @@ export interface OnboardingData {
 interface AppContextValue {
   onboarding: OnboardingData
   updateOnboarding: (data: Partial<OnboardingData>) => void
-  profiles: Profile[]
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
-  likeProfile: (id: string) => Promise<boolean>
-  passProfile: (id: string) => Promise<void>
+  /** Real like via the likeUser Cloud Function. Returns the real matchId
+   *  when a genuine mutual match was just created, otherwise null. */
+  likeProfile: (targetUid: string) => Promise<string | null>
+  passProfile: (targetUid: string) => Promise<void>
   isAuthenticated: boolean
   setAuthenticated: (v: boolean) => void
   onboardingComplete: boolean
@@ -89,78 +86,14 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [onboarding, setOnboarding] = useState<OnboardingData>(defaultOnboarding)
-  const [profiles, setProfiles] = useState<Profile[]>(fallbackProfiles)
   const [likedIds, setLikedIds] = useState<string[]>([])
   const [passedIds, setPassedIds] = useState<string[]>([])
-  const [matchedIds, setMatchedIds] = useState<string[]>(firebaseConfigured ? [] : ['amara', 'julian', 'sienna'])
+  const [matchedIds, setMatchedIds] = useState<string[]>([])
   const [localAuthenticated, setLocalAuthenticated] = useState(false)
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
   const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
   const [hideBottomNav, setHideBottomNav] = useState(false)
-  const resolvedChartKey = useRef<string | null>(null)
-
-  // Load curated profiles — from Firestore when configured, otherwise the bundled mock data.
-  useEffect(() => {
-    if (!firebaseConfigured) return
-    seedProfilesIfNeeded()
-      .then(fetchProfiles)
-      .then(setProfiles)
-      .catch((err) => console.warn('[Perennia] Failed to load profiles from Firestore:', err))
-  }, [])
-
-  // Once the signed-in member's own natal chart is complete, replace each
-  // discovery profile's bundled mock compatibility score/label with the
-  // real one from the Fusion System backend — so the badge shown in
-  // Discovery/Matches/the orbit hero always matches the detailed report.
-  // Only 6 seed profiles exist, so a full batch is cheap; re-runs only if
-  // the member's own chart actually changes.
-  useEffect(() => {
-    if (!firebaseConfigured || profiles.length === 0) return
-    const { sunSign, moonSign, risingSign, chineseAnimal, chineseElement, yinYang } = onboarding
-    if (!sunSign || !moonSign || !risingSign || !chineseAnimal || !chineseElement || !yinYang) return
-
-    const chartKey = [sunSign, moonSign, risingSign, chineseAnimal, chineseElement, yinYang].join('|')
-    if (resolvedChartKey.current === chartKey) return
-    resolvedChartKey.current = chartKey
-
-    const personA: PersonBirthProfile = { sunSign, moonSign, risingSign, chineseAnimal, chineseElement, yinYang }
-    let cancelled = false
-
-    Promise.all(
-      profiles.map(async (p) => {
-        try {
-          const result = await getCompatibility({
-            personA,
-            personB: {
-              sunSign: p.sunSign,
-              moonSign: p.moonSign,
-              risingSign: p.risingSign,
-              chineseAnimal: p.chineseZodiac,
-              chineseElement: p.chineseElement,
-              yinYang: p.yinYang,
-            },
-          })
-          return { id: p.id, compatibility: result.compatibility, compatibilityLabel: result.band }
-        } catch (err) {
-          console.warn(`[Perennia] Failed to compute real compatibility for ${p.id}:`, err)
-          return null
-        }
-      })
-    ).then((results) => {
-      if (cancelled) return
-      setProfiles((prev) =>
-        prev.map((p) => {
-          const real = results.find((r) => r?.id === p.id)
-          return real ? { ...p, compatibility: real.compatibility, compatibilityLabel: real.compatibilityLabel } : p
-        })
-      )
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [profiles.length, onboarding.sunSign, onboarding.moonSign, onboarding.risingSign, onboarding.chineseAnimal, onboarding.chineseElement, onboarding.yinYang])
 
   // Sync the signed-in user's doc (onboarding fields + like/pass/match state).
   useEffect(() => {
@@ -222,28 +155,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const likeProfile = useCallback(
-    async (id: string) => {
-      const profile = profiles.find((p) => p.id === id)
-      const willMatch = !!profile && profile.compatibility >= 80
-
-      if (firebaseConfigured && user) {
-        await likeProfileRemote(user.uid, id, willMatch)
-      } else {
-        setLikedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
-        if (willMatch) setMatchedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    async (targetUid: string) => {
+      if (!firebaseConfigured || !user) {
+        setLikedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
+        return null
       }
-      if (willMatch) setLastMatchId(id)
-      return willMatch
+      const result = await likeUser(targetUid)
+      setLikedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
+      if (result.matched && result.matchId) {
+        setMatchedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
+        setLastMatchId(result.matchId)
+        return result.matchId
+      }
+      return null
     },
-    [profiles, user]
+    [user]
   )
 
   const passProfile = useCallback(
-    async (id: string) => {
+    async (targetUid: string) => {
       if (firebaseConfigured && user) {
-        await passProfileRemote(user.uid, id)
+        await passProfileRemote(user.uid, targetUid)
       } else {
-        setPassedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+        setPassedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
       }
     },
     [user]
@@ -267,7 +201,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         onboarding,
         updateOnboarding,
-        profiles,
         likedIds,
         passedIds,
         matchedIds,

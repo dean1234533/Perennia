@@ -24,10 +24,11 @@ interface RateLimitDoc {
 export async function assertWithinRateLimit(
   uid: string,
   maxRequests: number,
-  windowSeconds: number
+  windowSeconds: number,
+  bucket?: string
 ): Promise<void> {
   const db = getFirestore()
-  const ref = db.collection(COLLECTION).doc(uid)
+  const ref = db.collection(COLLECTION).doc(bucket ? `${uid}_${bucket}` : uid)
   const now = Date.now()
   const windowMs = windowSeconds * 1000
 
@@ -49,7 +50,7 @@ export async function assertWithinRateLimit(
   })
 
   if (!allowed) {
-    log.warn('rate_limit_exceeded', { uid })
+    log.warn('rate_limit_exceeded', { uid, bucket })
     throw resourceExhausted()
   }
 }

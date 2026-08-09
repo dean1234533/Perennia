@@ -1,20 +1,58 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sparkles, MessageCircle, Compass } from 'lucide-react'
-import { useApp } from '@/context/AppContext'
+import { Sparkles, MessageCircle, Compass, Loader2 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Starfield } from '@/components/shared/Starfield'
 import { SelfAvatar } from '@/components/shared/SelfAvatar'
+import { getMatch, getUserDoc, type DiscoveryCandidate } from '@/lib/firestore'
+
+interface MatchLocationState {
+  otherUid?: string
+  compatibility?: number | null
+}
 
 export function MatchScreen() {
-  const { id } = useParams<{ id: string }>()
+  const { id: matchId } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profiles } = useApp()
-  const profile = id ? profiles.find((p) => p.id === id) : undefined
+  const location = useLocation()
+  const { user } = useAuth()
+  const state = (location.state as MatchLocationState | null) ?? null
+  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
+  const compatibility = state?.compatibility ?? null
 
-  if (!profile) {
+  useEffect(() => {
+    if (!matchId || !user) return
+    let cancelled = false
+
+    async function resolve() {
+      const otherUid = state?.otherUid ?? (await getMatch(matchId!))?.users.find((u) => u !== user!.uid)
+      if (!otherUid) {
+        if (!cancelled) setProfile(null)
+        return
+      }
+      const doc = await getUserDoc(otherUid)
+      if (!cancelled) setProfile(doc ? { uid: otherUid, ...doc } : null)
+    }
+
+    resolve()
+    return () => {
+      cancelled = true
+    }
+  }, [matchId, user, state?.otherUid])
+
+  if (!matchId || profile === null) {
     navigate('/discovery')
     return null
+  }
+
+  if (profile === undefined) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+      </div>
+    )
   }
 
   return (
@@ -53,7 +91,7 @@ export function MatchScreen() {
           initial={{ x: -40, rotate: 6 }}
           animate={{ x: 0, rotate: 6 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          src={profile.images[0]}
+          src={profile.profilePhotoUrl}
           alt={profile.name}
           className="h-32 w-32 rounded-full border-4 border-midnight object-cover shadow-2xl md:h-40 md:w-40"
         />
@@ -81,8 +119,9 @@ export function MatchScreen() {
         transition={{ delay: 0.65 }}
         className="relative z-10 mb-10 max-w-md text-white/60"
       >
-        You and {profile.name.split(' ')[0]} share a {profile.compatibility}% compatibility score.
-        The stars — and the science — agree.
+        {compatibility !== null
+          ? `You and ${profile.name.split(' ')[0]} share a ${compatibility}% compatibility score. The stars — and the science — agree.`
+          : `You and ${profile.name.split(' ')[0]} just matched.`}
       </motion.p>
 
       <motion.div
@@ -91,10 +130,10 @@ export function MatchScreen() {
         transition={{ delay: 0.8 }}
         className="relative z-10 flex flex-col gap-3 sm:flex-row"
       >
-        <Button size="lg" onClick={() => navigate(`/messages/${profile.id}`)}>
+        <Button size="lg" onClick={() => navigate(`/messages/${matchId}`)}>
           <MessageCircle className="h-4 w-4" /> Send a Message
         </Button>
-        <Button size="lg" variant="glass" onClick={() => navigate(`/compatibility/${profile.id}`)}>
+        <Button size="lg" variant="glass" onClick={() => navigate(`/compatibility/${profile.uid}`)}>
           View Compatibility Report
         </Button>
       </motion.div>

@@ -31,10 +31,14 @@ import {
   cacheTtlSeconds,
   stripeSecretKey,
   stripeWebhookSecret,
+  likeRateLimitMaxRequests,
+  likeRateLimitWindowSeconds,
 } from './config/env'
 import { getCompatibilityInputSchema, computeNatalChartInputSchema } from './validation/compatibility.validation'
 import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema } from './validation/founding500.validation'
+import { likeUserInputSchema } from './validation/matching.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
+import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { createVerificationSession, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted } from './services/founding500.service'
@@ -280,6 +284,44 @@ export const createFoundingCheckoutSession = onCall({ secrets: [stripeSecretKey]
   } catch (err) {
     if (err instanceof HttpsError) throw err
     throw internal('createFoundingCheckoutSession failed', err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// likeUser — the ONLY way a like is ever recorded, and the ONLY place a real
+// mutual match (and its conversation) is ever created. A client can never
+// read another user's likedIds, so reciprocity can only be established here,
+// server-side, inside one transaction — see repositories/matching.repository.ts.
+// ---------------------------------------------------------------------------
+export const likeUser = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw unauthenticated('Sign in to like someone.')
+  }
+
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+
+  const { targetUid } = parsed.data
+  if (targetUid === request.auth.uid) {
+    throw invalidArgument('You cannot like yourself.')
+  }
+
+  await assertWithinRateLimit(
+    request.auth.uid,
+    Number(likeRateLimitMaxRequests.value()),
+    Number(likeRateLimitWindowSeconds.value()),
+    'like'
+  )
+
+  try {
+    const result = await recordLike(request.auth.uid, targetUid)
+    log.info('like_recorded', { uid: request.auth.uid, matched: result.matched })
+    return result
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('likeUser failed', err)
   }
 })
 
