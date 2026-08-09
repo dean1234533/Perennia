@@ -32,6 +32,7 @@ export function AboutYouDetails() {
 function AboutYouForm() {
   const navigate = useNavigate()
   const { onboarding, updateOnboarding, profileExtras, updateProfileExtras } = useApp()
+  const [name, setName] = useState(onboarding.name)
   const [heightCm, setHeightCm] = useState(onboarding.heightCm ? String(onboarding.heightCm) : '')
   const [country, setCountry] = useState(onboarding.country)
   const [city, setCity] = useState(onboarding.city)
@@ -40,13 +41,14 @@ function AboutYouForm() {
   const [religion, setReligion] = useState(onboarding.religion)
   const [saving, setSaving] = useState(false)
 
-  const canContinue = city.trim() && country.trim()
+  const canContinue = name.trim() && city.trim() && country.trim()
 
   const handleContinue = async () => {
     if (!canContinue) return
     setSaving(true)
 
     const onboardingPatch: Partial<OnboardingData> = {
+      name: name.trim(),
       heightCm: heightCm ? Number(heightCm) : null,
       country: country.trim(),
       city: city.trim(),
@@ -86,6 +88,10 @@ function AboutYouForm() {
       <p className="mb-8 text-sm text-white/55">Real information — this is what other members will see.</p>
 
       <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="name">First Name</Label>
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Eleanor" />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="city">City</Label>

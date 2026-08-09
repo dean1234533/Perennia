@@ -4,7 +4,6 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile,
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
@@ -18,7 +17,9 @@ interface AuthContextValue {
   user: User | null
   loading: boolean
   authReady: boolean
-  signUp: (name: string, email: string, password: string) => Promise<User>
+  /** Account creation is now email/password only — real name is collected
+   *  later, in the "About You" onboarding step, not at signup. */
+  signUp: (email: string, password: string) => Promise<User>
   logIn: (email: string, password: string) => Promise<User>
   logOut: () => Promise<void>
   /** Reauthenticates with the current password, then sets the new one —
@@ -48,10 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub
   }, [])
 
-  const signUp = async (name: string, email: string, password: string) => {
+  const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password)
-    await updateProfile(cred.user, { displayName: name })
-    await ensureUserDoc(cred.user.uid, { name, email })
+    await ensureUserDoc(cred.user.uid, { name: '', email })
     setUser(cred.user)
     return cred.user
   }
