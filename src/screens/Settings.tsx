@@ -32,21 +32,21 @@ function Row({
   const content = (
     <>
       <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5">
-          <Icon className="h-4 w-4 text-champagne" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gold/10 bg-gold/5">
+          <Icon className="h-4 w-4 text-gold" />
         </div>
         <div className="text-left">
           <p className="text-sm font-medium text-white">{label}</p>
           {description && <p className="text-xs text-white/40">{description}</p>}
         </div>
       </div>
-      {right ?? (onClick && <ChevronRight className="h-4 w-4 text-white/25" />)}
+      {right ?? (onClick && <ChevronRight className="h-4 w-4 text-white/25 transition-transform group-hover:translate-x-0.5" />)}
     </>
   )
 
   if (onClick) {
     return (
-      <button onClick={onClick} className="flex w-full items-center justify-between gap-4 py-4 text-left cursor-pointer">
+      <button onClick={onClick} className="group -mx-2 flex w-full items-center justify-between gap-4 rounded-2xl px-2 py-4 text-left transition-colors hover:bg-white/[0.03] cursor-pointer">
         {content}
       </button>
     )
@@ -322,8 +322,8 @@ export function Settings() {
         },
       ].map((section) => (
         <motion.div key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.delay }}>
-          <p className="mb-2 mt-6 text-xs font-medium uppercase tracking-widest text-white/35">{section.title}</p>
-          <Card>
+          <p className="mb-3 mt-8 text-xs uppercase tracking-[0.25em] text-gold/60">{section.title}</p>
+          <Card className="border-white/5">
             <CardContent className="divide-y divide-transparent px-5 py-1">{section.content}</CardContent>
           </Card>
         </motion.div>
