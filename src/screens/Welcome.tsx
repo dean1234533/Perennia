@@ -65,11 +65,13 @@ export function Welcome() {
       {/* ============ HERO ============ */}
       <section className="relative min-h-[92vh] overflow-hidden sm:min-h-screen">
         {/* Full-bleed cover — the artwork's own text sits in the upper
-            ~60-65%. The button block below is positioned at a fixed
-            PERCENTAGE of the section (not a fixed pixel height glued to
-            the bottom edge), so it scales with viewport height instead of
-            leaving a growing gap on tall/wide desktop screens while still
-            clearing the text on short mobile ones. */}
+            ~60-65%, with a naturally dark, empty starfield below it
+            already — no extra darkening overlay needed there, the buttons'
+            own backgrounds give them plenty of contrast on their own. The
+            button block is positioned at a fixed PERCENTAGE of the section
+            (not a pixel height glued to the bottom edge), so it scales
+            with viewport height instead of leaving a growing/shrinking gap
+            on different screens, with real margin left below it. */}
         <img
           src="/landingPage-Mobile1.JPG"
           alt=""
@@ -80,13 +82,12 @@ export function Welcome() {
           alt=""
           className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
         />
-        <div className="absolute inset-x-0 bottom-0 top-[58%] bg-gradient-to-b from-transparent via-midnight/75 to-midnight" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-x-0 top-[70%] z-10 flex flex-col items-center px-6 text-center"
+          className="absolute inset-x-0 top-[75%] z-10 flex flex-col items-center px-6 text-center"
         >
           <h1 className="sr-only">Perennia</h1>
           <p className="sr-only">For Love That Fits, Naturally.</p>
