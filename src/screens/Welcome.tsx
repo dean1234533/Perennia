@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Sparkles, ArrowRight, Heart, Infinity as InfinityIcon, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
-import { editorial } from '@/data/editorial-images'
 
 const principles = [
   {
@@ -65,14 +64,22 @@ export function Welcome() {
 
       {/* ============ HERO ============ */}
       <section className="relative flex min-h-[92vh] flex-col items-center justify-end overflow-hidden px-6 pb-16 pt-8 text-center sm:min-h-screen">
+        {/* The supplied artwork already bakes in the heart + "Perennia"
+            wordmark + divider, so the real h1 below is visually hidden
+            (sr-only) rather than duplicated on screen — screen readers and
+            search engines still get real text, not just a JPG. */}
         <img
-          src="/1.JPG"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-top"
+          src="/landingPage-Mobile1.JPG"
+          alt="Perennia"
+          className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
         />
-        {/* Fades the artwork's own lower text/buttons into solid midnight so
-            real, accessible copy renders there instead — the constellation
-            heart at the top stays fully visible. */}
+        <img
+          src="/landingPage-Desktop1.JPG"
+          alt="Perennia"
+          className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
+        />
+        {/* Fades the artwork's lower empty starfield into solid midnight so
+            real, accessible copy renders there instead. */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-midnight/55 to-midnight" />
 
         <motion.div
@@ -81,9 +88,7 @@ export function Welcome() {
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 flex flex-col items-center"
         >
-          <h1 className="font-serif-display text-5xl tracking-wide text-gradient-gold md:text-7xl">
-            Perennia
-          </h1>
+          <h1 className="sr-only">Perennia</h1>
 
           <p className="mt-5 text-sm uppercase tracking-[0.3em] text-gold/80 md:text-base">
             For Love That Fits, Naturally.
@@ -114,7 +119,8 @@ export function Welcome() {
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
       <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
-        <img src="/2.JPG" alt="" className="h-full w-full object-cover" />
+        <img src="/landingPage-Mobile2.JPG" alt="" className="h-full w-full object-cover md:hidden" />
+        <img src="/landingPage-Desktop2.JPG" alt="" className="hidden h-full w-full object-cover md:block" />
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-xl px-6 md:px-16">
@@ -149,7 +155,8 @@ export function Welcome() {
       {/* ============ RARE ALIGNMENT ============ */}
       <section className="relative z-10">
         <div className="relative h-[55vh] min-h-[380px] w-full overflow-hidden">
-          <img src="/3.JPG" alt="" className="h-full w-full object-cover object-top" />
+          <img src="/landingPage-Mobile3.JPG" alt="" className="h-full w-full object-cover object-top md:hidden" />
+          <img src="/landingPage-Desktop3.JPG" alt="" className="hidden h-full w-full object-cover object-top md:block" />
           <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/10 to-transparent" />
         </div>
 
@@ -183,9 +190,10 @@ export function Welcome() {
         </div>
       </section>
 
-      {/* ============ FINAL CTA — cinematic sunset, full bleed ============ */}
+      {/* ============ FINAL CTA — cinematic city skyline, full bleed ============ */}
       <section className="relative z-10 h-[70vh] min-h-[480px] w-full overflow-hidden">
-        <img src={editorial.cinematicSunset} alt="Cinematic sunset" className="h-full w-full object-cover" />
+        <img src="/landingPage-Mobile4.JPG" alt="" className="h-full w-full object-cover md:hidden" />
+        <img src="/landingPage-Desktop4.JPG" alt="" className="hidden h-full w-full object-cover md:block" />
         <div className="absolute inset-0 bg-midnight/55" />
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
