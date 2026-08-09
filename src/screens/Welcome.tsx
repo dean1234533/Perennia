@@ -148,7 +148,7 @@ export function Welcome() {
       <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden bg-midnight sm:min-h-[80vh]">
         <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover md:hidden" />
         <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." className="absolute inset-0 hidden h-full w-full object-cover md:block" />
-        <div className="absolute inset-x-0 top-[78%] z-10 flex justify-center px-6">
+        <div className="absolute inset-x-0 top-[77%] z-10 flex justify-center px-6 md:top-[57%]">
           <Button size="lg" onClick={() => navigate('/signup')} className="group">
             Begin Your Story
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
