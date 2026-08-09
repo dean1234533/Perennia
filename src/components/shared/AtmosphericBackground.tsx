@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react'
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { motion, useMotionValue, useSpring, useTransform, useReducedMotion } from 'framer-motion'
 
 interface Star {
   x: number
@@ -48,6 +48,7 @@ export function AtmosphericBackground() {
   const stars = useMemo(() => makeSparseStars(22), [])
   const particles = useMemo(() => makeParticles(7), [])
   const containerRef = useRef<HTMLDivElement>(null)
+  const reducedMotion = useReducedMotion()
 
   const mouseX = useMotionValue(0.5)
   const mouseY = useMotionValue(0.35)
@@ -57,6 +58,7 @@ export function AtmosphericBackground() {
   const reflectionY = useTransform(smoothY, (v) => `${v * 100}%`)
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (reducedMotion) return
     const rect = containerRef.current?.getBoundingClientRect()
     if (!rect) return
     mouseX.set((e.clientX - rect.left) / rect.width)
@@ -138,14 +140,14 @@ export function AtmosphericBackground() {
             r={s.size}
             fill="#f8f5f0"
             opacity={s.opacity}
-            className="animate-twinkle"
-            style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }}
+            className={reducedMotion ? undefined : 'animate-twinkle'}
+            style={reducedMotion ? undefined : { animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }}
           />
         ))}
       </svg>
 
       {/* Sparse floating particles */}
-      {particles.map((p, i) => (
+      {!reducedMotion && particles.map((p, i) => (
         <motion.span
           key={i}
           className="absolute rounded-full blur-[1px]"

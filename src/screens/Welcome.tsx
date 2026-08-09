@@ -1,32 +1,25 @@
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Moon, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Sparkles, ArrowRight, Heart, Infinity as InfinityIcon, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { editorial } from '@/data/editorial-images'
-import { subscribeFounding500Config } from '@/lib/founding500'
-import type { Founding500Config } from '@/types/founding500'
-import {
-  CosmicProfileMockup, CompatibilityMockup, MessagingMockup,
-  VerificationMockup, ProfileMockup, MatchesMockup,
-} from '@/components/shared/ProductMockups'
 
-const howItWorks = [
+const principles = [
   {
-    n: '01',
-    title: 'Build Your Real Profile',
-    body: 'Your birth details, lifestyle, values, and story — real information, not a swipe deck of photos.',
+    icon: Heart,
+    title: 'Meaningful Connections',
+    body: 'Focused on genuine compatibility and lasting bonds.',
   },
   {
-    n: '02',
-    title: 'Verify Your Identity',
-    body: 'A real document scan and liveness check through Stripe Identity, so a verified badge always means a real person.',
+    icon: InfinityIcon,
+    title: 'Built for Lasting Love',
+    body: 'Not simply matches, but relationships with the potential to grow and endure.',
   },
   {
-    n: '03',
-    title: 'See Your Real Compatibility',
-    body: 'Six weighted dimensions — astrological and personal — calculated for every real introduction, never a random number.',
+    icon: ShieldCheck,
+    title: 'Intentional and Safe',
+    body: 'A trusted environment for people serious about building a future.',
   },
 ]
 
@@ -44,11 +37,13 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
   )
 }
 
+// The public landing page's job is to make someone want to see what Perennia
+// is — not to demonstrate the product. Deliberately just 5 sections; the
+// astrology/compatibility mechanics, verification flow, discovery, profile
+// orbit, and messaging are all real, but they're discoveries you make after
+// joining, not marketing copy before it.
 export function Welcome() {
   const navigate = useNavigate()
-  const [founding500Config, setFounding500Config] = useState<Founding500Config | null>(null)
-
-  useEffect(() => subscribeFounding500Config(setFounding500Config), [])
 
   return (
     <div className="relative overflow-hidden bg-midnight text-white">
@@ -56,103 +51,71 @@ export function Welcome() {
         <AtmosphericBackground />
       </div>
 
-      {/* Founding 500 announcement banner */}
-      <motion.button
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        onClick={() => navigate('/founding-500')}
-        className="group relative z-20 flex w-full cursor-pointer items-center justify-center gap-2 bg-gradient-to-r from-gold/20 via-champagne/25 to-gold/20 px-4 py-2.5 text-center text-xs font-medium text-champagne transition-colors hover:from-gold/30 hover:via-champagne/35 hover:to-gold/30 sm:text-sm"
-      >
-        <Sparkles className="h-3.5 w-3.5 shrink-0 text-gold" />
-        <span>
-          <span className="hidden sm:inline">Introducing the </span>Founding 500 — join us at the beginning
-        </span>
-        <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" />
-      </motion.button>
-
-      {/* Nav */}
+      {/* Nav — wordmark + the one login action. No signup button here; the
+          only place to join is the hero's primary CTA. */}
       <header className="relative z-20 flex items-center justify-between px-6 py-6 md:px-12">
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-gold" />
           <span className="font-serif-display text-2xl text-gradient-gold">Perennia</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-            Log In
-          </Button>
-          <Button variant="gold" size="sm" onClick={() => navigate('/signup')}>
-            Join Perennia
-          </Button>
-        </div>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+          Log In
+        </Button>
       </header>
 
       {/* ============ HERO ============ */}
-      <section className="relative z-10 flex flex-col items-center px-6 pb-20 pt-16 text-center md:pt-24">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="mb-6 inline-flex items-center gap-2 rounded-full glass border-lavender/20 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-champagne/80"
-        >
-          <Moon className="h-3.5 w-3.5 text-lavender" />
-          Compatibility-First Dating
-        </motion.div>
+      <section className="relative flex min-h-[92vh] flex-col items-center justify-end overflow-hidden px-6 pb-16 pt-8 text-center sm:min-h-screen">
+        <img
+          src="/1.JPG"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-top"
+        />
+        {/* Fades the artwork's own lower text/buttons into solid midnight so
+            real, accessible copy renders there instead — the constellation
+            heart at the top stays fully visible. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-midnight/55 to-midnight" />
 
-        <motion.h1
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif-display max-w-4xl text-5xl font-medium leading-[1.05] md:text-7xl"
+          className="relative z-10 flex flex-col items-center"
         >
-          For Love That Fits, <span className="text-gradient-gold italic">Naturally.</span>
-        </motion.h1>
+          <h1 className="font-serif-display text-5xl tracking-wide text-gradient-gold md:text-7xl">
+            Perennia
+          </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.25 }}
-          className="mt-6 max-w-xl text-lg text-white/60"
-        >
-          Perennia pairs the science of compatibility with the wonder of astrology to introduce
-          you to people you were truly meant to meet.
-        </motion.p>
+          <p className="mt-5 text-sm uppercase tracking-[0.3em] text-gold/80 md:text-base">
+            For Love That Fits, Naturally.
+          </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.4 }}
-          className="mt-10 flex flex-col gap-4 sm:flex-row"
-        >
-          <Button size="lg" onClick={() => navigate('/signup')} className="group">
-            Begin Your Story
-            <motion.span
-              className="inline-block"
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              →
-            </motion.span>
-          </Button>
-          <Button size="lg" variant="glass" onClick={() => navigate('/login')}>
-            I Already Have an Account
-          </Button>
+          <p className="mt-6 max-w-lg text-base leading-relaxed text-white/60 md:text-lg">
+            Perennia combines a structured compatibility system with astrological insight to
+            introduce you to people with genuine long-term potential.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+            <Button size="lg" onClick={() => navigate('/signup')} className="group">
+              Begin Your Story
+              <motion.span
+                className="inline-block"
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                →
+              </motion.span>
+            </Button>
+            <Button size="lg" variant="ghost" onClick={() => navigate('/login')}>
+              Log In
+            </Button>
+          </div>
         </motion.div>
       </section>
 
-      {/* ============ EDGE-TO-EDGE CINEMATIC COUPLE IMAGE ============ */}
-      <section className="relative z-10 h-[80vh] min-h-[560px] w-full overflow-hidden">
-        <motion.img
-          initial={{ scale: 1.08 }}
-          whileInView={{ scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
-          src={editorial.coupleGoldenLight}
-          alt="Two people at golden hour"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/45 to-midnight/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-midnight/85 via-midnight/30 to-transparent" />
+      {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
+      <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
+        <img src="/2.JPG" alt="" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-xl px-6 md:px-16">
             <FadeUp>
@@ -167,168 +130,57 @@ export function Welcome() {
         </div>
       </section>
 
-      {/* ============ HOW COMPATIBILITY WORKS — split, text left ============ */}
-      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 md:py-32 lg:grid-cols-2 lg:gap-20">
+      {/* ============ COMPATIBILITY FIRST ============ */}
+      <section className="relative z-10 mx-auto max-w-2xl px-6 py-24 text-center md:py-32">
         <FadeUp>
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Your Cosmic Profile</p>
+          <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/70">Compatibility First</p>
           <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
-            Compatibility begins with <span className="text-gradient-gold italic">who you are</span>
+            Meet fewer people.
+            <br />
+            Meet <span className="text-gradient-gold italic">people who fit</span>.
           </h2>
-          <p className="mb-8 max-w-md text-white/55 leading-relaxed">
-            Your birth details, values, and story shape a profile far richer than a list of
-            hobbies — the foundation every introduction we make is built on.
+          <p className="text-white/55 leading-relaxed">
+            Perennia is designed to introduce you to people with stronger natural compatibility
+            and genuine potential for something lasting.
           </p>
-          <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
-            Build Your Profile <ArrowRight className="h-4 w-4" />
-          </Button>
-        </FadeUp>
-        <FadeUp delay={0.15}>
-          <CosmicProfileMockup />
         </FadeUp>
       </section>
 
-      {/* ============ COMPATIBILITY REPORT — full-width showcase ============ */}
-      <section className="relative z-10 px-6 py-24 md:py-32">
-        <FadeUp className="mx-auto mb-14 max-w-2xl text-center">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">The Compatibility Report</p>
-          <h2 className="font-serif-display text-4xl leading-tight md:text-5xl">
-            Not a guess. <span className="text-gradient-gold italic">A calculation.</span>
-          </h2>
-          <p className="mt-5 text-white/55 leading-relaxed">
-            Six dimensions of alignment — emotional, intellectual, and astrological — distilled
-            into a single, honest number before you ever say hello.
-          </p>
-        </FadeUp>
-        <FadeUp delay={0.1} className="mx-auto max-w-2xl">
-          <CompatibilityMockup />
-        </FadeUp>
-      </section>
+      {/* ============ RARE ALIGNMENT ============ */}
+      <section className="relative z-10">
+        <div className="relative h-[55vh] min-h-[380px] w-full overflow-hidden">
+          <img src="/3.JPG" alt="" className="h-full w-full object-cover object-top" />
+          <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/10 to-transparent" />
+        </div>
 
-      {/* ============ PROFILE SHOWCASE — split, image left ============ */}
-      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 md:py-32 lg:grid-cols-2 lg:gap-20">
-        <FadeUp className="order-2 lg:order-1">
-          <ProfileMockup />
-        </FadeUp>
-        <FadeUp delay={0.15} className="order-1 lg:order-2">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Discovery, Reimagined</p>
-          <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
-            Explore someone's world, <span className="text-gradient-gold italic">not their résumé</span>
-          </h2>
-          <p className="mb-8 max-w-md text-white/55 leading-relaxed">
-            Full-screen galleries, rich profiles, and a curated collection instead of an endless
-            feed — a handful of people worth actually getting to know.
-          </p>
-          <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
-            See How It Works <ArrowRight className="h-4 w-4" />
-          </Button>
-        </FadeUp>
-      </section>
+        <div className="mx-auto max-w-4xl px-6 pb-24 pt-4 text-center md:pb-32">
+          <FadeUp>
+            <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/70">Rare Alignment</p>
+            <h2 className="font-serif-display mb-16 text-3xl leading-snug italic md:text-5xl">
+              Rare alignment isn't a feature.
+              <br />
+              <span className="text-gradient-gold">It's a feeling.</span>
+            </h2>
+          </FadeUp>
 
-      {/* ============ HANDS TOUCHING — full bleed emotional beat ============ */}
-      <section className="relative z-10 h-[60vh] min-h-[420px] w-full overflow-hidden">
-        <img src={editorial.handsTouching} alt="Two hands touching" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-midnight/30" />
-        <div className="absolute inset-0 flex items-end justify-center pb-16">
-          <FadeUp className="text-center">
-            <p className="font-serif-display text-2xl italic text-champagne [text-shadow:0_2px_16px_rgba(0,0,0,0.8)] md:text-3xl">
-              "Rare alignment isn't a feature. It's a feeling."
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-6">
+            {principles.map((p, i) => (
+              <FadeUp key={p.title} delay={i * 0.1} className="flex flex-col items-center sm:border-l sm:border-white/10 sm:first:border-l-0 sm:px-4">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 bg-gold/5">
+                  <p.icon className="h-5 w-5 text-gold" />
+                </div>
+                <h3 className="font-serif-display mb-2 text-lg text-champagne">{p.title}</h3>
+                <p className="text-sm leading-relaxed text-white/50">{p.body}</p>
+              </FadeUp>
+            ))}
+          </div>
+
+          <FadeUp delay={0.3} className="mt-16">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/35">
+              Every member is identity verified before appearing in Discovery.
             </p>
           </FadeUp>
         </div>
-      </section>
-
-      {/* ============ MESSAGING — split, text left ============ */}
-      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 md:py-32 lg:grid-cols-2 lg:gap-20">
-        <FadeUp>
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Conversation, Elevated</p>
-          <h2 className="font-serif-display mb-6 text-4xl leading-tight md:text-5xl">
-            Say something <span className="text-gradient-gold italic">worth reading</span>
-          </h2>
-          <p className="mb-8 max-w-md text-white/55 leading-relaxed">
-            A messaging experience built for intention — real conversations with real read
-            receipts, only ever between people who've actually matched.
-          </p>
-          <Button variant="link" onClick={() => navigate('/signup')} className="text-base">
-            Start Talking <ArrowRight className="h-4 w-4" />
-          </Button>
-        </FadeUp>
-        <FadeUp delay={0.15}>
-          <MessagingMockup />
-        </FadeUp>
-      </section>
-
-      {/* ============ VERIFICATION + MATCHES — asymmetric two-up ============ */}
-      <section className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 py-24 md:py-32 md:grid-cols-5">
-        <FadeUp className="md:col-span-3">
-          <VerificationMockup />
-        </FadeUp>
-        <FadeUp delay={0.12} className="md:col-span-2">
-          <MatchesMockup />
-        </FadeUp>
-      </section>
-
-      {/* ============ HOW IT WORKS ============ */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:py-32">
-        <FadeUp className="mb-16 text-center">
-          <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">How Perennia Works</p>
-          <h2 className="font-serif-display text-4xl md:text-5xl">
-            Perennia gets to know <span className="text-gradient-gold italic">you</span> first.
-          </h2>
-        </FadeUp>
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
-          {howItWorks.map((step, i) => (
-            <FadeUp key={step.n} delay={i * 0.12}>
-              <p className="font-serif-display text-gradient-gold mb-4 text-3xl">{step.n}</p>
-              <h3 className="font-serif-display mb-3 text-xl text-champagne">{step.title}</h3>
-              <p className="text-sm leading-relaxed text-white/55">{step.body}</p>
-            </FadeUp>
-          ))}
-        </div>
-      </section>
-
-      {/* ============ LUXURY CITY — real, live Founding 500 numbers ============ */}
-      <section className="relative z-10 w-full overflow-hidden">
-        <div className="relative min-h-[70vh]">
-          <img src={editorial.citySkyline} alt="City at golden hour" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-midnight/80" />
-          <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/70 to-midnight/40" />
-          <div className="relative flex min-h-[70vh] flex-col items-center justify-center px-6 py-24 text-center">
-            <FadeUp>
-              <p className="mb-6 text-xs uppercase tracking-[0.3em] text-gold/80">Built On Intention</p>
-            </FadeUp>
-            <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-16">
-              <FadeUp>
-                <p className="font-serif-display text-gradient-gold text-5xl md:text-6xl">
-                  {founding500Config ? founding500Config.currentMemberCount : '—'}
-                </p>
-                <p className="mt-3 text-xs uppercase tracking-widest text-white/50">
-                  Founding Members{founding500Config ? ` of ${founding500Config.memberLimit}` : ''}
-                </p>
-              </FadeUp>
-              <FadeUp delay={0.12}>
-                <ShieldCheck className="mx-auto h-9 w-9 text-gold md:h-11 md:w-11" />
-                <p className="mt-3 text-xs uppercase tracking-widest text-white/50">Real Identity Verification</p>
-              </FadeUp>
-              <FadeUp delay={0.24}>
-                <p className="font-serif-display text-gradient-gold text-5xl md:text-6xl">6</p>
-                <p className="mt-3 text-xs uppercase tracking-widest text-white/50">Dimensions Analyzed Per Match</p>
-              </FadeUp>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ OUR PROMISE ============ */}
-      <section className="relative z-10 mx-auto max-w-4xl px-6 py-24 text-center md:py-32">
-        <FadeUp>
-          <Sparkles className="mx-auto mb-6 h-6 w-6 text-gold/60" />
-          <h2 className="font-serif-display mb-6 text-3xl leading-snug md:text-4xl">
-            "We're building Perennia as our own first members —
-            <br className="hidden md:block" />
-            every introduction has to be one we'd want ourselves."
-          </h2>
-          <p className="text-sm text-white/40">The Perennia Team</p>
-        </FadeUp>
       </section>
 
       {/* ============ FINAL CTA — cinematic sunset, full bleed ============ */}
@@ -342,10 +194,11 @@ export function Welcome() {
               Your Story Deserves a <span className="text-gradient-gold italic">Beautiful Beginning</span>
             </h2>
             <p className="mx-auto mb-10 max-w-md text-white/65 [text-shadow:0_2px_12px_rgba(0,0,0,0.7)]">
-              Join the Founding 500 — written in the stars, grounded in reality.
+              Ready to discover a different way to meet someone?
             </p>
-            <Button size="lg" onClick={() => navigate('/signup')}>
+            <Button size="lg" onClick={() => navigate('/signup')} className="group">
               Begin Your Story
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Button>
           </FadeUp>
         </div>

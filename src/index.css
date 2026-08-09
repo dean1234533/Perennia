@@ -52,6 +52,21 @@
   50% { transform: translate(2%, -2%) scale(1.06); opacity: 1; }
 }
 
+/* Ambient celestial motion (twinkling stars, drifting nebula, floating
+ * particles) should stop for anyone who's asked for reduced motion —
+ * content, buttons and page-transition animations are untouched, this
+ * only targets the background atmosphere. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-twinkle,
+  .animate-drift,
+  .animate-drift-slow,
+  .animate-float,
+  .animate-pulse-glow,
+  .animate-haze {
+    animation: none !important;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
