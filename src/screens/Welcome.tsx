@@ -63,21 +63,31 @@ export function Welcome() {
       </header>
 
       {/* ============ HERO ============ */}
-      <section className="relative flex flex-col items-center px-6 pb-16 pt-10 text-center sm:pt-14">
-        {/* The supplied artwork already bakes in the heart, "Perennia"
-            wordmark, divider, tagline, and description — shown at its
-            natural aspect ratio (never cropped) so nothing in it is ever
-            hidden or guessed at. The real buttons live in genuinely
-            separate space below, not overlaid on top of it, so they can
-            never collide with the artwork's own text on any device. */}
-        <img src="/landingPage-Mobile1.JPG" alt="" className="w-full max-w-[420px] md:hidden" />
-        <img src="/landingPage-Desktop1.JPG" alt="" className="hidden w-full max-w-2xl md:block" />
+      <section className="relative flex min-h-[92vh] flex-col items-center justify-end overflow-hidden px-6 pb-10 text-center sm:min-h-screen sm:pb-14">
+        {/* Full-bleed cover, exactly like before — the artwork's own text
+            sits in the upper ~2/3, with a generous empty starfield margin
+            below it. Instead of guessing a percentage of the (cropped,
+            variably-scaled) image where that text ends, the button scrim
+            below is a FIXED pixel height anchored to the true bottom edge
+            of the screen — that stays predictable regardless of viewport
+            aspect ratio or how much the browser crops/scales the image. */}
+        <img
+          src="/landingPage-Mobile1.JPG"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
+        />
+        <img
+          src="/landingPage-Desktop1.JPG"
+          alt=""
+          className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-midnight via-midnight/85 to-transparent sm:h-64" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 -mt-2 flex flex-col items-center sm:-mt-4"
+          className="relative z-10 flex flex-col items-center"
         >
           <h1 className="sr-only">Perennia</h1>
           <p className="sr-only">For Love That Fits, Naturally.</p>
