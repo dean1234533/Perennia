@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
-import { BrandMark } from '@/components/shared/BrandMark'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 
 export function OnboardingShell({
   children,
@@ -19,10 +19,11 @@ export function OnboardingShell({
       </div>
 
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-6 py-8 sm:py-10">
-        {/* The same header sits on every onboarding screen, so it should
-            read as one continuous journey rather than a generic multi-step
-            form. */}
-        <BrandMark />
+        {/* The same celestial heart sits on every onboarding screen, so it
+            reads as a consistent marker that you're still inside the
+            Perennia setup journey — it's onboarding-only, not part of the
+            regular app chrome once a member is through it. */}
+        <CelestialHeart className="mb-5 h-16 w-16 sm:h-20 sm:w-20" />
 
         {step !== undefined && totalSteps !== undefined && (
           <div className="relative mb-8 flex w-full max-w-sm items-center gap-1.5 sm:mb-10">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ShieldCheck, CheckCircle2, Loader2, AlertTriangle, Clock, ExternalLink } from 'lucide-react'
+import { ShieldCheck, IdCard, CheckCircle2, Loader2, AlertTriangle, Clock, ExternalLink, UploadCloud, Camera } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
 import { useApp } from '@/context/AppContext'
@@ -54,8 +54,17 @@ export function Verify() {
 
   const showNotConfigured = stage === 'not-configured' || !identityVerificationConfigured
 
+  const showIntro = remoteStatus !== 'verified' && stage !== 'pending-webhook' && !showNotConfigured
+
   return (
     <OnboardingShell step={3} totalSteps={12}>
+      {showIntro && (
+        <div className="mb-8 text-center">
+          <h1 className="font-serif-display text-3xl sm:text-4xl">Verify Your Identity</h1>
+          <p className="mt-2 text-sm text-white/55">Keep our community safe with verified profiles</p>
+        </div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -123,15 +132,16 @@ export function Verify() {
 
           {remoteStatus !== 'verified' && stage !== 'pending-webhook' && !showNotConfigured && (
             <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold/10">
-                <ShieldCheck className="h-8 w-8 text-gold" />
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gold/10">
+                <IdCard className="h-8 w-8 text-gold" strokeWidth={1.5} />
               </div>
-              <h1 className="font-serif-display mb-2 text-3xl">Identity Verification</h1>
-              <p className="mb-8 text-sm leading-relaxed text-white/55">
-                Every Perennia member is verified through Stripe Identity — a real document scan,
-                live selfie, and liveness/anti-spoof check. It's how we keep this a space of real
-                people, real intentions.
+              <h2 className="font-serif-display mb-2 text-2xl">Choose Verification Method</h2>
+              <p className="mb-6 text-sm leading-relaxed text-white/55">
+                Upload or scan your government-issued ID. Perennia never sees the raw document or
+                your biometric data — Stripe Identity handles the real document scan, live selfie,
+                and face match, then tells us only the result.
               </p>
+
               {remoteStatus === 'failed' && (
                 <p className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-300">
                   Your last verification attempt didn't pass. You can try again.
@@ -142,20 +152,47 @@ export function Verify() {
                   {errorMessage}
                 </p>
               )}
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handleStart}
-                disabled={stage === 'launching' || !firebaseConfigured || !user}
-              >
-                {stage === 'launching' ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Opening Stripe Identity…</>
-                ) : (
-                  'Start Verification'
-                )}
-              </Button>
+
+              <div className="flex flex-col gap-3 text-left">
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={stage === 'launching' || !firebaseConfigured || !user}
+                  className="flex w-full items-center gap-4 rounded-2xl border border-dashed border-white/25 px-5 py-4 transition-colors hover:border-gold/50 hover:bg-white/[0.03] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                >
+                  <UploadCloud className="h-6 w-6 shrink-0 text-white/70" strokeWidth={1.5} />
+                  <span>
+                    <span className="block font-medium text-white">Upload ID Photo</span>
+                    <span className="block text-xs text-white/45">Passport, driving licence, or provisional</span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={stage === 'launching' || !firebaseConfigured || !user}
+                  className="flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-gold to-champagne px-5 py-4 text-midnight shadow-[0_0_24px_-6px_rgba(229,192,123,0.6)] transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
+                >
+                  <Camera className="h-6 w-6 shrink-0" strokeWidth={1.5} />
+                  <span>
+                    <span className="block font-medium">Scan with Camera</span>
+                    <span className="block text-xs text-midnight/70">Use your device camera</span>
+                  </span>
+                </button>
+              </div>
+
+              {stage === 'launching' && (
+                <p className="mt-5 flex items-center justify-center gap-2 text-xs text-white/45">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Opening secure verification window…
+                </p>
+              )}
+
+              <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-white/35">
+                <ShieldCheck className="h-3.5 w-3.5" /> You must upload or scan a valid photo ID to continue
+              </p>
+
               {(!firebaseConfigured || !user) && (
-                <p className="mt-3 text-xs text-white/35">Sign in with a real account to verify your identity.</p>
+                <p className="mt-3 text-center text-xs text-white/35">Sign in with a real account to verify your identity.</p>
               )}
             </motion.div>
           )}
