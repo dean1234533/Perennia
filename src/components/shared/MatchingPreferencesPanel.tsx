@@ -1,14 +1,19 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Loader2, Check } from 'lucide-react'
+import { MapPin, Loader2, Check, ChevronDown } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { DualRangeSlider } from '@/components/ui/dual-range-slider'
 import { geocodeLocation } from '@/lib/geocodeApi'
 import { useAuth } from '@/context/AuthContext'
 import { setCurrentLocationRemote, updateUserDoc } from '@/lib/firestore'
+import { RELATIONSHIP_GOALS } from '@/data/relationshipGoals'
+import { LIFESTYLE_CATEGORIES } from '@/data/lifestyleOptions'
 
 const DISTANCE_OPTIONS = [5, 10, 25, 50, 100, null] as const
+const WANTS_CHILDREN_OPTIONS = LIFESTYLE_CATEGORIES.find((c) => c.label === 'Wants Children')?.options ?? []
 
 function distanceLabel(miles: number | null) {
   return miles === null ? 'Anywhere' : `${miles} miles`
@@ -24,6 +29,10 @@ export function MatchingPreferencesPanel({ onSaved }: { onSaved?: () => void }) 
   const [ageMin, setAgeMin] = useState(onboarding.preferences.ageMin)
   const [ageMax, setAgeMax] = useState(onboarding.preferences.ageMax)
   const [maxDistance, setMaxDistance] = useState<number | null>(onboarding.preferences.maxDistanceMiles)
+  const [relationshipGoal, setRelationshipGoal] = useState<string | null>(onboarding.preferences.relationshipGoal)
+  const [wantsChildren, setWantsChildren] = useState<string | null>(onboarding.preferences.wantsChildren)
+  const [religion, setReligion] = useState(onboarding.preferences.religion)
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
   const [locationInput, setLocationInput] = useState(
     onboarding.city && onboarding.country ? `${onboarding.city}, ${onboarding.country}` : ''
   )
@@ -50,7 +59,7 @@ export function MatchingPreferencesPanel({ onSaved }: { onSaved?: () => void }) 
 
   const handleSave = async () => {
     setSaving(true)
-    await updatePreferences({ ageMin, ageMax, maxDistanceMiles: maxDistance })
+    await updatePreferences({ ageMin, ageMax, maxDistanceMiles: maxDistance, relationshipGoal, wantsChildren, religion: religion.trim() })
     setSaving(false)
     onSaved?.()
   }
@@ -108,6 +117,67 @@ export function MatchingPreferencesPanel({ onSaved }: { onSaved?: () => void }) 
             </button>
           ))}
         </div>
+      </div>
+
+      {/* More filters — all optional */}
+      <div>
+        <button
+          onClick={() => setMoreFiltersOpen((v) => !v)}
+          className="flex w-full items-center justify-between text-xs uppercase tracking-[0.25em] text-gold/70 cursor-pointer"
+        >
+          More Filters
+          <ChevronDown className={`h-4 w-4 transition-transform ${moreFiltersOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {moreFiltersOpen && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 flex flex-col gap-4 overflow-hidden">
+            <div className="flex flex-col gap-2">
+              <Label>Relationship Goal</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setRelationshipGoal(null)}
+                  className={`rounded-full px-3 py-1.5 text-xs cursor-pointer ${relationshipGoal === null ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50'}`}
+                >
+                  Any
+                </button>
+                {RELATIONSHIP_GOALS.map((g) => (
+                  <button
+                    key={g.value}
+                    onClick={() => setRelationshipGoal(g.value)}
+                    className={`rounded-full px-3 py-1.5 text-xs cursor-pointer ${relationshipGoal === g.value ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50'}`}
+                  >
+                    {g.value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Wants Children</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setWantsChildren(null)}
+                  className={`rounded-full px-3 py-1.5 text-xs cursor-pointer ${wantsChildren === null ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50'}`}
+                >
+                  Any
+                </button>
+                {WANTS_CHILDREN_OPTIONS.map((o) => (
+                  <button
+                    key={o}
+                    onClick={() => setWantsChildren(o)}
+                    className={`rounded-full px-3 py-1.5 text-xs cursor-pointer ${wantsChildren === o ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50'}`}
+                  >
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="religion-filter">Religion</Label>
+              <Input id="religion-filter" value={religion} onChange={(e) => setReligion(e.target.value)} placeholder="Any" />
+            </div>
+          </motion.div>
+        )}
       </div>
 
       <motion.div whileTap={{ scale: 0.98 }}>

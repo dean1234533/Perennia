@@ -36,6 +36,10 @@ export interface MatchingPreferences {
   ageMax: number
   /** null = "Anywhere" — no distance filtering applied. */
   maxDistanceMiles: number | null
+  /** "More filters" — all optional, null/'' = no filtering on that dimension. */
+  relationshipGoal: string | null
+  wantsChildren: string | null
+  religion: string
 }
 
 export interface StoryPrompt {
@@ -99,6 +103,9 @@ export const defaultPreferences: MatchingPreferences = {
   ageMin: 21,
   ageMax: 55,
   maxDistanceMiles: null,
+  relationshipGoal: null,
+  wantsChildren: null,
+  religion: '',
 }
 
 const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {

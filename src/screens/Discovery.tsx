@@ -39,7 +39,7 @@ export function Discovery() {
   }, [user])
 
   const interestedIn = onboarding.gender === 'male' ? 'female' : onboarding.gender === 'female' ? 'male' : null
-  const { ageMin, ageMax, maxDistanceMiles } = onboarding.preferences
+  const { ageMin, ageMax, maxDistanceMiles, relationshipGoal, wantsChildren, religion } = onboarding.preferences
   const selfLocation = onboarding.currentLocationLat !== null && onboarding.currentLocationLon !== null
     ? { lat: onboarding.currentLocationLat, lon: onboarding.currentLocationLon }
     : null
@@ -61,6 +61,12 @@ export function Discovery() {
       const distance = distanceTo(c)
       if (distance !== null && distance > maxDistanceMiles) return false
     }
+    if (relationshipGoal && c.relationshipGoal && c.relationshipGoal !== relationshipGoal) return false
+    if (wantsChildren) {
+      const theirAnswer = c.profileExtras?.lifestyle.find((l) => l.label === 'Wants Children')?.value
+      if (theirAnswer && theirAnswer !== wantsChildren) return false
+    }
+    if (religion.trim() && c.religion && c.religion.toLowerCase() !== religion.trim().toLowerCase()) return false
     return true
   })
 
