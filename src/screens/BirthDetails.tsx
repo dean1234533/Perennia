@@ -193,8 +193,8 @@ function BirthDetailsForm() {
             <div className="flex flex-col gap-2">
               <p className="text-xs uppercase tracking-[0.2em] text-lavender/70">Birth Date</p>
               <div className="relative">
-                <Calendar className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold/50" />
-                <Input type="date" className="pl-11 [color-scheme:dark]" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
+                {!birthDate && <Calendar className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold/50" />}
+                <Input type="date" className={birthDate ? '[color-scheme:dark]' : 'pl-11 [color-scheme:dark]'} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
               </div>
               <p className="text-xs text-white/35">
                 Identity verification didn't return a birth date, so please confirm it here.
