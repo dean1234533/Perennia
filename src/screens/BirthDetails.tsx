@@ -106,16 +106,28 @@ function BirthDetailsForm() {
 
   const needsManualBirthDate = !onboarding.birthDate
 
-  const isValid =
-    (needsManualBirthDate ? !!birthDate : true) &&
-    (timeUnknown || !!time) &&
-    !!birthCountry && !!birthCity &&
-    !!currentCountry && !!currentCity &&
-    confirmed
+  // Named so the disabled Confirm button can explain itself — otherwise a
+  // missed step (most easily: typing a city without clicking an actual
+  // suggestion from the dropdown, which is the only thing that sets
+  // birthCity/currentCity) makes the button silently do nothing with zero
+  // feedback about why.
+  const missingFields: string[] = []
+  if (needsManualBirthDate && !birthDate) missingFields.push('birth date')
+  if (!timeUnknown && !time) missingFields.push('time of birth (or check "I don\'t know")')
+  if (!birthCountry) missingFields.push('birth country')
+  else if (!birthCity) missingFields.push('birth city — select it from the dropdown')
+  if (!currentCountry) missingFields.push('current country')
+  else if (!currentCity) missingFields.push('current city — select it from the dropdown')
+  if (!confirmed) missingFields.push('the confirmation checkbox')
+
+  const isValid = missingFields.length === 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isValid) return
+    if (!isValid) {
+      setError(`Still needed: ${missingFields.join(', ')}.`)
+      return
+    }
     setError('')
     setSaving(true)
 
@@ -322,7 +334,12 @@ function BirthDetailsForm() {
             </motion.p>
           )}
 
-          <Button type="submit" size="lg" className="birth-details-cta mt-1 min-h-14 w-full font-serif-display text-xl sm:text-2xl" disabled={!isValid || saving}>
+          <Button
+            type="submit"
+            size="lg"
+            className={`birth-details-cta mt-1 min-h-14 w-full font-serif-display text-xl sm:text-2xl ${!isValid && !saving ? 'opacity-60' : ''}`}
+            disabled={saving}
+          >
             {saving ? (<><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>) : 'Confirm Birth Details'}
           </Button>
         </form>
