@@ -46,27 +46,8 @@
   display: none;
 }
 
-/* Portrait tablets use their own 3:4 composition so all artwork and copy
-   remain inside the frame without scaling a phone layout or cropping a
-   landscape layout. */
-@media (min-width: 768px) and (max-width: 1023px),
-       (min-width: 1024px) and (orientation: portrait) {
-  .landing-final-mobile {
-    display: none;
-  }
-
-  .landing-artwork-ipad {
-    display: block;
-  }
-
-  .landing-final-cta {
-    top: 84%;
-  }
-}
-
-/* Width alone is not enough here: a 1024px iPad in portrait must retain
-   the portrait artwork, otherwise its baked-in wording becomes too small
-   and appears outside the intended composition. */
+/* Wide layouts use the landscape assets by default. The tablet-specific
+   override below replaces only the final artwork with its iPad version. */
 @media (min-width: 1024px) and (orientation: landscape) {
   .landing-artwork-mobile {
     display: none;
@@ -82,6 +63,35 @@
 
   .landing-final-cta {
     top: 62%;
+  }
+}
+
+/* Use the dedicated iPad artwork throughout standard tablet widths in both
+   orientations. Larger iPad Pro widths are included when the device reports
+   a coarse pointer, without replacing the artwork on a 1366px laptop. */
+@media (min-width: 768px) and (max-width: 1180px),
+       (min-width: 1181px) and (max-width: 1366px) and (pointer: coarse) {
+  .landing-final-mobile,
+  .landing-final-desktop {
+    display: none;
+  }
+
+  .landing-final-ipad {
+    display: block;
+  }
+
+  .landing-final-cta {
+    top: 84%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (pointer: coarse),
+       (min-width: 768px) and (max-width: 1180px) and (orientation: landscape) {
+  .landing-final-ipad {
+    width: auto;
+    max-width: 100%;
+    height: 100svh;
+    object-fit: contain;
   }
 }
 

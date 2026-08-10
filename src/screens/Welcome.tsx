@@ -139,8 +139,8 @@ export function Welcome() {
       {/* ============ BEGIN YOUR STORY ============ */}
       <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
         <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" className="landing-artwork-mobile landing-final-mobile landing-final-artwork h-auto w-full" />
-        <img src="/landingPage-iPad5.png" alt="Stories, not statistics." width="1086" height="1448" className="landing-artwork-ipad landing-final-artwork h-auto w-full" />
-        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." width="1672" height="941" className="landing-artwork-desktop landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-iPad5.png" alt="Stories, not statistics." width="1086" height="1448" className="landing-artwork-ipad landing-final-ipad landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." width="1672" height="941" className="landing-artwork-desktop landing-final-desktop landing-final-artwork h-auto w-full" />
         <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">
           <Button size="lg" onClick={() => navigate('/signup')} className="group w-full max-w-sm sm:w-auto sm:min-w-72">
             Begin Your Story
