@@ -107,7 +107,7 @@ export function Welcome() {
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
       <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
-        <picture>
+        <picture className="block w-full">
           <source media="(min-width: 768px)" srcSet="/landingPage-Desktop2.JPG" />
           <img src="/landingPage-Mobile2.JPG" alt="" width="256" height="384" loading="lazy" decoding="async" className="h-full w-full object-cover" />
         </picture>
@@ -128,7 +128,7 @@ export function Welcome() {
 
       {/* ============ RARE ALIGNMENT ============ */}
       <section className="relative z-10 flex w-full items-center justify-center">
-        <picture>
+        <picture className="block w-full">
           <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop3.JPG" />
           <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="543" height="724" loading="lazy" decoding="async" className="h-auto w-full" />
         </picture>
@@ -136,7 +136,7 @@ export function Welcome() {
 
       {/* ============ FINAL CTA ============ */}
       <section className="relative z-10 flex w-full items-center justify-center">
-        <picture>
+        <picture className="block w-full">
           <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop4.JPG" />
           <img src="/landingPage-Mobile4.JPG" alt="Built on intention." width="512" height="768" loading="lazy" decoding="async" className="h-auto w-full" />
         </picture>
@@ -144,7 +144,7 @@ export function Welcome() {
 
       {/* ============ BEGIN YOUR STORY ============ */}
       <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
-        <picture>
+        <picture className="block w-full">
           <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop5.png" />
           <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" loading="lazy" decoding="async" className="landing-final-artwork h-auto w-full" />
         </picture>
