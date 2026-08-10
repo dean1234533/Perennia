@@ -146,7 +146,6 @@ export function Welcome() {
       <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
         <picture>
           <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop5.png" />
-          <source media="(min-width: 768px)" srcSet="/landingPage-iPad5.png" />
           <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" loading="lazy" decoding="async" className="landing-final-artwork h-auto w-full" />
         </picture>
         <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">

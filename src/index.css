@@ -29,27 +29,19 @@
 
 /* Positioning for the CTA overlaid on the final section's baked-in
    artwork. The `<picture>` element in Welcome.tsx picks exactly one of
-   mobile/iPad/desktop crops per viewport (native browser art-direction —
-   no CSS display-toggling of sibling <img>s, which previously caused all
-   variants to be fetched and, on some viewports, shown simultaneously).
-   These rules track that same picking logic so the CTA always lines up
-   with whichever crop is actually on screen. */
+   mobile/desktop crops per viewport (native browser art-direction — no
+   CSS display-toggling of sibling <img>s). These rules track that same
+   picking logic so the CTA always lines up with whichever crop is on
+   screen. */
 .landing-final-cta {
   top: 82%;
 }
 
-/* iPad crop: any viewport 768px+ that isn't the desktop case below. */
+/* The mobile crop is a tall portrait composition; on a tablet-width
+   viewport (where it's still the one showing — no dedicated tablet
+   asset) contain it by height instead of stretching it full-bleed. */
 @media (min-width: 768px) and (max-width: 1023px),
        (min-width: 1024px) and (orientation: portrait),
-       (min-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
-  .landing-final-cta {
-    top: 84%;
-  }
-}
-
-/* The iPad crop is a portrait composition; in a landscape tablet viewport
-   it needs to be contained by height rather than stretched full-bleed. */
-@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape),
        (min-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
   .landing-final-artwork {
     width: auto;
