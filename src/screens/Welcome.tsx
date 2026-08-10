@@ -29,7 +29,11 @@ export function Welcome() {
 
   return (
     <div className="relative overflow-hidden bg-midnight text-white">
-      <div className="fixed inset-0 z-0">
+      {/* Absolutely (not fixed-)positioned so it stretches to cover the
+          whole scrollable page rather than just one viewport height — a
+          `fixed` full-bleed background gets visibly resized/jumped by
+          mobile browsers as the address bar hides/shows mid-scroll. */}
+      <div className="absolute inset-0 z-0">
         <LandingCelestialBackground />
       </div>
 

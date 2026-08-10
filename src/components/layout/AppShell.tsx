@@ -19,14 +19,12 @@ const navItems = [
   { to: '/settings', label: 'Settings', mobileLabel: 'Settings', icon: Settings },
 ]
 
-// The finished mobile profile uses the four primary destinations shown in
-// the product reference. Secondary tools remain available on desktop and
-// through profile/settings actions.
 const mobileNavItems = [
   navItems[0], // Discover
   { ...navItems[1], label: 'Likes', mobileLabel: 'Likes' },
   navItems[2], // Messages
   navItems[4], // Profile
+  navItems[5], // Settings
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -35,7 +33,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-screen bg-midnight text-white">
-      <div className="fixed inset-0 z-0">
+      {/* Absolutely (not fixed-)positioned so it stretches to cover the
+          whole scrollable page rather than just one viewport height — a
+          `fixed` full-bleed background gets visibly resized/jumped by
+          mobile browsers as the address bar hides/shows mid-scroll. */}
+      <div className="absolute inset-0 z-0">
         <LandingCelestialBackground />
       </div>
 
@@ -105,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         initial={false}
         animate={hideBottomNav ? { y: '100%', opacity: 0 } : { y: 0, opacity: 1 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-strong fixed bottom-0 left-0 right-0 z-40 grid grid-cols-4 items-center border-t border-white/10 px-2 py-2 xl:hidden"
+        className="glass-strong fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 items-center border-t border-white/10 px-2 py-2 xl:hidden"
         style={{ pointerEvents: hideBottomNav ? 'none' : 'auto' }}
       >
         {mobileNavItems.map((item) => {

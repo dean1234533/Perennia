@@ -54,7 +54,7 @@ export function Founding500() {
     <div className="relative min-h-screen bg-midnight text-white">
       <AtmosphericBackground />
       <div
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{ background: 'radial-gradient(90% 60% at 50% 0%, rgba(124,58,237,0.18) 0%, transparent 60%)' }}
       />
 
