@@ -107,8 +107,8 @@ export function Welcome() {
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
       <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
-        <img src="/landingPage-Mobile2.JPG" alt="" width="256" height="384" className="h-full w-full object-cover md:hidden" />
-        <img src="/landingPage-Desktop2.JPG" alt="" width="418" height="236" className="hidden h-full w-full object-cover md:block" />
+        <img src="/landingPage-Mobile2.JPG" alt="" width="256" height="384" loading="lazy" decoding="async" className="h-full w-full object-cover md:hidden" />
+        <img src="/landingPage-Desktop2.JPG" alt="" width="418" height="236" loading="lazy" decoding="async" className="hidden h-full w-full object-cover md:block" />
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-xl px-6 md:px-16">
@@ -126,21 +126,21 @@ export function Welcome() {
 
       {/* ============ RARE ALIGNMENT ============ */}
       <section className="relative z-10 flex w-full items-center justify-center">
-        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="543" height="724" className="landing-artwork-mobile h-auto w-full" />
-        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="836" height="470" className="landing-artwork-desktop h-auto w-full" />
+        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="543" height="724" loading="lazy" decoding="async" className="landing-artwork-mobile h-auto w-full" />
+        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="836" height="470" loading="lazy" decoding="async" className="landing-artwork-desktop h-auto w-full" />
       </section>
 
       {/* ============ FINAL CTA ============ */}
       <section className="relative z-10 flex w-full items-center justify-center">
-        <img src="/landingPage-Mobile4.JPG" alt="Built on intention." width="512" height="768" className="landing-artwork-mobile h-auto w-full" />
-        <img src="/landingPage-Desktop4.JPG" alt="Built on intention." width="836" height="470" className="landing-artwork-desktop h-auto w-full" />
+        <img src="/landingPage-Mobile4.JPG" alt="Built on intention." width="512" height="768" loading="lazy" decoding="async" className="landing-artwork-mobile h-auto w-full" />
+        <img src="/landingPage-Desktop4.JPG" alt="Built on intention." width="836" height="470" loading="lazy" decoding="async" className="landing-artwork-desktop h-auto w-full" />
       </section>
 
       {/* ============ BEGIN YOUR STORY ============ */}
       <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
-        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" className="landing-artwork-mobile landing-final-mobile landing-final-artwork h-auto w-full" />
-        <img src="/landingPage-iPad5.png" alt="Stories, not statistics." width="1086" height="1448" className="landing-artwork-ipad landing-final-ipad landing-final-artwork h-auto w-full" />
-        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." width="1672" height="941" className="landing-artwork-desktop landing-final-desktop landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" loading="lazy" decoding="async" className="landing-artwork-mobile landing-final-mobile landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-iPad5.png" alt="Stories, not statistics." width="1086" height="1448" loading="lazy" decoding="async" className="landing-artwork-ipad landing-final-ipad landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." width="1672" height="941" loading="lazy" decoding="async" className="landing-artwork-desktop landing-final-desktop landing-final-artwork h-auto w-full" />
         <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">
           <Button size="lg" onClick={() => navigate('/signup')} className="group w-full max-w-sm sm:w-auto sm:min-w-72">
             Begin Your Story
