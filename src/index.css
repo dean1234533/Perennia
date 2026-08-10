@@ -49,8 +49,9 @@
 /* Portrait tablets use their own 3:4 composition so all artwork and copy
    remain inside the frame without scaling a phone layout or cropping a
    landscape layout. */
-@media (min-width: 768px) and (orientation: portrait) {
-  .landing-artwork-mobile {
+@media (min-width: 768px) and (max-width: 1023px),
+       (min-width: 1024px) and (orientation: portrait) {
+  .landing-final-mobile {
     display: none;
   }
 
