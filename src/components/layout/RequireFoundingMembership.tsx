@@ -97,7 +97,7 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
     if (!onboarding.relationshipGoal) {
       return <Navigate to="/relationship-goals" replace />
     }
-    if (profileExtras.interests.length < MIN_ONBOARDING_INTERESTS) {
+    if ((profileExtras.interests ?? []).length < MIN_ONBOARDING_INTERESTS) {
       return <Navigate to="/interests" replace />
     }
     if (!onboarding.aboutYouCompletedAt) {

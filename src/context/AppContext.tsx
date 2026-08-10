@@ -215,7 +215,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setBlockedIds(data.blockedIds ?? [])
       setMatchedIds(data.matchedIds ?? [])
       setRemoteOnboardingComplete(!!data.onboardingComplete)
-      if (data.profileExtras) setProfileExtras(data.profileExtras)
+      // Merged field-by-field against emptySelfProfile, not set wholesale —
+      // an account whose profileExtras doc predates a newer SelfProfile
+      // field (interests, languages, storyPrompts, etc. were all added
+      // over time) would otherwise have that field come back as
+      // `undefined` from Firestore, and every screen that reads its
+      // `.length` (Discovery gating, MyProfile, CosmicProfile) would
+      // throw and white-screen for that one real account.
+      if (data.profileExtras) setProfileExtras({ ...emptySelfProfile, ...data.profileExtras })
     })
     return unsub
   }, [user])

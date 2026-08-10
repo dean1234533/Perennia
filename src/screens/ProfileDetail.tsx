@@ -14,6 +14,7 @@ import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections
 import { OtherProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import { getUserDoc, subscribeUserMedia, getPrivateLifestyle, type DiscoveryCandidate, type MediaDoc, type PrivateLifestyle } from '@/lib/firestore'
+import { emptySelfProfile } from '@/data/selfProfile'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { calculateAge } from '@/lib/age'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
@@ -38,7 +39,19 @@ export function ProfileDetail() {
 
   useEffect(() => {
     if (!id) return
-    getUserDoc(id).then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
+    // Normalized against real defaults before it ever reaches render — a
+    // profile viewed here belongs to someone else's account, which can
+    // easily predate a SelfProfile/UserDoc array field added later (real
+    // accounts don't retroactively grow new Firestore fields). Every
+    // `.length` read below assumes these arrays exist; this is what
+    // makes that assumption actually true instead of a real accounts
+    // white-screening the viewer.
+    getUserDoc(id).then((doc) => setProfile(doc ? {
+      uid: id,
+      ...doc,
+      storyPrompts: doc.storyPrompts ?? [],
+      profileExtras: doc.profileExtras ? { ...emptySelfProfile, ...doc.profileExtras } : null,
+    } : null))
     getPrivateLifestyle(id).then(setLifestyle)
     return subscribeUserMedia(id, setMedia)
   }, [id])
