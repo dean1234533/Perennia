@@ -94,10 +94,20 @@ function BirthDetailsForm() {
   const [time, setTime] = useState(onboarding.birthTime)
   const [timeUnknown, setTimeUnknown] = useState(onboarding.birthTimeUnknown)
 
-  const [birthCountry, setBirthCountry] = useState(onboarding.birthCountry)
+  // Only trust a pre-existing country value if it's a real ISO code we
+  // recognize — some accounts still carry a legacy free-text country
+  // (e.g. "United Kingdom") from before this screen existed, when current
+  // location was a plain text field elsewhere in onboarding. Passing that
+  // straight through as countryCode silently breaks every city search
+  // (the backend expects a 2-letter code), so the field would never fill
+  // in no matter what was typed. Falling back to empty forces a real,
+  // valid re-selection instead.
+  const validCountryCode = (code: string) => COUNTRIES.some((c) => c.code === code)
+
+  const [birthCountry, setBirthCountry] = useState(validCountryCode(onboarding.birthCountry) ? onboarding.birthCountry : '')
   const [birthCity, setBirthCity] = useState<CityMatch | null>(null)
 
-  const [currentCountry, setCurrentCountry] = useState(onboarding.country)
+  const [currentCountry, setCurrentCountry] = useState(validCountryCode(onboarding.country) ? onboarding.country : '')
   const [currentCity, setCurrentCity] = useState<CityMatch | null>(null)
 
   const [confirmed, setConfirmed] = useState(false)

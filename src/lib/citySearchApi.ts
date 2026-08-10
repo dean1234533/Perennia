@@ -16,6 +16,11 @@ const searchCitiesCallable = httpsCallable<{ query: string; country?: string }, 
 
 export async function searchCities(query: string, country?: string): Promise<CityMatch[]> {
   if (query.trim().length < 2) return []
-  const result: HttpsCallableResult<CityMatch[]> = await searchCitiesCallable({ query, country })
+  // The backend requires a real 2-letter ISO code and rejects anything
+  // else — silently drop an invalid one (e.g. leftover legacy free-text
+  // country data) rather than sending a request that's guaranteed to fail
+  // validation and return nothing with no visible explanation.
+  const safeCountry = country && /^[A-Za-z]{2}$/.test(country) ? country : undefined
+  const result: HttpsCallableResult<CityMatch[]> = await searchCitiesCallable({ query, country: safeCountry })
   return result.data
 }
