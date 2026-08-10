@@ -1,46 +1,47 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Loader2 } from 'lucide-react'
+import { MapPin, Loader2, CheckCircle2 } from 'lucide-react'
 import { searchCities, type CityMatch } from '@/lib/citySearchApi'
 
 /** A real searchable city dropdown backed by the `searchCities` Cloud
  *  Function (live query against the ~138k-city dataset), scoped to a
  *  selected country when one is provided. Selecting a suggestion is the
- *  only way to set a value — free text alone never resolves to
- *  coordinates, matching "proper dropdown/select functionality" rather
- *  than a plain text field. */
+ *  only way to produce a value — typing alone never resolves to
+ *  coordinates.
+ *
+ *  Deliberately uncontrolled: this component owns its own text + selection
+ *  state and only ever reports outward via onSelect, instead of taking a
+ *  `value` prop it has to keep reconciled with its own local text state.
+ *  Earlier versions tried to stay in sync with a parent-owned value and
+ *  that two-way binding was the root of several real bugs (stale closures,
+ *  blur races, the visible text disagreeing with what was actually
+ *  selected). To reset it (e.g. when the country changes), remount it
+ *  with a new `key` from the parent rather than pushing a new value in. */
 export function CityCombobox({
   countryCode,
-  value,
+  initialValue = '',
   onSelect,
-  placeholder = 'Select city / town',
+  placeholder = 'Select city',
   disabled = false,
 }: {
   countryCode: string
-  value: string
-  onSelect: (city: CityMatch) => void
+  initialValue?: string
+  onSelect: (city: CityMatch | null) => void
   placeholder?: string
   disabled?: boolean
 }) {
-  const [query, setQuery] = useState(value)
+  const [query, setQuery] = useState(initialValue)
+  const [selected, setSelected] = useState(Boolean(initialValue))
   const [results, setResults] = useState<CityMatch[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  // Read inside the blur-revert timeout instead of closing over `value`
-  // directly — the input blurs (moving focus to the suggestion button)
-  // BEFORE that button's onClick/onSelect runs, so a plain closure would
-  // see the pre-selection value and could wipe out a selection that
-  // completes a few milliseconds later.
-  const valueRef = useRef(value)
 
+  // Never searches once a real selection has been made — there's nothing
+  // to look up until the member actually edits the text again.
   useEffect(() => {
-    setQuery(value)
-    valueRef.current = value
-  }, [value])
-
-  useEffect(() => {
-    if (!open || query.trim().length < 2) {
+    if (!open || selected || query.trim().length < 2) {
       setResults([])
+      setLoading(false)
       return
     }
     let cancelled = false
@@ -59,7 +60,7 @@ export function CityCombobox({
       cancelled = true
       clearTimeout(timer)
     }
-  }, [query, countryCode, open])
+  }, [query, countryCode, open, selected])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -71,17 +72,22 @@ export function CityCombobox({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Typed text alone never sets a value — only clicking a real suggestion
-  // does (see onSelect below). Without this, the box can visually show a
-  // city name that was never actually selected, making the field look
-  // filled in when it genuinely isn't. On blur, if what's typed doesn't
-  // match the last real selection, revert the visible text so the box
-  // never lies about what's actually selected. Delayed so a click on a
-  // suggestion (which blurs the input first) has time to register.
-  const handleBlur = () => {
-    window.setTimeout(() => {
-      setQuery((current) => (current === valueRef.current ? current : valueRef.current))
-    }, 150)
+  const handleSelect = (city: CityMatch) => {
+    setQuery(city.name)
+    setSelected(true)
+    setOpen(false)
+    onSelect(city)
+  }
+
+  const handleChange = (text: string) => {
+    setQuery(text)
+    setOpen(true)
+    // Editing after a selection immediately invalidates it — the parent
+    // never holds on to a city that no longer matches what's on screen.
+    if (selected) {
+      setSelected(false)
+      onSelect(null)
+    }
   }
 
   return (
@@ -92,28 +98,35 @@ export function CityCombobox({
         value={query}
         disabled={disabled}
         placeholder={countryCode ? placeholder : 'Select a country first'}
-        onChange={(e) => {
-          setQuery(e.target.value)
-          setOpen(true)
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={() => !selected && setOpen(true)}
+        onBlur={() => {
+          // A real selection click can never trigger this — its button
+          // uses onPointerDown/preventDefault so the input never loses
+          // focus during the click, no race to work around. Anything
+          // that does reach here is genuinely "left without selecting",
+          // so the typed text is cleared immediately: the box can never
+          // visually look filled in when nothing was actually picked.
+          if (!selected) {
+            setQuery('')
+            setOpen(false)
+          }
         }}
-        onFocus={() => setOpen(true)}
-        onBlur={handleBlur}
-        className="h-14 w-full rounded-xl border border-blue-200/35 bg-navy/40 pl-11 pr-9 text-base text-white backdrop-blur-sm placeholder:text-white/35 transition focus:border-blue-200/70 focus:outline-none focus:shadow-[0_0_18px_rgba(111,135,255,.16)] disabled:cursor-not-allowed disabled:opacity-50"
+        className={`h-14 w-full rounded-xl border bg-navy/40 pl-11 pr-9 text-base text-white backdrop-blur-sm placeholder:text-white/35 transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+          selected ? 'border-emerald-400/50 focus:border-emerald-400/70' : 'border-blue-200/35 focus:border-blue-200/70 focus:shadow-[0_0_18px_rgba(111,135,255,.16)]'
+        }`}
       />
-      {loading && <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-white/40" />}
+      {selected && <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400" />}
+      {!selected && loading && <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-white/40" />}
 
-      {open && !disabled && (results.length > 0 || (loading && query.trim().length >= 2)) && (
+      {open && !disabled && !selected && (results.length > 0 || loading || query.trim().length >= 2) && (
         <div className="absolute z-20 mt-1.5 max-h-56 w-full overflow-y-auto rounded-xl border border-white/10 bg-navy/95 py-1.5 shadow-xl backdrop-blur-md">
           {results.map((c, i) => (
             <button
               key={`${c.name}-${c.country}-${i}`}
               type="button"
               onPointerDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onSelect(c)
-                setQuery(c.name)
-                setOpen(false)
-              }}
+              onClick={() => handleSelect(c)}
               className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-white/85 hover:bg-white/[0.06] cursor-pointer"
             >
               <MapPin className="h-3.5 w-3.5 shrink-0 text-white/30" />

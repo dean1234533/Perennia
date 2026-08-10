@@ -276,8 +276,8 @@ function BirthDetailsForm() {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/45">City / Town</label>
               <CityCombobox
+                key={birthCountry}
                 countryCode={birthCountry}
-                value={birthCity?.name ?? ''}
                 disabled={!birthCountry}
                 placeholder="Select city / town"
                 onSelect={setBirthCity}
@@ -305,8 +305,8 @@ function BirthDetailsForm() {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-white/45">City / Area</label>
               <CityCombobox
+                key={currentCountry}
                 countryCode={currentCountry}
-                value={currentCity?.name ?? ''}
                 disabled={!currentCountry}
                 placeholder="Select city / area"
                 onSelect={setCurrentCity}
