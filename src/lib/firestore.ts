@@ -98,6 +98,10 @@ export interface UserDoc {
   incognito: boolean
   showDistance: boolean
   pushNotificationsEnabled: boolean
+  /** Real FCM registration tokens for this member's browsers/devices —
+   *  written only by the client's own opt-in flow (src/lib/pushNotifications.ts)
+   *  after the browser actually grants Notification permission. */
+  pushTokens: string[]
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
@@ -161,6 +165,7 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   incognito: false,
   showDistance: true,
   pushNotificationsEnabled: true,
+  pushTokens: [],
   likedIds: [],
   passedIds: [],
   matchedIds: [],
@@ -212,6 +217,10 @@ export async function setCurrentLocationRemote(uid: string, lat: number, lon: nu
 
 export async function passProfileRemote(uid: string, targetUid: string) {
   await updateDoc(doc(db, 'users', uid), { passedIds: arrayUnion(targetUid) })
+}
+
+export async function savePushTokenRemote(uid: string, token: string) {
+  await updateDoc(doc(db, 'users', uid), { pushNotificationsEnabled: true, pushTokens: arrayUnion(token) })
 }
 
 // --- Real discovery, matches, messaging -------------------------------------

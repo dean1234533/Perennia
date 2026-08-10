@@ -2,9 +2,11 @@ import { type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Compass, Heart, MessageCircle, Settings, UserRound, Star } from 'lucide-react'
-import { Starfield } from '@/components/shared/Starfield'
+import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { SelfAvatar } from '@/components/shared/SelfAvatar'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
+import { InstallAppBanner } from '@/components/shared/InstallAppBanner'
+import { NotificationPermissionBanner } from '@/components/shared/NotificationPermissionBanner'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/utils'
 
@@ -17,15 +19,14 @@ const navItems = [
   { to: '/settings', label: 'Settings', mobileLabel: 'Settings', icon: Settings },
 ]
 
-// Mobile bottom nav shows Profile first (leftmost) — everything else keeps
-// the same relative order.
+// The finished mobile profile uses the four primary destinations shown in
+// the product reference. Secondary tools remain available on desktop and
+// through profile/settings actions.
 const mobileNavItems = [
-  navItems[4], // Profile
   navItems[0], // Discover
-  navItems[1], // Matches
+  { ...navItems[1], label: 'Likes', mobileLabel: 'Likes' },
   navItems[2], // Messages
-  navItems[3], // Compatibility
-  navItems[5], // Settings
+  navItems[4], // Profile
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -34,15 +35,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-screen bg-midnight text-white">
-      <div
-        className="fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(120% 90% at 50% -10%, #1a1140 0%, #0c1433 42%, #060b1d 78%)' }}
-      >
-        <Starfield density={40} />
+      <div className="fixed inset-0 z-0">
+        <LandingCelestialBackground />
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="glass-strong fixed left-0 top-0 z-40 hidden h-full w-24 flex-col items-center gap-8 border-r border-white/5 py-8 lg:flex xl:w-64 xl:items-stretch xl:px-6">
+      <aside className="glass-strong fixed left-0 top-0 z-40 hidden h-full w-64 flex-col items-stretch gap-8 border-r border-white/5 px-6 py-8 xl:flex">
         <button
           onClick={() => navigate('/discovery')}
           className="mb-6 flex items-center gap-2 xl:px-2 cursor-pointer"
@@ -94,21 +92,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="relative z-10 min-h-screen pb-24 lg:pb-8 lg:pl-24 xl:pl-64">{children}</main>
+      <main className="relative z-10 min-h-screen pb-24 xl:pb-8 xl:pl-64">
+        <div className="px-4 pt-4 xl:px-8">
+          <InstallAppBanner />
+          <NotificationPermissionBanner />
+        </div>
+        {children}
+      </main>
 
-      {/* Mobile bottom nav — icons only, no labels. Each tab gets a
-          distinct icon shape plus a clear active-state pill (background
-          highlight + dot) so which tab is current is still obvious without
-          text. Profile is the leftmost tab. */}
+      {/* Mobile bottom navigation mirrors the four-item profile reference. */}
       <motion.nav
         initial={false}
         animate={hideBottomNav ? { y: '100%', opacity: 0 } : { y: 0, opacity: 1 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-strong fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 py-2.5 lg:hidden"
+        className="glass-strong fixed bottom-0 left-0 right-0 z-40 grid grid-cols-4 items-center border-t border-white/10 px-2 py-2 xl:hidden"
         style={{ pointerEvents: hideBottomNav ? 'none' : 'auto' }}
       >
         {mobileNavItems.map((item) => {
-          const isProfileTab = item.to === '/my-profile'
           return (
             <NavLink
               key={item.to}
@@ -117,25 +117,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               title={item.label}
               className={({ isActive }) =>
                 cn(
-                  'relative flex h-12 w-12 items-center justify-center rounded-2xl text-white/45 transition-colors',
-                  isActive && 'bg-gold/10 border border-gold/20 text-champagne'
+                  'relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 text-white/55 transition-colors',
+                  isActive && 'text-gold'
                 )
               }
             >
-              {({ isActive }) => (
+              {() => (
                 <>
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-active-mobile"
-                      className="absolute -top-2.5 h-1 w-5 rounded-full bg-gradient-to-r from-gold to-champagne"
-                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  {isProfileTab ? (
-                    <SelfAvatar className={cn('h-8 w-8 rounded-full ring-2', isActive ? 'ring-gold' : 'ring-white/35')} />
-                  ) : (
-                    <item.icon className="h-6 w-6" />
-                  )}
+                  <item.icon className="h-6 w-6" strokeWidth={1.5} />
+                  <span className="font-serif-display text-xs">{item.mobileLabel}</span>
                 </>
               )}
             </NavLink>
