@@ -58,7 +58,7 @@ export function InterestsStep() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={6} totalSteps={12}>
+    <OnboardingShell step={7} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <InterestsForm />}
     </OnboardingShell>
   )

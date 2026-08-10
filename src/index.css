@@ -162,6 +162,24 @@
   display: block;
 }
 
+/* London remains a transparent foreground asset. Its duplicate is clipped
+   and softened into the river plane, so the reflection reads as atmosphere
+   without introducing another rectangular photographic background. */
+.intention-skyline-reflection {
+  filter: blur(2px) saturate(.75);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.75), transparent 70%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.75), transparent 70%);
+}
+
+.intention-river {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 8%, rgba(241,193,116,.07) 9%, transparent 10% 18%),
+    linear-gradient(to bottom, rgba(8,21,54,.08), rgba(3,9,27,.68));
+  filter: blur(.35px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 24%);
+  mask-image: linear-gradient(to bottom, transparent, black 24%);
+}
+
 
 .birth-details-cta {
   border: 1px solid rgba(218, 225, 255, .72);

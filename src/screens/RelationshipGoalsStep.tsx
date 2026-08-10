@@ -12,7 +12,7 @@ export function RelationshipGoalsStep() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={5} totalSteps={12}>
+    <OnboardingShell step={6} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <RelationshipGoalsForm />}
     </OnboardingShell>
   )
@@ -49,7 +49,7 @@ function RelationshipGoalsForm() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-2xl pb-4"
     >
-      <button onClick={() => navigate('/birth-details')} className="mb-5 inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white">
+      <button onClick={() => navigate('/preferences')} className="mb-5 inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white">
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 

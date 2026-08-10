@@ -15,7 +15,7 @@ export function ProfilePhoto() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={8} totalSteps={12}>
+    <OnboardingShell step={9} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <ProfilePhotoForm />}
     </OnboardingShell>
   )

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Heart, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
@@ -16,6 +16,30 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
     >
       {children}
     </motion.div>
+  )
+}
+
+function IntentionFeature({
+  icon,
+  heading,
+  children,
+  delay,
+}: {
+  icon: React.ReactNode
+  heading: string
+  children: React.ReactNode
+  delay: number
+}) {
+  return (
+    <FadeUp delay={delay} className="relative flex gap-4 sm:gap-5">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-champagne/45 bg-midnight/35 text-champagne shadow-[0_0_24px_rgba(229,192,123,.12)] backdrop-blur-sm sm:h-16 sm:w-16">
+        {icon}
+      </div>
+      <div className="pt-1">
+        <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-ivory sm:text-base">{heading}</h3>
+        <p className="mt-2 max-w-md text-sm leading-6 text-white/65 sm:text-[0.95rem] sm:leading-7">{children}</p>
+      </div>
+    </FadeUp>
   )
 }
 
@@ -134,12 +158,56 @@ export function Welcome() {
         </picture>
       </section>
 
-      {/* ============ FINAL CTA ============ */}
-      <section className="relative z-10 flex w-full items-center justify-center">
-        <picture className="block w-full">
-          <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop4.JPG" />
-          <img src="/landingPage-Mobile4.JPG" alt="Built on intention." width="512" height="768" loading="lazy" decoding="async" className="h-auto w-full" />
-        </picture>
+      {/* ============ BUILT ON INTENTION ============ */}
+      <section className="relative z-10 min-h-[62rem] w-full overflow-hidden border-y border-white/[.04] sm:min-h-[58rem] lg:min-h-[48rem]">
+        {/* The page's pinned celestial atmosphere remains the real background.
+            London is deliberately just an alpha cutout above it — never a
+            second rectangular sky/background image. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-gradient-to-b from-transparent via-[#06112d]/20 to-[#020714]/80" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[46%] overflow-hidden opacity-85 sm:h-[52%] lg:left-[34%] lg:h-[72%] lg:opacity-95">
+          <img
+            src="/landing/london-cutout.png"
+            alt=""
+            width="1270"
+            height="820"
+            loading="lazy"
+            decoding="async"
+            className="absolute bottom-[17%] left-1/2 w-[52rem] max-w-none -translate-x-1/2 object-contain drop-shadow-[0_0_30px_rgba(30,68,150,.28)] sm:w-[68rem] lg:bottom-[20%] lg:w-[76rem]"
+          />
+          <img
+            src="/landing/london-cutout.png"
+            alt=""
+            width="1270"
+            height="820"
+            loading="lazy"
+            decoding="async"
+            className="intention-skyline-reflection absolute bottom-[-46%] left-1/2 w-[52rem] max-w-none -translate-x-1/2 scale-y-[-1] object-contain opacity-30 sm:w-[68rem] lg:bottom-[-41%] lg:w-[76rem]"
+          />
+          <div className="intention-river absolute inset-x-0 bottom-0 h-[36%]" />
+        </div>
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-24 lg:px-16">
+          <FadeUp className="text-center lg:text-left">
+            <p className="text-xs font-medium uppercase tracking-[0.38em] text-champagne sm:text-sm">Built on Intention</p>
+            <div aria-hidden="true" className="mx-auto mt-5 flex w-28 items-center gap-3 text-gold lg:mx-0">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/70" />
+              <span className="h-2 w-2 rotate-45 border border-gold/80 shadow-[0_0_12px_rgba(229,192,123,.5)]" />
+              <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/70" />
+            </div>
+          </FadeUp>
+
+          <div className="mt-14 grid max-w-2xl gap-10 sm:gap-12 lg:mt-16 lg:max-w-[34rem]">
+            <IntentionFeature icon={<ShieldCheck className="h-7 w-7" strokeWidth={1.35} />} heading="Verified Members Only" delay={0.05}>
+              Every profile is identity verified to help keep the Perennia community genuine and safer.
+            </IntentionFeature>
+            <IntentionFeature icon={<Heart className="h-7 w-7" strokeWidth={1.35} />} heading="80%+ Compatibility" delay={0.12}>
+              Perennia only introduces you to profiles that meet your compatibility threshold.
+            </IntentionFeature>
+            <IntentionFeature icon={<Sparkles className="h-7 w-7" strokeWidth={1.35} />} heading="A Deeper Match" delay={0.19}>
+              Compatibility goes beyond first impressions. Perennia is designed to help you discover connections with the potential to grow into something meaningful and lasting.
+            </IntentionFeature>
+          </div>
+        </div>
       </section>
 
       {/* ============ BEGIN YOUR STORY ============ */}

@@ -34,6 +34,10 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       navigate('/birth-details')
       return
     }
+    if (!onboarding.gender) {
+      navigate('/preferences')
+      return
+    }
     if (!onboarding.relationshipGoal) {
       navigate('/relationship-goals')
       return
