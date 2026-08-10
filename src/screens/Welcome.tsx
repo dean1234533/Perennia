@@ -28,10 +28,14 @@ export function Welcome() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative isolate overflow-hidden bg-midnight text-white">
-      {/* One fixed animated atmosphere sits behind the complete landing page.
-          The hero and the supplied artwork sections scroll over this layer. */}
-      <div className="fixed inset-0 z-0">
+    <div className="relative isolate overflow-x-clip bg-midnight text-white">
+      {/* Absolutely (not fixed- or sticky-)positioned so it stretches to
+          cover the whole scrollable page rather than pinning to the
+          viewport — a `fixed` (or `sticky` sized to a viewport unit)
+          full-bleed background gets visibly resized/jumped by mobile
+          browsers as the address bar hides/shows mid-scroll. Same fix as
+          every other screen's background in this app. */}
+      <div className="pointer-events-none absolute inset-0 z-0">
         <LandingCelestialBackground />
       </div>
 
@@ -97,8 +101,8 @@ export function Welcome() {
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
       <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
-        <img src="/landingPage-Mobile2.JPG" alt="" className="h-full w-full object-cover md:hidden" />
-        <img src="/landingPage-Desktop2.JPG" alt="" className="hidden h-full w-full object-cover md:block" />
+        <img src="/landingPage-Mobile2.JPG" alt="" width="256" height="384" className="h-full w-full object-cover md:hidden" />
+        <img src="/landingPage-Desktop2.JPG" alt="" width="418" height="236" className="hidden h-full w-full object-cover md:block" />
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-xl px-6 md:px-16">
@@ -116,22 +120,22 @@ export function Welcome() {
 
       {/* ============ RARE ALIGNMENT ============ */}
       <section className="relative z-10 flex w-full items-center justify-center">
-        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="w-full md:hidden" />
-        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="hidden w-full md:block" />
+        <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="543" height="724" className="landing-artwork-mobile h-auto w-full" />
+        <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="836" height="470" className="landing-artwork-desktop h-auto w-full" />
       </section>
 
       {/* ============ FINAL CTA ============ */}
       <section className="relative z-10 flex w-full items-center justify-center">
-        <img src="/landingPage-Mobile4.JPG" alt="Your story deserves a beautiful beginning." className="w-full md:hidden" />
-        <img src="/landingPage-Desktop4.JPG" alt="Your story deserves a beautiful beginning." className="hidden w-full md:block" />
+        <img src="/landingPage-Mobile4.JPG" alt="Built on intention." width="512" height="768" className="landing-artwork-mobile h-auto w-full" />
+        <img src="/landingPage-Desktop4.JPG" alt="Built on intention." width="836" height="470" className="landing-artwork-desktop h-auto w-full" />
       </section>
 
       {/* ============ BEGIN YOUR STORY ============ */}
-      <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden sm:min-h-[80vh]">
-        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover md:hidden" />
-        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." className="absolute inset-0 hidden h-full w-full object-cover md:block" />
+      <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
+        <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" className="landing-artwork-mobile landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." width="1672" height="941" className="landing-artwork-desktop landing-final-artwork h-auto w-full" />
         <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">
-          <Button size="lg" onClick={() => navigate('/signup')} className="group">
+          <Button size="lg" onClick={() => navigate('/signup')} className="group w-full max-w-sm sm:w-auto sm:min-w-72">
             Begin Your Story
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
