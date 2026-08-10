@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
   Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
   GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
+  Heart, Sparkles, BriefcaseBusiness, MapPinned, type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
@@ -24,6 +25,7 @@ import { ACCEPTED_IMAGE_TYPES } from '@/lib/media/imageProcessing'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
 import type { SelfProfile } from '@/data/selfProfile'
+import type { StoryPrompt } from '@/lib/firestore'
 import { editorial } from '@/data/editorial-images'
 
 const previewProfile: SelfProfile = {
@@ -42,6 +44,11 @@ const previewProfile: SelfProfile = {
   education: 'Postgraduate Degree',
   location: 'London, United Kingdom',
 }
+
+const previewStoryPrompts: StoryPrompt[] = [
+  { question: 'My ideal Sunday looks like…', answer: 'A slow morning, a good book, and a long walk before dinner with people I love.' },
+  { question: 'A cause I care about', answer: 'Making creative education more accessible for young people.' },
+]
 
 const previewCategories: DisplayCategory[] = [
   { id: 'moments', label: 'Moments', emoji: '✨' },
@@ -231,6 +238,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   }
 
   const photoUrl = preview ? editorial.portraitMale : onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
+  const storyPrompts = preview ? previewStoryPrompts : onboarding.storyPrompts
   const visibleMedia = displayItems.filter((item) => (
     mediaMode === 'photos' ? item.type === 'image' : item.type === 'video'
   ) && item.processingStatus !== 'error')
@@ -305,36 +313,39 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           {onboarding.moonSign ? `${onboarding.moonSign} Moon` : preview ? 'Virgo Moon' : 'Moon'} <span className="mx-2 text-white/35">•</span>
           {onboarding.risingSign ? `${onboarding.risingSign} Rising` : preview ? 'Taurus Rising' : 'Rising'}
         </p>
-        {!editMode && (
+
+        {/* Looking For — the real relationship intention chosen during
+            onboarding (RelationshipGoalsStep), not a separate free-text
+            field, so this profile always reflects the real answer. */}
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/[0.06] px-3.5 py-1 text-xs text-champagne">
+            <Heart className="h-3 w-3 text-gold" strokeWidth={1.75} />
+            Looking for {onboarding.relationshipGoal || (preview ? 'Long-term Relationship / Marriage' : 'Not set yet')}
+          </span>
+          {editMode && !preview && (
+            <button
+              onClick={() => navigate('/relationship-goals')}
+              className="text-[10px] uppercase tracking-widest text-white/40 hover:text-gold cursor-pointer"
+            >
+              Change
+            </button>
+          )}
+        </div>
+
+        {editMode ? (
+          <textarea
+            value={draft.about}
+            onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
+            placeholder="Tell people who you are…"
+            rows={3}
+            className="mx-auto mt-4 w-full max-w-2xl rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-lg text-white/90 outline-none focus:border-gold/40"
+          />
+        ) : (
           <p className="mx-auto mt-3 max-w-2xl font-serif-display text-xl leading-snug text-white/75 sm:text-2xl">
             {draft.about || 'Add a few words that capture your spirit, your story, and the kind of connection you hope to find.'}
           </p>
         )}
       </div>
-
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={() => document.getElementById('profile-bio')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-full border border-champagne/70 bg-white/[.04] px-6 font-serif-display text-sm text-ivory shadow-[0_0_20px_rgba(243,226,186,.12)] transition sm:text-lg"
-        >
-          <Feather className="h-4 w-4 shrink-0" /> <span>Bio</span>
-        </button>
-      </div>
-
-      {/* Editing controls remain available from the ellipsis menu without
-          changing the polished public profile presentation. */}
-      {editMode && (
-        <div id="profile-bio" className="mt-8 scroll-mt-6">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About Me</p>
-          <textarea
-            value={draft.about}
-            onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
-            placeholder="Tell people who you are…"
-            rows={4}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-lg text-white/90 outline-none focus:border-gold/40"
-          />
-        </div>
-      )}
 
       {/* Reference-style Photos / Videos switch and compact 3-column grid. */}
       <section className="mt-4">
@@ -491,76 +502,130 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       </AnimatePresence>
 
       {/* Interests */}
-      <div className="mt-10">
-        <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
-        {editMode ? (
-          <>
-            <Reorder.Group axis="x" values={draft.interests} onReorder={(v) => setDraft((d) => ({ ...d, interests: v }))} className="mb-3 flex flex-wrap gap-2">
-              {draft.interests.map((interest) => (
-                <Reorder.Item key={interest} value={interest} className="cursor-grab active:cursor-grabbing">
-                  <Badge variant="glass" className="flex items-center gap-1.5">
-                    {interest}
-                    <button onClick={() => setDraft((d) => ({ ...d, interests: d.interests.filter((i) => i !== interest) }))} className="cursor-pointer">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                </Reorder.Item>
+      {/* Four compact sections — everything here traces back to a real
+          onboarding screen: Bio to Your Story's prompts, Interests to the
+          Interests step, Lifestyle to profession/education/languages from
+          About You, Travel to the favourite-places/dream-destinations
+          fields also collected there. */}
+      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ProfileSection icon={Feather} title="Bio">
+          {storyPrompts.length ? (
+            <div className="flex flex-col gap-3">
+              {storyPrompts.map((p) => (
+                <div key={p.question}>
+                  <p className="text-xs text-gold/70">{p.question}</p>
+                  <p className="mt-0.5 text-sm text-white/80">{p.answer}</p>
+                </div>
               ))}
-            </Reorder.Group>
-            <div className="flex gap-2">
-              <input
-                value={newInterest}
-                onChange={(e) => setNewInterest(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addInterest()}
-                placeholder="Add an interest…"
-                className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40"
-              />
-              <Button size="sm" variant="glass" onClick={addInterest}><Plus className="h-3.5 w-3.5" /></Button>
             </div>
-          </>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {draft.interests.length ? (
-              draft.interests.map((i) => <Badge key={i} variant="glass">{i}</Badge>)
-            ) : (
-              <p className="text-sm italic text-white/30">No interests added yet.</p>
-            )}
-          </div>
-        )}
-      </div>
+          ) : (
+            <EmptyHint editMode={editMode} preview={preview} label="story" onClick={() => navigate('/your-story')} />
+          )}
+        </ProfileSection>
 
-      {/* Relationship goals */}
-      <div className="mt-10">
-        <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Relationship Intentions</p>
-        {editMode ? (
-          <input
-            value={draft.goals}
-            onChange={(e) => setDraft((d) => ({ ...d, goals: e.target.value }))}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-lg text-white/80 outline-none focus:border-gold/40"
-          />
-        ) : (
-          <p className="max-w-2xl text-xl leading-relaxed text-white/70">
-            {draft.goals || <span className="italic text-white/30">Not added yet.</span>}
-          </p>
-        )}
-      </div>
+        <ProfileSection icon={Sparkles} title="Interests">
+          {editMode ? (
+            <>
+              <Reorder.Group axis="x" values={draft.interests} onReorder={(v) => setDraft((d) => ({ ...d, interests: v }))} className="mb-3 flex flex-wrap gap-2">
+                {draft.interests.map((interest) => (
+                  <Reorder.Item key={interest} value={interest} className="cursor-grab active:cursor-grabbing">
+                    <Badge variant="glass" className="flex items-center gap-1.5">
+                      {interest}
+                      <button onClick={() => setDraft((d) => ({ ...d, interests: d.interests.filter((i) => i !== interest) }))} className="cursor-pointer">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+              <div className="flex gap-2">
+                <input
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addInterest()}
+                  placeholder="Add an interest…"
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40"
+                />
+                <Button size="sm" variant="glass" onClick={addInterest}><Plus className="h-3.5 w-3.5" /></Button>
+              </div>
+            </>
+          ) : draft.interests.length ? (
+            <div className="flex flex-wrap gap-2">
+              {draft.interests.map((i) => <Badge key={i} variant="glass">{i}</Badge>)}
+            </div>
+          ) : (
+            <EmptyHint editMode={editMode} preview={preview} label="interests" onClick={() => navigate('/interests')} />
+          )}
+        </ProfileSection>
 
-      {/* Profession / education / location */}
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {(['profession', 'education', 'location'] as const).map((field) => (
-          <div key={field}>
-            <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field}</p>
-            {editMode ? (
-              <input
-                value={draft[field]}
-                onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
-                className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
-              />
-            ) : (
-              <p className="text-sm text-white/80">{draft[field] || <span className="italic text-white/30">—</span>}</p>
-            )}
-          </div>
-        ))}
+        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle">
+          {editMode ? (
+            <div className="flex flex-col gap-3">
+              {(['profession', 'education'] as const).map((field) => (
+                <div key={field}>
+                  <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field}</p>
+                  <input
+                    value={draft[field]}
+                    onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
+                  />
+                </div>
+              ))}
+              <div>
+                <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">languages (comma-separated)</p>
+                <input
+                  value={draft.languages.join(', ')}
+                  onChange={(e) => setDraft((d) => ({ ...d, languages: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
+                />
+              </div>
+            </div>
+          ) : draft.profession || draft.education || draft.languages.length ? (
+            <div className="flex flex-col gap-2 text-sm text-white/80">
+              {draft.profession && <p>{draft.profession}</p>}
+              {draft.education && <p>{draft.education}</p>}
+              {!!draft.languages.length && <p className="text-white/55">{draft.languages.join(', ')}</p>}
+            </div>
+          ) : (
+            <EmptyHint editMode={editMode} preview={preview} label="lifestyle details" onClick={() => navigate('/about-you')} />
+          )}
+        </ProfileSection>
+
+        <ProfileSection icon={MapPinned} title="Travel">
+          {editMode ? (
+            <div className="flex flex-col gap-3">
+              {(['favoritePlaces', 'dreamDestinations'] as const).map((field) => (
+                <div key={field}>
+                  <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">
+                    {field === 'favoritePlaces' ? 'favourite places' : 'dream destinations'} (comma-separated)
+                  </p>
+                  <input
+                    value={draft[field].join(', ')}
+                    onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : draft.favoritePlaces.length || draft.dreamDestinations.length ? (
+            <div className="flex flex-col gap-2">
+              {!!draft.favoritePlaces.length && (
+                <div>
+                  <p className="text-xs text-gold/70">Favourite Places</p>
+                  <p className="mt-0.5 text-sm text-white/80">{draft.favoritePlaces.join(', ')}</p>
+                </div>
+              )}
+              {!!draft.dreamDestinations.length && (
+                <div>
+                  <p className="text-xs text-gold/70">Dream Destinations</p>
+                  <p className="mt-0.5 text-sm text-white/80">{draft.dreamDestinations.join(', ')}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <EmptyHint editMode={editMode} preview={preview} label="travel details" onClick={() => navigate('/about-you')} />
+          )}
+        </ProfileSection>
       </div>
 
       {/* Upload modal */}
@@ -635,6 +700,28 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       )}
     </div>
   )
+}
+
+function ProfileSection({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+      <p className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-[0.25em] text-gold/70">
+        <Icon className="h-3.5 w-3.5" strokeWidth={1.75} /> {title}
+      </p>
+      {children}
+    </div>
+  )
+}
+
+function EmptyHint({ editMode, preview, label, onClick }: { editMode: boolean; preview: boolean; label: string; onClick: () => void }) {
+  if (editMode && !preview) {
+    return (
+      <button onClick={onClick} className="text-sm italic text-white/35 hover:text-gold cursor-pointer">
+        Add your {label} in onboarding →
+      </button>
+    )
+  }
+  return <p className="text-sm italic text-white/30">No {label} added yet.</p>
 }
 
 function CategoryTab({ cat, active, onSelect, onRename }: { cat: DisplayCategory; active: boolean; onSelect: () => void; onRename: (label: string) => void }) {
