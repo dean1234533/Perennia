@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
   Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
-  GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MapPinned, Sparkles, MoreHorizontal, Play,
+  GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
@@ -13,7 +13,6 @@ import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { FoundingMemberBadge } from '@/components/founding500/FoundingMemberBadge'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CircularCropper } from '@/components/shared/CircularCropper'
-import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import { subscribeUserMedia, renameCategoryRemote, type MediaDoc } from '@/lib/firestore'
 import {
@@ -313,20 +312,13 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
-        {[
-          { label: 'Bio', icon: Feather, target: 'profile-bio' },
-          { label: 'Favourite Places', icon: MapPinned, target: 'profile-details' },
-          { label: 'Dream Destinations', icon: Sparkles, target: 'profile-details' },
-        ].map(({ label, icon: Icon, target }, index) => (
-          <button
-            key={label}
-            onClick={() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className={`flex min-h-14 items-center justify-center gap-2 rounded-full border px-2 font-serif-display text-sm transition sm:text-lg ${index === 0 ? 'border-champagne/70 bg-white/[.04] text-ivory shadow-[0_0_20px_rgba(243,226,186,.12)]' : 'border-white/12 bg-midnight/35 text-white/75 hover:border-gold/35'}`}
-          >
-            <Icon className="h-4 w-4 shrink-0" /> <span>{label}</span>
-          </button>
-        ))}
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={() => document.getElementById('profile-bio')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="flex min-h-14 items-center justify-center gap-2 rounded-full border border-champagne/70 bg-white/[.04] px-6 font-serif-display text-sm text-ivory shadow-[0_0_20px_rgba(243,226,186,.12)] transition sm:text-lg"
+        >
+          <Feather className="h-4 w-4 shrink-0" /> <span>Bio</span>
+        </button>
       </div>
 
       {/* Editing controls remain available from the ellipsis menu without
@@ -569,45 +561,6 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
             )}
           </div>
         ))}
-      </div>
-
-      {/* Premium detail sections */}
-      <div id="profile-details" className="mt-12 scroll-mt-6">
-        <p className="mb-5 text-xs uppercase tracking-[0.25em] text-gold/70">More About You</p>
-        {editMode ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {(['music', 'languages', 'favoritePlaces', 'dreamDestinations'] as const).map((field) => (
-              <div key={field}>
-                <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field} (comma-separated)</p>
-                <input
-                  value={draft[field].join(', ')}
-                  onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
-                />
-              </div>
-            ))}
-            {(['fitness', 'books', 'movies'] as const).map((field) => (
-              <div key={field}>
-                <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field}</p>
-                <input
-                  value={draft[field]}
-                  onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <ProfileDetailSections
-            music={draft.music}
-            languages={draft.languages}
-            favoritePlaces={draft.favoritePlaces}
-            dreamDestinations={draft.dreamDestinations}
-            fitness={draft.fitness}
-            books={draft.books}
-            movies={draft.movies}
-          />
-        )}
       </div>
 
       {/* Upload modal */}
