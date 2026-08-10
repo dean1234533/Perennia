@@ -31,12 +31,56 @@
    explicit avoids tablet-only arbitrary variants being omitted by the CSS
    scanner. */
 .landing-final-cta {
-  top: 77%;
+  top: 82%;
 }
 
-@media (min-width: 768px) {
+.landing-artwork-mobile {
+  display: block;
+}
+
+.landing-artwork-desktop {
+  display: none;
+}
+
+.landing-artwork-ipad {
+  display: none;
+}
+
+/* Portrait tablets use their own 3:4 composition so all artwork and copy
+   remain inside the frame without scaling a phone layout or cropping a
+   landscape layout. */
+@media (min-width: 768px) and (orientation: portrait) {
+  .landing-artwork-mobile {
+    display: none;
+  }
+
+  .landing-artwork-ipad {
+    display: block;
+  }
+
   .landing-final-cta {
-    top: 64%;
+    top: 84%;
+  }
+}
+
+/* Width alone is not enough here: a 1024px iPad in portrait must retain
+   the portrait artwork, otherwise its baked-in wording becomes too small
+   and appears outside the intended composition. */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .landing-artwork-mobile {
+    display: none;
+  }
+
+  .landing-artwork-desktop {
+    display: block;
+  }
+
+  .landing-artwork-ipad {
+    display: none;
+  }
+
+  .landing-final-cta {
+    top: 62%;
   }
 }
 
