@@ -108,7 +108,7 @@ export function CityCombobox({
             <button
               key={`${c.name}-${c.country}-${i}`}
               type="button"
-              onMouseDown={(e) => e.preventDefault()}
+              onPointerDown={(e) => e.preventDefault()}
               onClick={() => {
                 onSelect(c)
                 setQuery(c.name)
