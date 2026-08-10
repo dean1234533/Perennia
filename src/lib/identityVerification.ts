@@ -53,3 +53,11 @@ export async function confirmIdentityDetails(): Promise<void> {
   const confirmDetails = httpsCallable<unknown, { confirmed: true }>(functions, 'confirmIdentityVerificationDetails')
   await confirmDetails()
 }
+
+/** Reconciles the caller's pending session directly with Stripe through a
+ * trusted Cloud Function. Used as a fallback when webhook delivery is slow. */
+export async function refreshIdentityVerificationStatus(): Promise<'pending' | 'verified' | 'failed'> {
+  const refresh = httpsCallable<unknown, { status: 'pending' | 'verified' | 'failed' }>(functions, 'refreshIdentityVerificationStatus')
+  const result = await refresh()
+  return result.data.status
+}

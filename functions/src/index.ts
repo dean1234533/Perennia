@@ -40,7 +40,7 @@ import { likeUserInputSchema } from './validation/matching.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
-import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
+import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent, refreshVerificationStatus } from './services/identity.service'
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
@@ -249,6 +249,21 @@ export const confirmIdentityVerificationDetails = onCall(async (request) => {
   if (!request.auth) throw unauthenticated('Sign in to confirm your identity details.')
   return confirmVerificationDetails(request.auth.uid)
 })
+
+// Secure fallback when Stripe's webhook is delayed: the session id is read
+// from the caller's own Firestore record and reconciled directly with Stripe.
+export const refreshIdentityVerificationStatus = onCall(
+  { secrets: [stripeSecretKey] },
+  async (request) => {
+    if (!request.auth) throw unauthenticated('Sign in to refresh identity verification.')
+    try {
+      return await refreshVerificationStatus(request.auth.uid, stripeSecretKey.value())
+    } catch (err) {
+      if (err instanceof HttpsError) throw err
+      throw internal('refreshIdentityVerificationStatus failed', err)
+    }
+  }
+)
 
 // ---------------------------------------------------------------------------
 // stripeIdentityWebhook — one shared Stripe webhook endpoint for this app.

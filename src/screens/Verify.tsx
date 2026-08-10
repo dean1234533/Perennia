@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import {
   confirmIdentityDetails,
+  refreshIdentityVerificationStatus,
   startIdentityVerification,
   identityVerificationConfigured,
   VerificationNotConfiguredError,
@@ -57,20 +58,62 @@ export function Verify() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const continueDestination = searchParams.get('next') || '/birth-details'
+  const previewPending = import.meta.env.DEV && searchParams.get('preview') === 'pending'
   const { user } = useAuth()
   const { onboarding } = useApp()
-  const [stage, setStage] = useState<LocalStage>('idle')
+  const [stage, setStage] = useState<LocalStage>(previewPending ? 'pending' : 'idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
+  const [pendingLong, setPendingLong] = useState(false)
+  const [refreshError, setRefreshError] = useState('')
 
   const verification = onboarding.verification
   const configured = identityVerificationConfigured && firebaseConfigured
   const detailsReady = verification.status === 'verified' && onboarding.legalName && onboarding.birthDate
   const detailsConfirmed = Boolean(verification.detailsConfirmedAt)
 
+  const refreshStatus = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setRefreshError('')
+    try {
+      const status = await refreshIdentityVerificationStatus()
+      if (status === 'failed') {
+        setErrorMessage('This verification attempt needs new information. Please upload or scan your ID again.')
+        setStage('idle')
+      } else if (status === 'verified') {
+        setPendingLong(false)
+      }
+    } catch {
+      setRefreshError('We could not refresh the status automatically. You can check again or start a new verification attempt.')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
   useEffect(() => {
     if (verification.status === 'failed') setStage('idle')
     if (verification.status === 'pending') setStage('pending')
   }, [verification.status])
+
+  useEffect(() => {
+    if (stage !== 'pending') {
+      setPendingLong(false)
+      return
+    }
+
+    const firstRefresh = window.setTimeout(() => void refreshStatus(), 1200)
+    const secondRefresh = window.setTimeout(() => void refreshStatus(), 6000)
+    const longTimer = window.setTimeout(() => setPendingLong(true), 9000)
+    return () => {
+      window.clearTimeout(firstRefresh)
+      window.clearTimeout(secondRefresh)
+      window.clearTimeout(longTimer)
+    }
+    // Refreshing is deliberately excluded: it is transient request state,
+    // not a reason to recreate every pending timer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage])
 
   // Wait for the Firestore listener to observe the server-side confirmation
   // before navigating. Otherwise the route guard could briefly see stale
@@ -81,6 +124,8 @@ export function Verify() {
 
   const launch = async () => {
     setErrorMessage('')
+    setRefreshError('')
+    setPendingLong(false)
     setStage('launching')
     try {
       await startIdentityVerification()
@@ -161,11 +206,26 @@ export function Verify() {
           ) : stage === 'pending' ? (
             <motion.div key="pending" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <div className="relative mx-auto mb-6 flex h-44 w-44 items-center justify-center rounded-full border border-blue-300/70 shadow-[0_0_35px_rgba(68,103,255,.35)]">
-                <ScanFace className="h-20 w-20 text-blue-100/75" strokeWidth={1} />
-                <Loader2 className="absolute h-48 w-48 animate-spin text-blue-400/60" strokeWidth={.5} />
+                {pendingLong ? <AlertTriangle className="h-16 w-16 text-amber-300/80" strokeWidth={1} /> : <ScanFace className="h-20 w-20 text-blue-100/75" strokeWidth={1} />}
+                {!pendingLong && <Loader2 className="absolute h-48 w-48 animate-spin text-blue-400/60" strokeWidth={.5} />}
               </div>
-              <h2 className="font-serif-display text-3xl">Checking Your Identity</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/55">Stripe is validating your document and matching your live face to its photograph. This screen updates automatically.</p>
+              <h2 className="font-serif-display text-3xl">{pendingLong ? 'Still Checking Your Identity' : 'Checking Your Identity'}</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/55">
+                {pendingLong
+                  ? 'This is taking longer than expected. Check the status again or begin a fresh verification attempt.'
+                  : 'Stripe is validating your document and matching your live face to its photograph. This screen updates automatically.'}
+              </p>
+              {(pendingLong || refreshError) && (
+                <div className="mx-auto mt-6 max-w-md space-y-3">
+                  {refreshError && <p className="rounded-xl border border-amber-400/20 bg-amber-400/[.06] px-4 py-3 text-xs leading-relaxed text-amber-100/70">{refreshError}</p>}
+                  <Button type="button" className="w-full" onClick={refreshStatus} disabled={refreshing}>
+                    {refreshing ? <><Loader2 className="h-4 w-4 animate-spin" /> Checking status…</> : 'Check Verification Status'}
+                  </Button>
+                  <Button type="button" variant="outline" className="w-full" onClick={launch} disabled={refreshing}>
+                    Start a New Verification
+                  </Button>
+                </div>
+              )}
               {import.meta.env.DEV && (
                 <div className="mx-auto mt-7 max-w-md border-t border-white/10 pt-6">
                   <Button type="button" variant="outline" className="w-full" onClick={skipForTesting}>

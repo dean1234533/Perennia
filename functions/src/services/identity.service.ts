@@ -76,9 +76,80 @@ export function constructWebhookEvent(params: { rawBody: Buffer; signature: stri
   return stripe.webhooks.constructEvent(params.rawBody, params.signature, params.webhookSecret)
 }
 
-export async function handleVerificationWebhookEvent(event: Stripe.Event, secretKey: string) {
+async function persistVerificationResult(params: {
+  uid: string
+  session: Stripe.Identity.VerificationSession
+  secretKey: string
+  verified: boolean
+}) {
+  const { uid, session, secretKey, verified } = params
   const db = getFirestore()
+  const update: Record<string, unknown> = {
+    'verification.status': verified ? 'verified' : 'failed',
+    'verification.provider': 'stripe_identity',
+    'verification.verificationReference': session.id,
+    'verification.verifiedAt': verified ? new Date().toISOString() : null,
+  }
 
+  if (verified) {
+    try {
+      const stripe = getStripe(secretKey)
+      const full = session.verified_outputs
+        ? session
+        : await stripe.identity.verificationSessions.retrieve(session.id, { expand: ['verified_outputs'] })
+      const outputs = full.verified_outputs
+      const dob = outputs?.dob
+
+      const userRef = db.collection('users').doc(uid)
+      const existing = await userRef.get()
+      const hasBirthDate = !!existing.get('birthDate')
+      const hasDisplayName = !!existing.get('name')
+
+      if (dob?.year && dob.month && dob.day && !hasBirthDate) {
+        const mm = String(dob.month).padStart(2, '0')
+        const dd = String(dob.day).padStart(2, '0')
+        update.birthDate = `${dob.year}-${mm}-${dd}`
+      }
+
+      const legalName = [outputs?.first_name, outputs?.last_name].filter(Boolean).join(' ')
+      if (legalName) update.legalName = legalName
+      if (outputs?.first_name && !hasDisplayName) update.name = outputs.first_name
+    } catch (err) {
+      log.warn('identity_verified_outputs_fetch_failed', {
+        uid,
+        message: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  await db.collection('users').doc(uid).update(update)
+  return verified ? 'verified' as const : 'failed' as const
+}
+
+/** Reconciles a pending Firestore record directly against Stripe. This is a
+ * secure fallback for delayed/misconfigured webhooks and never trusts a
+ * client-supplied session id. */
+export async function refreshVerificationStatus(uid: string, secretKey: string) {
+  const snapshot = await getFirestore().collection('users').doc(uid).get()
+  const sessionId = snapshot.get('verification.verificationReference') as string | undefined
+  if (!sessionId) throw failedPrecondition('No identity verification session is available to refresh.')
+
+  const stripe = getStripe(secretKey)
+  const session = await stripe.identity.verificationSessions.retrieve(sessionId, {
+    expand: ['verified_outputs'],
+  })
+
+  if (session.status === 'processing') return { status: 'pending' as const }
+  if (session.status === 'verified') {
+    return { status: await persistVerificationResult({ uid, session, secretKey, verified: true }) }
+  }
+
+  // Once Stripe's hosted UI has returned, requires_input/canceled means the
+  // current attempt cannot progress without a fresh capture.
+  return { status: await persistVerificationResult({ uid, session, secretKey, verified: false }) }
+}
+
+export async function handleVerificationWebhookEvent(event: Stripe.Event, secretKey: string) {
   if (
     event.type === 'identity.verification_session.verified' ||
     event.type === 'identity.verification_session.requires_input'
@@ -91,53 +162,7 @@ export async function handleVerificationWebhookEvent(event: Stripe.Event, secret
     }
 
     const verified = event.type === 'identity.verification_session.verified'
-    const update: Record<string, unknown> = {
-      'verification.status': verified ? 'verified' : 'failed',
-      'verification.provider': 'stripe_identity',
-      'verification.verificationReference': session.id,
-      'verification.verifiedAt': verified ? new Date().toISOString() : null,
-    }
-
-    // Real extracted legal name + DOB from the ID document Stripe just
-    // verified — this is what feeds the Birth Details step (the member no
-    // longer re-types their birth date; it's already confirmed against a
-    // government ID). Never overwrites a birth date the member has already
-    // locked in via the Birth Details screen.
-    if (verified) {
-      try {
-        const stripe = getStripe(secretKey)
-        const full = await stripe.identity.verificationSessions.retrieve(session.id, {
-          expand: ['verified_outputs'],
-        })
-        const outputs = full.verified_outputs
-        const dob = outputs?.dob
-
-        const userRef = db.collection('users').doc(uid)
-        const existing = await userRef.get()
-        const hasBirthDate = !!existing.get('birthDate')
-        const hasDisplayName = !!existing.get('name')
-
-        if (dob?.year && dob.month && dob.day && !hasBirthDate) {
-          const mm = String(dob.month).padStart(2, '0')
-          const dd = String(dob.day).padStart(2, '0')
-          update.birthDate = `${dob.year}-${mm}-${dd}`
-        }
-
-        const legalName = [outputs?.first_name, outputs?.last_name].filter(Boolean).join(' ')
-        if (legalName) update.legalName = legalName
-        // About You is intentionally short and no longer asks the member to
-        // re-enter a name Stripe has already verified. Seed the public first
-        // name only when the account does not already have one.
-        if (outputs?.first_name && !hasDisplayName) update.name = outputs.first_name
-      } catch (err) {
-        log.warn('identity_verified_outputs_fetch_failed', {
-          uid,
-          message: err instanceof Error ? err.message : String(err),
-        })
-      }
-    }
-
-    await db.collection('users').doc(uid).update(update)
+    await persistVerificationResult({ uid, session, secretKey, verified })
 
     log.info('identity_verification_updated', { uid, status: verified ? 'verified' : 'failed' })
   }
