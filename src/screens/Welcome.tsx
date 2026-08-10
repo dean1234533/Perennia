@@ -29,23 +29,25 @@ export function Welcome() {
 
   return (
     <div className="relative isolate overflow-x-clip bg-midnight text-white">
-      {/* Absolutely (not fixed- or sticky-)positioned so it stretches to
-          cover the whole scrollable page rather than pinning to the
-          viewport — a `fixed` (or `sticky` sized to a viewport unit)
-          full-bleed background gets visibly resized/jumped by mobile
-          browsers as the address bar hides/shows mid-scroll. Same fix as
-          every other screen's background in this app. */}
-      <div className="pointer-events-none absolute inset-0 z-0">
+      {/* Genuinely pinned behind the whole page (position: fixed) — but
+          sized with `dvh` (dynamic viewport height), not `vh`/`svh`.
+          `dvh` is the unit built specifically to track the browser's
+          REAL current visible height as the address bar hides/shows, so
+          a fixed background stays perfectly full-bleed with no gap and
+          no snap — `vh`/`svh` stay locked to one fixed number while the
+          real viewport changes size around them, which is what reads as
+          a "jump". This keeps the pinned effect, not just avoids it. */}
+      <div className="pointer-events-none fixed inset-0 z-0 h-[100dvh]">
         <LandingCelestialBackground />
       </div>
 
       {/* ============ HERO ============ */}
-      <section className="relative z-10 min-h-screen overflow-hidden">
+      <section className="relative z-10 min-h-[100dvh] overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-start px-6 pb-6 pt-16 text-center sm:justify-center sm:px-10 sm:py-6"
+          className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-3xl flex-col items-center justify-start px-6 pb-6 pt-16 text-center sm:justify-center sm:px-10 sm:py-6"
         >
           <CelestialHeart className="h-40 w-40 sm:h-32 sm:w-32" />
           <span aria-hidden="true" className="-mt-2 font-serif-display text-3xl leading-none text-ivory [text-shadow:0_0_16px_rgba(173,194,255,.75)]">☾</span>
@@ -133,6 +135,7 @@ export function Welcome() {
       {/* ============ BEGIN YOUR STORY ============ */}
       <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
         <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" className="landing-artwork-mobile landing-final-artwork h-auto w-full" />
+        <img src="/landingPage-iPad5.png" alt="Stories, not statistics." width="1086" height="1448" className="landing-artwork-ipad landing-final-artwork h-auto w-full" />
         <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." width="1672" height="941" className="landing-artwork-desktop landing-final-artwork h-auto w-full" />
         <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">
           <Button size="lg" onClick={() => navigate('/signup')} className="group w-full max-w-sm sm:w-auto sm:min-w-72">
