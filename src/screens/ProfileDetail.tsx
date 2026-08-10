@@ -22,7 +22,7 @@ import type { DisplayCategory } from '@/types/media'
 export function ProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { likeProfile, passProfile, matchedIds, profileExtras, onboarding } = useApp()
+  const { likeProfile, passProfile, blockProfile, matchedIds, profileExtras, onboarding } = useApp()
   const { user } = useAuth()
   const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
   const [media, setMedia] = useState<MediaDoc[]>([])
@@ -354,11 +354,10 @@ export function ProfileDetail() {
         profileName={profile.name}
         profileId={profile.uid}
         onBlock={() => {
-          passProfile(profile.uid)
+          blockProfile(profile.uid)
           navigate('/discovery')
         }}
         onMute={() => {
-          window.sessionStorage.setItem(`perennia:muted-profile:${profile.uid}`, 'true')
           passProfile(profile.uid)
           navigate('/discovery')
         }}

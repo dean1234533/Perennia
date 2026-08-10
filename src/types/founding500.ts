@@ -31,4 +31,8 @@ export interface FoundingMemberRecord {
   stripeSubscriptionId: string
   pricing: PricingSnapshot
   confirmedAt: string
+  /** Set by the real cancelFoundingMembership Cloud Function — a canceled
+   *  record is kept (member number/history preserved) but treated as no
+   *  active membership for access purposes. */
+  canceledAt?: string | null
 }

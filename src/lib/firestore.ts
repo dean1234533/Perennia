@@ -7,6 +7,7 @@ import {
   updateDoc,
   deleteDoc,
   arrayUnion,
+  arrayRemove,
   onSnapshot,
   serverTimestamp,
   query,
@@ -105,6 +106,10 @@ export interface UserDoc {
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
+  /** Real blocked-member list — a block hides that member from Discovery
+   *  (same mechanism as passedIds) and is reversible from Settings ->
+   *  Blocked Users, unlike a pass. */
+  blockedIds: string[]
   profilePhotoUrl: string
   profilePhotoThumbUrl: string
   categories: { id: string; label: string }[]
@@ -169,6 +174,7 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   likedIds: [],
   passedIds: [],
   matchedIds: [],
+  blockedIds: [],
   profilePhotoUrl: '',
   profilePhotoThumbUrl: '',
   categories: DEFAULT_MEDIA_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
@@ -217,6 +223,14 @@ export async function setCurrentLocationRemote(uid: string, lat: number, lon: nu
 
 export async function passProfileRemote(uid: string, targetUid: string) {
   await updateDoc(doc(db, 'users', uid), { passedIds: arrayUnion(targetUid) })
+}
+
+export async function blockProfileRemote(uid: string, targetUid: string) {
+  await updateDoc(doc(db, 'users', uid), { blockedIds: arrayUnion(targetUid) })
+}
+
+export async function unblockProfileRemote(uid: string, targetUid: string) {
+  await updateDoc(doc(db, 'users', uid), { blockedIds: arrayRemove(targetUid) })
 }
 
 export async function savePushTokenRemote(uid: string, token: string) {

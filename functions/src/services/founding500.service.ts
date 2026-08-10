@@ -19,7 +19,8 @@
  * API shape and should be smoke-tested once real keys are configured.
  */
 import Stripe from 'stripe'
-import { failedPrecondition, internal } from '../utils/errors'
+import { getFirestore } from 'firebase-admin/firestore'
+import { failedPrecondition, internal, notFound } from '../utils/errors'
 import { log } from '../utils/logger'
 import { getConfig, confirmFoundingMembership, Founding500FullError, Founding500DisabledError } from '../repositories/founding500.repository'
 import type { MembershipTier, PricingSnapshot } from '../types/founding500'
@@ -198,5 +199,58 @@ export async function cancelFoundingSubscription(subscriptionId: string, secretK
       return
     }
     throw internal(`Failed to cancel Stripe subscription: ${err instanceof Error ? err.message : String(err)}`, err)
+  }
+}
+
+/** Real self-serve membership cancellation — cancels the actual Stripe
+ *  subscription (same helper account deletion uses) and marks the member's
+ *  own foundingMembers record as canceled, WITHOUT deleting their account or
+ *  their real membership history (member number, tier, confirmedAt stay
+ *  intact). RequireFoundingMembership treats a canceled record the same as
+ *  no record at all — real access is revoked, not just a UI label change. */
+export async function cancelMembership(uid: string, secretKey: string): Promise<{ canceled: true }> {
+  const db = getFirestore()
+  const ref = db.collection('foundingMembers').doc(uid)
+  const snap = await ref.get()
+  if (!snap.exists) {
+    throw notFound('No active Founding 500 membership found for this account.')
+  }
+  const record = snap.data() as { stripeSubscriptionId?: string; canceledAt?: string | null }
+  if (record.canceledAt) {
+    return { canceled: true }
+  }
+  if (record.stripeSubscriptionId) {
+    await cancelFoundingSubscription(record.stripeSubscriptionId, secretKey)
+  }
+  await ref.update({ canceledAt: new Date().toISOString() })
+  log.info('founding500_membership_canceled', { uid })
+  return { canceled: true }
+}
+
+/** Real Stripe-hosted billing portal — invoices, payment method, and
+ *  subscription details all come straight from Stripe, never rendered from
+ *  our own guessed/cached data. Requires a billing portal configuration to
+ *  exist in the Stripe Dashboard; surfaces that as a real error rather than
+ *  a broken link if it isn't set up yet. */
+export async function createBillingPortalSession(uid: string, secretKey: string, returnUrl: string): Promise<{ url: string }> {
+  const db = getFirestore()
+  const snap = await db.collection('foundingMembers').doc(uid).get()
+  if (!snap.exists) {
+    throw notFound('No Founding 500 membership found for this account.')
+  }
+  const record = snap.data() as { stripeCustomerId?: string }
+  if (!record.stripeCustomerId) {
+    throw notFound('No billing account found for this membership.')
+  }
+
+  const stripe = getStripe(secretKey)
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: record.stripeCustomerId,
+      return_url: returnUrl,
+    })
+    return { url: session.url }
+  } catch (err) {
+    throw internal(`Failed to open billing portal: ${err instanceof Error ? err.message : String(err)}`, err)
   }
 }

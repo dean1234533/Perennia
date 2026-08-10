@@ -58,3 +58,22 @@ export async function createFoundingCheckoutSession(input: CreateCheckoutInput):
     throw err
   }
 }
+
+const cancelMembershipCallable = httpsCallable<unknown, { canceled: true }>(functions, 'cancelFoundingMembership')
+
+/** Real self-serve cancellation — cancels the actual Stripe subscription
+ *  and marks the member's own foundingMembers record canceled server-side.
+ *  Throws if there's no active membership to cancel. */
+export async function cancelFoundingMembership(): Promise<{ canceled: true }> {
+  const result: HttpsCallableResult<{ canceled: true }> = await cancelMembershipCallable()
+  return result.data
+}
+
+const billingPortalCallable = httpsCallable<{ returnUrl: string }, { url: string }>(functions, 'createBillingPortalSession')
+
+/** Real Stripe-hosted billing portal — invoices and payment method come
+ *  straight from Stripe. Returns the URL to redirect to. */
+export async function createBillingPortalSession(returnUrl: string): Promise<{ url: string }> {
+  const result: HttpsCallableResult<{ url: string }> = await billingPortalCallable({ returnUrl })
+  return result.data
+}

@@ -68,7 +68,7 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
     )
   }
 
-  if (!membershipState.record) {
+  if (!membershipState.record || membershipState.record.canceledAt) {
     return <Navigate to={`/founding-500?next=${encodeURIComponent(location.pathname)}`} replace />
   }
 

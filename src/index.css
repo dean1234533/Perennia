@@ -27,6 +27,26 @@
   --animate-haze: haze 24s ease-in-out infinite;
 }
 
+/* Responsive positioning tied to the artwork itself. Keeping these rules
+   explicit avoids tablet-only arbitrary variants being omitted by the CSS
+   scanner. */
+.landing-final-cta {
+  top: 77%;
+}
+
+@media (min-width: 768px) {
+  .landing-final-cta {
+    top: 64%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1180px) {
+  .login-form-stage {
+    justify-content: flex-start;
+    padding-top: 1rem;
+  }
+}
+
 @keyframes twinkle {
   0%, 100% { opacity: 0.25; transform: scale(0.92); }
   50% { opacity: 0.85; transform: scale(1.05); }

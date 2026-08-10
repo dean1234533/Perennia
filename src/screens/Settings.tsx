@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Bell, Shield, Sparkles, LogOut, ChevronRight, Eye, MapPin, Heart, X, Check, Crown,
-  SlidersHorizontal, Images, KeyRound, Trash2, AlertTriangle, Loader2, UserRoundX,
+  SlidersHorizontal, Images, KeyRound, Trash2, AlertTriangle, Loader2, UserRoundX, Ban, Flag, BadgeHelp,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -14,6 +14,7 @@ import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
+import { getUserDoc } from '@/lib/firestore'
 import type { FoundingMemberRecord } from '@/types/founding500'
 
 function Row({
@@ -60,7 +61,7 @@ function Row({
 export function Settings() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { setAuthenticated, onboarding, updateOnboarding } = useApp()
+  const { setAuthenticated, onboarding, updateOnboarding, blockedIds, unblockProfile } = useApp()
   const { user, logOut, changePassword, deleteAccount } = useAuth()
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false)
   const [nameDraft, setNameDraft] = useState(onboarding.name)
@@ -80,6 +81,11 @@ export function Settings() {
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
 
+  const [blockedOpen, setBlockedOpen] = useState(false)
+  const [blockedProfiles, setBlockedProfiles] = useState<{ uid: string; name: string; photoUrl: string }[]>([])
+  const [blockedLoading, setBlockedLoading] = useState(false)
+  const [safetyOpen, setSafetyOpen] = useState(false)
+
   useEffect(() => {
     const anchor = location.hash.slice(1)
     if (!anchor) return
@@ -87,8 +93,29 @@ export function Settings() {
       setDeleteOpen(true)
       return
     }
+    if (anchor === 'blocked-users') {
+      setBlockedOpen(true)
+      return
+    }
+    if (anchor === 'safety') {
+      setSafetyOpen(true)
+      return
+    }
     window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
   }, [location.hash])
+
+  const openBlockedUsers = async () => {
+    setBlockedOpen(true)
+    if (!firebaseConfigured || blockedIds.length === 0) return
+    setBlockedLoading(true)
+    const docs = await Promise.all(blockedIds.map((uid) => getUserDoc(uid)))
+    setBlockedProfiles(
+      docs
+        .map((doc, i) => (doc ? { uid: blockedIds[i], name: doc.name || 'Unknown', photoUrl: doc.profilePhotoThumbUrl || doc.profilePhotoUrl } : null))
+        .filter((p): p is { uid: string; name: string; photoUrl: string } => p !== null)
+    )
+    setBlockedLoading(false)
+  }
 
   useEffect(() => {
     if (!firebaseConfigured || !user) return
@@ -305,9 +332,15 @@ export function Settings() {
                 right={<Switch checked={onboarding.showDistance} onCheckedChange={(v) => updateOnboarding({ showDistance: v })} />}
               />
               <div className="h-px bg-white/5" />
-              <Row id="blocked-users" icon={UserRoundX} label="Blocked Users" description="Review profiles you have blocked" />
+              <Row
+                id="blocked-users"
+                icon={UserRoundX}
+                label="Blocked Users"
+                description={blockedIds.length ? `${blockedIds.length} blocked` : 'Review profiles you have blocked'}
+                onClick={openBlockedUsers}
+              />
               <div className="h-px bg-white/5" />
-              <Row id="safety" icon={Shield} label="Safety Settings" description="Profile visibility and safety controls" />
+              <Row id="safety" icon={Shield} label="Safety Settings" description="Blocking, reporting & support" onClick={() => setSafetyOpen(true)} />
             </>
           ),
         },
@@ -488,6 +521,105 @@ export function Settings() {
                   {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Forever'}
                 </Button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Blocked users modal */}
+      <AnimatePresence>
+        {blockedOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && setBlockedOpen(false)}
+          >
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-strong w-full max-w-sm rounded-2xl p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="font-serif-display text-xl text-champagne">Blocked Users</h3>
+                <button onClick={() => setBlockedOpen(false)} className="cursor-pointer text-white/40 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {blockedLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-gold" /></div>
+              ) : blockedProfiles.length === 0 ? (
+                <p className="py-4 text-center text-sm text-white/40">You haven't blocked anyone.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {blockedProfiles.map((p) => (
+                    <div key={p.uid} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5">
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/10">
+                        {p.photoUrl && <img src={p.photoUrl} alt="" className="h-full w-full object-cover" />}
+                      </div>
+                      <p className="flex-1 truncate text-sm text-white/85">{p.name}</p>
+                      <button
+                        onClick={async () => {
+                          await unblockProfile(p.uid)
+                          setBlockedProfiles((prev) => prev.filter((b) => b.uid !== p.uid))
+                        }}
+                        className="cursor-pointer rounded-full border border-white/15 px-3 py-1 text-xs text-white/60 hover:border-gold/40 hover:text-gold"
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Safety settings modal */}
+      <AnimatePresence>
+        {safetyOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && setSafetyOpen(false)}
+          >
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-strong w-full max-w-sm rounded-2xl p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="font-serif-display text-xl text-champagne">Safety Settings</h3>
+                <button onClick={() => setSafetyOpen(false)} className="cursor-pointer text-white/40 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <Row
+                  icon={Ban}
+                  label="Blocked Users"
+                  description={blockedIds.length ? `${blockedIds.length} blocked` : 'Manage who you have blocked'}
+                  onClick={() => { setSafetyOpen(false); openBlockedUsers() }}
+                />
+                <div className="h-px bg-white/5" />
+                <Row
+                  icon={Flag}
+                  label="Report a Problem"
+                  description="Email our safety team"
+                  onClick={() => { window.location.href = 'mailto:safety@perennia.com?subject=Report%20a%20Problem'; setSafetyOpen(false) }}
+                />
+                <div className="h-px bg-white/5" />
+                <Row
+                  icon={BadgeHelp}
+                  label="Help & Support"
+                  description="Email support"
+                  onClick={() => { window.location.href = 'mailto:support@perennia.com'; setSafetyOpen(false) }}
+                />
+              </div>
+
+              <p className="mt-5 rounded-xl border border-white/5 bg-white/[0.02] p-3.5 text-xs leading-relaxed text-white/45">
+                Never share financial details or move conversations off Perennia early. Meet new connections in
+                public places and tell a friend your plans. If a member makes you uncomfortable, block and
+                report them — our team reviews every report.
+              </p>
             </motion.div>
           </motion.div>
         )}

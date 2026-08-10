@@ -35,13 +35,13 @@ import {
   likeRateLimitWindowSeconds,
 } from './config/env'
 import { getCompatibilityInputSchema, computeNatalChartInputSchema, geocodeLocationInputSchema, searchCitiesInputSchema } from './validation/compatibility.validation'
-import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema } from './validation/founding500.validation'
+import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema, createBillingPortalInputSchema } from './validation/founding500.validation'
 import { likeUserInputSchema } from './validation/matching.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent } from './services/identity.service'
-import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted } from './services/founding500.service'
+import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { deleteAccount as deleteAccountService } from './services/account.service'
@@ -337,6 +337,40 @@ export const createFoundingCheckoutSession = onCall({ secrets: [stripeSecretKey]
   } catch (err) {
     if (err instanceof HttpsError) throw err
     throw internal('createFoundingCheckoutSession failed', err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// cancelFoundingMembership — real self-serve cancellation. Cancels the
+// actual Stripe subscription and marks the caller's own foundingMembers
+// record canceled; RequireFoundingMembership then treats them the same as
+// a non-member. Does not delete the account or any other data.
+// ---------------------------------------------------------------------------
+export const cancelFoundingMembership = onCall({ secrets: [stripeSecretKey] }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in to manage your membership.')
+  try {
+    return await cancelMembership(request.auth.uid, stripeSecretKey.value())
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('cancelFoundingMembership failed', err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// createBillingPortalSession — real Stripe-hosted billing portal (invoices,
+// payment method) for the caller's own Founding 500 subscription.
+// ---------------------------------------------------------------------------
+export const createBillingPortalSession = onCall({ secrets: [stripeSecretKey] }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in to manage billing.')
+  const parsed = createBillingPortalInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+  try {
+    return await createBillingPortalSessionService(request.auth.uid, stripeSecretKey.value(), parsed.data.returnUrl)
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('createBillingPortalSession failed', err)
   }
 })
 

@@ -8,6 +8,12 @@ export const createFoundingCheckoutInputSchema = z.object({
 
 export type CreateFoundingCheckoutInput = z.infer<typeof createFoundingCheckoutInputSchema>
 
+export const createBillingPortalInputSchema = z.object({
+  returnUrl: z.string().url(),
+})
+
+export type CreateBillingPortalInput = z.infer<typeof createBillingPortalInputSchema>
+
 export const updateFounding500ConfigInputSchema = z
   .object({
     enabled: z.boolean().optional(),

@@ -72,7 +72,7 @@ export function Login() {
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-6 py-8 sm:py-10">
         <BrandMark />
 
-        <div className="flex w-full flex-1 flex-col items-center justify-center">
+        <div className="login-form-stage flex w-full flex-1 flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}

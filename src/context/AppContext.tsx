@@ -8,6 +8,8 @@ import {
   subscribeUserDoc,
   updateUserDoc,
   passProfileRemote,
+  blockProfileRemote,
+  unblockProfileRemote,
   completeOnboardingRemote,
   updateProfileExtrasRemote,
   updatePreferencesRemote,
@@ -68,10 +70,13 @@ interface AppContextValue {
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
+  blockedIds: string[]
   /** Real like via the likeUser Cloud Function. Returns the real matchId
    *  when a genuine mutual match was just created, otherwise null. */
   likeProfile: (targetUid: string) => Promise<string | null>
   passProfile: (targetUid: string) => Promise<void>
+  blockProfile: (targetUid: string) => Promise<void>
+  unblockProfile: (targetUid: string) => Promise<void>
   isAuthenticated: boolean
   setAuthenticated: (v: boolean) => void
   onboardingComplete: boolean
@@ -147,6 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [onboarding, setOnboarding] = useState<OnboardingData>(defaultOnboarding)
   const [likedIds, setLikedIds] = useState<string[]>([])
   const [passedIds, setPassedIds] = useState<string[]>([])
+  const [blockedIds, setBlockedIds] = useState<string[]>([])
   const [matchedIds, setMatchedIds] = useState<string[]>([])
   const [localAuthenticated, setLocalAuthenticated] = useState(false)
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
@@ -206,6 +212,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }))
       setLikedIds(data.likedIds ?? [])
       setPassedIds(data.passedIds ?? [])
+      setBlockedIds(data.blockedIds ?? [])
       setMatchedIds(data.matchedIds ?? [])
       setRemoteOnboardingComplete(!!data.onboardingComplete)
       if (data.profileExtras) setProfileExtras(data.profileExtras)
@@ -277,6 +284,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [user]
   )
 
+  const blockProfile = useCallback(
+    async (targetUid: string) => {
+      if (firebaseConfigured && user) {
+        await blockProfileRemote(user.uid, targetUid)
+      } else {
+        setBlockedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
+      }
+    },
+    [user]
+  )
+
+  const unblockProfile = useCallback(
+    async (targetUid: string) => {
+      if (firebaseConfigured && user) {
+        await unblockProfileRemote(user.uid, targetUid)
+      } else {
+        setBlockedIds((prev) => prev.filter((id) => id !== targetUid))
+      }
+    },
+    [user]
+  )
+
   const clearLastMatch = useCallback(() => setLastMatchId(null), [])
 
   const isAuthenticated = firebaseConfigured ? !!user : localAuthenticated
@@ -298,8 +327,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         likedIds,
         passedIds,
         matchedIds,
+        blockedIds,
         likeProfile,
         passProfile,
+        blockProfile,
+        unblockProfile,
         isAuthenticated,
         setAuthenticated: setLocalAuthenticated,
         onboardingComplete,
