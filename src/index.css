@@ -83,6 +83,13 @@
   50% { opacity: 0.72; transform: scale(1.15); box-shadow: 0 0 14px 3px rgba(205,216,255,.42); }
 }
 
+@keyframes celestial-star-move {
+  0% { opacity: .2; transform: translate3d(0, 0, 0) scale(.86); }
+  28% { opacity: .75; }
+  72% { opacity: .48; }
+  100% { opacity: .08; transform: translate3d(var(--star-drift-x), var(--star-drift-y), 0) scale(1.08); }
+}
+
 @keyframes celestial-drift {
   0%, 100% { transform: translate3d(-0.15%, 0.1%, 0) scale(1.015); }
   50% { transform: translate3d(0.25%, -0.2%, 0) scale(1.019); }
@@ -114,6 +121,14 @@
 
 .celestial-glow-star {
   animation: celestial-soft-pulse 11s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.celestial-moving-star {
+  animation-name: celestial-star-move;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  box-shadow: 0 0 5px 1px rgba(214, 225, 255, .28);
   will-change: opacity, transform;
 }
 
@@ -171,6 +186,7 @@
 
   .celestial-drift,
   .celestial-twinkle,
+  .celestial-moving-star,
   .celestial-glow-star,
   .celestial-shooting-star {
     animation: none !important;

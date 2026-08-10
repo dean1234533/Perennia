@@ -64,8 +64,13 @@ export async function confirmVerificationDetails(uid: string) {
   const snapshot = await userRef.get()
   if (!snapshot.exists) throw failedPrecondition('Your account profile could not be found.')
   const data = snapshot.data()
-  if (data?.verification?.status !== 'verified' || !data?.legalName || !data?.birthDate) {
-    throw failedPrecondition('Verified identity details are not ready to confirm.')
+  // legalName/birthDate are a bonus when Stripe's document type returns them
+  // (not every document/region does) — never required to proceed, since the
+  // real Birth Details onboarding step already asks for birth date manually
+  // when it wasn't captured here. Blocking on them stranded verified members
+  // on this screen with no way forward.
+  if (data?.verification?.status !== 'verified') {
+    throw failedPrecondition('Identity verification is not complete yet.')
   }
   await userRef.update({ 'verification.detailsConfirmedAt': new Date().toISOString() })
   return { confirmed: true as const }

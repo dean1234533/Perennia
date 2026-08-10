@@ -69,7 +69,11 @@ export function Verify() {
 
   const verification = onboarding.verification
   const configured = identityVerificationConfigured && firebaseConfigured
-  const detailsReady = verification.status === 'verified' && onboarding.legalName && onboarding.birthDate
+  // Stripe confirming the document + face match is what actually matters —
+  // legalName/birthDate are a bonus extraction that not every document type
+  // or region returns. Requiring them to proceed used to strand verified
+  // members on this screen forever with no way out.
+  const isVerified = verification.status === 'verified'
   const detailsConfirmed = Boolean(verification.detailsConfirmedAt)
 
   const refreshStatus = async () => {
@@ -94,6 +98,10 @@ export function Verify() {
   useEffect(() => {
     if (verification.status === 'failed') setStage('idle')
     if (verification.status === 'pending') setStage('pending')
+    // Stop the pending-poll timers once Stripe has actually confirmed —
+    // the confirm screen renders from `isVerified` regardless of `stage`,
+    // this just avoids pointless background refresh calls afterward.
+    if (verification.status === 'verified') setStage('idle')
   }, [verification.status])
 
   useEffect(() => {
@@ -156,7 +164,7 @@ export function Verify() {
     navigate(continueDestination)
   }
 
-  const activeStep = detailsConfirmed ? 4 : detailsReady ? 3 : stage === 'pending' ? 2 : stage === 'launching' ? 1 : 0
+  const activeStep = detailsConfirmed ? 4 : isVerified ? 3 : stage === 'pending' ? 2 : stage === 'launching' ? 1 : 0
 
   return (
     <OnboardingShell>
@@ -171,25 +179,34 @@ export function Verify() {
         className="verification-card glass-strong w-full max-w-2xl rounded-[2rem] border-white/20 p-7 text-center shadow-[0_0_50px_rgba(54,93,211,.16)] sm:p-10"
       >
         <AnimatePresence mode="wait">
-          {detailsReady && !detailsConfirmed ? (
+          {isVerified && !detailsConfirmed ? (
             <motion.div key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-300/40 bg-blue-500/10 shadow-[0_0_22px_rgba(79,118,255,.25)]">
                 <CheckCircle2 className="h-8 w-8 text-blue-200" />
               </div>
               <h2 className="font-serif-display text-3xl">Confirm Your Details</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/55">
-                Your document and live face match passed. Please confirm the verified details extracted from your ID.
+                Your document and live face match passed
+                {onboarding.legalName || onboarding.birthDate
+                  ? '. Please confirm the verified details extracted from your ID.'
+                  : ' — your identity has been verified by Stripe.'}
               </p>
-              <div className="mx-auto my-7 max-w-md space-y-3 text-left">
-                <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
-                  <UserRound className="h-5 w-5 text-champagne" />
-                  <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Legal name</p><p className="mt-1 text-white/90">{onboarding.legalName}</p></div>
+              {(onboarding.legalName || onboarding.birthDate) && (
+                <div className="mx-auto my-7 max-w-md space-y-3 text-left">
+                  {onboarding.legalName && (
+                    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+                      <UserRound className="h-5 w-5 text-champagne" />
+                      <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Legal name</p><p className="mt-1 text-white/90">{onboarding.legalName}</p></div>
+                    </div>
+                  )}
+                  {onboarding.birthDate && (
+                    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+                      <CalendarDays className="h-5 w-5 text-champagne" />
+                      <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Date of birth</p><p className="mt-1 text-white/90">{formatBirthDate(onboarding.birthDate)}</p></div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
-                  <CalendarDays className="h-5 w-5 text-champagne" />
-                  <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Date of birth</p><p className="mt-1 text-white/90">{formatBirthDate(onboarding.birthDate)}</p></div>
-                </div>
-              </div>
+              )}
               {errorMessage && <p className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
               <Button size="lg" className="w-full max-w-md" onClick={confirmAndContinue} disabled={stage === 'confirming'}>
                 {stage === 'confirming' ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Confirm &amp; Continue <ArrowRight className="h-4 w-4" /></>}

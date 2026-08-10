@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 
 interface CelestialStar {
   x: number
@@ -9,6 +9,11 @@ interface CelestialStar {
   delay: number
 }
 
+interface MovingStar extends CelestialStar {
+  driftX: number
+  driftY: number
+}
+
 // Small deterministic PRNG: the stars keep their positions across renders,
 // avoiding layout shimmer while still looking naturally irregular.
 function seededRandom(seed: number) {
@@ -17,6 +22,24 @@ function seededRandom(seed: number) {
     value = (value * 1664525 + 1013904223) >>> 0
     return value / 4294967296
   }
+}
+
+function makeMovingStars(count: number): MovingStar[] {
+  const random = seededRandom(20260810)
+  return Array.from({ length: count }, () => {
+    // Keep the centre quieter so the movement never competes with the hero copy.
+    const onLeft = random() > 0.5
+    return {
+      x: onLeft ? random() * 24 : 76 + random() * 24,
+      y: random() * 100,
+      size: random() * 1.25 + 0.75,
+      opacity: random() * 0.38 + 0.38,
+      duration: random() * 12 + 15,
+      delay: random() * -28,
+      driftX: (onLeft ? 1 : -1) * (random() * 15 + 8),
+      driftY: -(random() * 18 + 8),
+    }
+  })
 }
 
 function makeStars(count: number): CelestialStar[] {
@@ -46,7 +69,8 @@ const glowStars = [
 /** Shared, image-led celestial background. All animation is limited to
  * opacity and tiny transforms so it stays compositor-friendly. */
 export function LandingCelestialBackground() {
-  const stars = useMemo(() => makeStars(34), [])
+  const stars = useMemo(() => makeStars(76), [])
+  const movingStars = useMemo(() => makeMovingStars(16), [])
 
   return (
     <div className="celestial-atmosphere pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -65,6 +89,19 @@ export function LandingCelestialBackground() {
               opacity: star.opacity,
               animationDuration: `${star.duration}s`, animationDelay: `${star.delay}s`,
             }}
+          />
+        ))}
+        {movingStars.map((star, index) => (
+          <i
+            key={`moving-${index}`}
+            className="celestial-moving-star absolute rounded-full bg-white"
+            style={{
+              left: `${star.x}%`, top: `${star.y}%`, width: star.size, height: star.size,
+              opacity: star.opacity,
+              animationDuration: `${star.duration}s`, animationDelay: `${star.delay}s`,
+              '--star-drift-x': `${star.driftX}px`,
+              '--star-drift-y': `${star.driftY}px`,
+            } as CSSProperties}
           />
         ))}
         {glowStars.map((star, index) => (

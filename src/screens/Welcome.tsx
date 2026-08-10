@@ -28,12 +28,15 @@ export function Welcome() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative overflow-hidden bg-midnight text-white">
+    <div className="relative isolate overflow-hidden bg-midnight text-white">
+      {/* One fixed animated atmosphere sits behind the complete landing page.
+          The hero and the supplied artwork sections scroll over this layer. */}
+      <div className="fixed inset-0 z-0">
+        <LandingCelestialBackground />
+      </div>
+
       {/* ============ HERO ============ */}
-      <section className="relative min-h-screen overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <LandingCelestialBackground />
-        </div>
+      <section className="relative z-10 min-h-screen overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -112,19 +115,19 @@ export function Welcome() {
       </section>
 
       {/* ============ RARE ALIGNMENT ============ */}
-      <section className="relative z-10 flex w-full items-center justify-center bg-midnight">
+      <section className="relative z-10 flex w-full items-center justify-center">
         <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="w-full md:hidden" />
         <img src="/landingPage-Desktop3.JPG" alt="Rare alignment isn't a feature. It's a feeling." className="hidden w-full md:block" />
       </section>
 
       {/* ============ FINAL CTA ============ */}
-      <section className="relative z-10 flex w-full items-center justify-center bg-midnight">
+      <section className="relative z-10 flex w-full items-center justify-center">
         <img src="/landingPage-Mobile4.JPG" alt="Your story deserves a beautiful beginning." className="w-full md:hidden" />
         <img src="/landingPage-Desktop4.JPG" alt="Your story deserves a beautiful beginning." className="hidden w-full md:block" />
       </section>
 
       {/* ============ BEGIN YOUR STORY ============ */}
-      <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden bg-midnight sm:min-h-[80vh]">
+      <section className="relative z-10 flex min-h-[70vh] w-full items-center justify-center overflow-hidden sm:min-h-[80vh]">
         <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." className="absolute inset-0 h-full w-full object-cover md:hidden" />
         <img src="/landingPage-Desktop5.png" alt="Stories, not statistics." className="absolute inset-0 hidden h-full w-full object-cover md:block" />
         <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">
@@ -135,7 +138,7 @@ export function Welcome() {
         </div>
       </section>
 
-      <footer className="relative z-10 border-t border-white/5 px-6 py-8 text-center text-xs text-white/30">
+      <footer className="relative z-10 border-t border-white/5 bg-midnight/75 px-6 py-8 text-center text-xs text-white/30 backdrop-blur-sm">
         © 2026 Perennia. For love that fits, naturally.
       </footer>
     </div>
