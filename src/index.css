@@ -27,71 +27,42 @@
   --animate-haze: haze 24s ease-in-out infinite;
 }
 
-/* Responsive positioning tied to the artwork itself. Keeping these rules
-   explicit avoids tablet-only arbitrary variants being omitted by the CSS
-   scanner. */
+/* Positioning for the CTA overlaid on the final section's baked-in
+   artwork. The `<picture>` element in Welcome.tsx picks exactly one of
+   mobile/iPad/desktop crops per viewport (native browser art-direction —
+   no CSS display-toggling of sibling <img>s, which previously caused all
+   variants to be fetched and, on some viewports, shown simultaneously).
+   These rules track that same picking logic so the CTA always lines up
+   with whichever crop is actually on screen. */
 .landing-final-cta {
   top: 82%;
 }
 
-.landing-artwork-mobile {
-  display: block;
-}
-
-.landing-artwork-desktop {
-  display: none;
-}
-
-.landing-artwork-ipad {
-  display: none;
-}
-
-/* Wide layouts use the landscape assets by default. The tablet-specific
-   override below replaces only the final artwork with its iPad version. */
-@media (min-width: 1024px) and (orientation: landscape) {
-  .landing-artwork-mobile {
-    display: none;
-  }
-
-  .landing-artwork-desktop {
-    display: block;
-  }
-
-  .landing-artwork-ipad {
-    display: none;
-  }
-
-  .landing-final-cta {
-    top: 62%;
-  }
-}
-
-/* Use the dedicated iPad artwork throughout standard tablet widths in both
-   orientations. Larger iPad Pro widths are included when the device reports
-   a coarse pointer, without replacing the artwork on a 1366px laptop. */
-@media (min-width: 768px) and (max-width: 1180px),
-       (min-width: 1181px) and (max-width: 1366px) and (pointer: coarse) {
-  .landing-final-mobile,
-  .landing-final-desktop {
-    display: none;
-  }
-
-  .landing-final-ipad {
-    display: block;
-  }
-
+/* iPad crop: any viewport 768px+ that isn't the desktop case below. */
+@media (min-width: 768px) and (max-width: 1023px),
+       (min-width: 1024px) and (orientation: portrait),
+       (min-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
   .landing-final-cta {
     top: 84%;
   }
 }
 
-@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) and (pointer: coarse),
-       (min-width: 768px) and (max-width: 1180px) and (orientation: landscape) {
-  .landing-final-ipad {
+/* The iPad crop is a portrait composition; in a landscape tablet viewport
+   it needs to be contained by height rather than stretched full-bleed. */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape),
+       (min-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
+  .landing-final-artwork {
     width: auto;
     max-width: 100%;
     height: 100svh;
     object-fit: contain;
+  }
+}
+
+/* Desktop crop: real landscape screens with a mouse/trackpad. */
+@media (min-width: 1024px) and (orientation: landscape) and (pointer: fine) {
+  .landing-final-cta {
+    top: 62%;
   }
 }
 
