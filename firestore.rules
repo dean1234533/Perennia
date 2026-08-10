@@ -159,6 +159,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Birth-details edit re-verification (OTP state) — Admin SDK only, see
+    // functions/src/services/birthDetailsReverification.service.ts.
+    match /birthDetailsReverification/{uid} {
+      allow read: if false;
+      allow write: if false;
+    }
+
     // --- Founding 500 membership --------------------------------------
     // Config is public (the pricing page is shown pre-auth) but only ever
     // written via the Admin SDK / admin-only callables — never directly by

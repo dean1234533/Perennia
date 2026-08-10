@@ -27,6 +27,12 @@ export const googleSheetId = defineSecret('GOOGLE_SHEET_ID')
 export const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY')
 export const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
 
+// --- Transactional email (Resend) ---------------------------------------
+// Not set in this environment yet — see functions/README.md "Birth details
+// re-verification setup". Until RESEND_API_KEY is set, sendBirthDetailsOtp
+// throws a clear failed-precondition error instead of pretending to work.
+export const resendApiKey = defineSecret('RESEND_API_KEY')
+
 // --- Sub-score table ranges (Western Zodiac tab) ------------------------
 // Columns read directly off a screenshot of the real sheet: three side by
 // side 3-column tables (label | score | rule-applied) at B:D, F:H, J:L.

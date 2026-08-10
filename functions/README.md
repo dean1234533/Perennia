@@ -160,6 +160,24 @@ node scripts/grant-admin.js <firebase-auth-uid>
 
 Sign out/in afterward for the claim to take effect. Revoke with `--revoke`.
 
+### 7. Birth details re-verification setup (Resend)
+
+Editing already-confirmed Birth Details requires emailing a one-time
+verification code (see `services/birthDetailsReverification.service.ts`,
+`sendBirthDetailsOtp`). This uses [Resend](https://resend.com) — sign up,
+create an API key, then:
+
+```bash
+firebase functions:secrets:set RESEND_API_KEY
+```
+
+Until this is set, `sendBirthDetailsOtp` throws a clear "not configured"
+error instead of pretending to send. The default `from` address
+(`onboarding@resend.dev`) works out of the box for testing on Resend's free
+tier without verifying a custom domain; switch `FROM_ADDRESS` in
+`services/email.service.ts` to a verified domain address before real
+production use.
+
 ## Local development
 
 ```bash

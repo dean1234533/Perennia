@@ -22,6 +22,10 @@ interface AuthContextValue {
   signUp: (email: string, password: string) => Promise<User>
   logIn: (email: string, password: string) => Promise<User>
   logOut: () => Promise<void>
+  /** Reauthenticates with the current password only — no other change.
+   *  Used to gate sensitive actions (e.g. editing confirmed birth details)
+   *  behind a fresh password check before anything else happens. */
+  reauthenticate: (currentPassword: string) => Promise<void>
   /** Reauthenticates with the current password, then sets the new one —
    *  Firebase requires a fresh sign-in before a real password change. */
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
@@ -89,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading: !authReady, authReady, signUp, logIn, logOut, changePassword, deleteAccount: deleteAccountAction }}
+      value={{ user, loading: !authReady, authReady, signUp, logIn, logOut, reauthenticate, changePassword, deleteAccount: deleteAccountAction }}
     >
       {children}
     </AuthContext.Provider>

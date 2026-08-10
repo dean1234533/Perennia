@@ -33,14 +33,17 @@ import {
   stripeWebhookSecret,
   likeRateLimitMaxRequests,
   likeRateLimitWindowSeconds,
+  resendApiKey,
 } from './config/env'
 import { getCompatibilityInputSchema, computeNatalChartInputSchema, geocodeLocationInputSchema, searchCitiesInputSchema } from './validation/compatibility.validation'
 import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema, createBillingPortalInputSchema } from './validation/founding500.validation'
 import { likeUserInputSchema } from './validation/matching.validation'
+import { verifyBirthDetailsOtpInputSchema, updateBirthDetailsInputSchema } from './validation/birthDetailsReverification.validation'
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent, refreshVerificationStatus } from './services/identity.service'
+import { sendOtp as sendBirthDetailsOtpService, verifyOtp as verifyBirthDetailsOtpService, updateBirthDetails as updateBirthDetailsService } from './services/birthDetailsReverification.service'
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
@@ -445,6 +448,88 @@ export const deleteAccount = onCall({ secrets: [stripeSecretKey] }, async (reque
     throw internal('deleteAccount failed', err)
   }
 })
+
+// ---------------------------------------------------------------------------
+// Birth details re-verification — lets a member correct already-confirmed
+// Time/Country/City of Birth without a support ticket, gated by password
+// re-entry (client-side, via AuthContext.reauthenticate) + an emailed OTP.
+// DOB is never accepted here (enforced in updateBirthDetailsInputSchema,
+// not just the UI) — it's sourced from identity verification only. See
+// services/birthDetailsReverification.service.ts for the state machine.
+// ---------------------------------------------------------------------------
+export const sendBirthDetailsOtp = onCall({ secrets: [resendApiKey] }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const email = request.auth.token.email
+  if (!email) throw failedPreconditionForNoEmail()
+
+  await assertWithinRateLimit(request.auth.uid, 3, 600, 'birthDetailsOtp')
+
+  try {
+    const result = await sendBirthDetailsOtpService(request.auth.uid, email, resendApiKey.value())
+    log.info('birth_details_otp_sent', { uid: request.auth.uid })
+    return result
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('sendBirthDetailsOtp failed', err)
+  }
+})
+
+export const verifyBirthDetailsOtp = onCall({}, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = verifyBirthDetailsOtpInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+
+  await assertWithinRateLimit(request.auth.uid, 10, 600, 'birthDetailsOtpVerify')
+
+  try {
+    const result = await verifyBirthDetailsOtpService(request.auth.uid, parsed.data.code)
+    log.info('birth_details_otp_verified', { uid: request.auth.uid })
+    return result
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('verifyBirthDetailsOtp failed', err)
+  }
+})
+
+export const updateBirthDetailsSecure = onCall({}, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = updateBirthDetailsInputSchema.safeParse(request.data)
+  if (!parsed.success) {
+    throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
+  }
+
+  const { birthCountry, birthCity } = parsed.data
+  const birthPlace = `${birthCity}, ${birthCountry}`
+
+  try {
+    const result = await updateBirthDetailsService(request.auth.uid, {
+      birthTime: parsed.data.birthTimeUnknown ? '' : (parsed.data.birthTime ?? ''),
+      birthTimeUnknown: parsed.data.birthTimeUnknown,
+      birthPlace,
+      birthCountry,
+      birthCity,
+      birthPlaceLat: parsed.data.birthPlaceLat,
+      birthPlaceLon: parsed.data.birthPlaceLon,
+      sunSign: parsed.data.sunSign,
+      moonSign: parsed.data.moonSign,
+      risingSign: parsed.data.risingSign,
+      chineseAnimal: parsed.data.chineseAnimal,
+      chineseElement: parsed.data.chineseElement,
+      yinYang: parsed.data.yinYang,
+    })
+    log.info('birth_details_updated', { uid: request.auth.uid })
+    return result
+  } catch (err) {
+    if (err instanceof HttpsError) throw err
+    throw internal('updateBirthDetailsSecure failed', err)
+  }
+})
+
+function failedPreconditionForNoEmail(): HttpsError {
+  return new HttpsError('failed-precondition', 'Your account has no email address on file.')
+}
 
 // ---------------------------------------------------------------------------
 // processVideoUpload — triggers on every file finalized under

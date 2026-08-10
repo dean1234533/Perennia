@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Clock, Globe2, ArrowRight, Loader2, ShieldCheck, Calendar } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { createPortal } from 'react-dom'
+import { Clock, Globe2, ArrowRight, Loader2, ShieldCheck, Calendar, Pencil, MapPin, X } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { CityCombobox } from '@/components/shared/CityCombobox'
+import { EditBirthDetailsModal } from '@/components/shared/EditBirthDetailsModal'
 import { useApp } from '@/context/AppContext'
 import { computeNatalChart } from '@/lib/natalChart'
 import { firebaseConfigured } from '@/lib/firebase'
@@ -48,6 +50,8 @@ export function BirthDetails() {
 function LockedSummary() {
   const navigate = useNavigate()
   const { onboarding } = useApp()
+  const [editBirthOpen, setEditBirthOpen] = useState(false)
+  const [editLocationOpen, setEditLocationOpen] = useState(false)
 
   return (
     <motion.div
@@ -61,10 +65,10 @@ function LockedSummary() {
       </div>
       <h1 className="font-serif-display mb-2 text-3xl">Birth Details Confirmed</h1>
       <p className="mb-6 text-sm leading-relaxed text-white/55">
-        These details are locked in for your astrological profile. Need a correction? Contact
-        Perennia Support.
+        These details are locked in for your astrological profile. You can correct them any time
+        with a quick identity re-check.
       </p>
-      <div className="mb-8 space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left text-sm">
+      <div className="mb-4 space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left text-sm">
         <p className="text-white/70">
           <span className="text-white/40">Birth date · </span>{formatBirthDate(onboarding.birthDate) || '—'}
         </p>
@@ -75,14 +79,113 @@ function LockedSummary() {
         <p className="text-white/70">
           <span className="text-white/40">Birth place · </span>{onboarding.birthCity}, {countryName(onboarding.birthCountry)}
         </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => setEditBirthOpen(true)}
+        className="mb-4 flex w-full cursor-pointer items-center justify-center gap-2 text-xs text-white/45 hover:text-white/75"
+      >
+        <Pencil className="h-3.5 w-3.5" /> Edit Birth Details
+      </button>
+
+      <div className="mb-4 space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left text-sm">
         <p className="text-white/70">
           <span className="text-white/40">Current location · </span>{onboarding.city}, {countryName(onboarding.country)}
         </p>
       </div>
-      <Button size="lg" className="w-full" onClick={() => navigate('/relationship-goals')}>
+      <button
+        type="button"
+        onClick={() => setEditLocationOpen(true)}
+        className="mb-8 flex w-full cursor-pointer items-center justify-center gap-2 text-xs text-white/45 hover:text-white/75"
+      >
+        <MapPin className="h-3.5 w-3.5" /> Edit Current Location
+      </button>
+
+      <Button size="lg" className="w-full" onClick={() => navigate('/preferences')}>
         Continue <ArrowRight className="h-4 w-4" />
       </Button>
+
+      {editBirthOpen && <EditBirthDetailsModal onClose={() => setEditBirthOpen(false)} />}
+      {editLocationOpen && <EditCurrentLocationModal onClose={() => setEditLocationOpen(false)} />}
     </motion.div>
+  )
+}
+
+/** Current Location is designed to change (people relocate), so unlike
+ *  Birth Details it stays freely editable with no re-verification step —
+ *  same instant-write path as the rest of onboarding. */
+function EditCurrentLocationModal({ onClose }: { onClose: () => void }) {
+  const { onboarding, updateOnboarding } = useApp()
+  const validCountryCode = (c: string) => COUNTRIES.some((x) => x.code === c)
+
+  const [country, setCountry] = useState(validCountryCode(onboarding.country) ? onboarding.country : '')
+  const [city, setCity] = useState<CityMatch | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSave = () => {
+    if (!country || !city) {
+      setError('Please select both a country and a city.')
+      return
+    }
+    setSaving(true)
+    updateOnboarding({
+      country,
+      city: city.name,
+      currentLocationLat: city.lat,
+      currentLocationLon: city.lon,
+    })
+    setSaving(false)
+    onClose()
+  }
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="glass-strong relative w-full max-w-md rounded-2xl p-6 sm:p-8"
+        >
+          <button onClick={onClose} className="absolute right-5 top-5 cursor-pointer text-white/40 hover:text-white" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+          <h2 className="font-serif-display mb-5 text-2xl">Edit Current Location</h2>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-white/45">Country</label>
+              <Select icon={<Globe2 className="h-4 w-4" />} value={country} onChange={(e) => { setCountry(e.target.value); setCity(null) }}>
+                <option value="" disabled>Select country</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-white/45">City / Area</label>
+              <CityCombobox
+                key={country}
+                countryCode={country}
+                disabled={!country}
+                placeholder="Select city / area"
+                onSelect={setCity}
+              />
+            </div>
+            {error && <p className="text-xs text-rose-300">{error}</p>}
+            <Button size="lg" className="w-full" onClick={handleSave} disabled={saving}>
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : 'Save Location'}
+            </Button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>,
+    document.body
   )
 }
 
@@ -188,7 +291,7 @@ function BirthDetailsForm() {
           currentLocationLon: currentCity!.lon,
         })
       }
-      navigate('/relationship-goals')
+      navigate('/preferences')
     } catch (err) {
       const message = (err as { message?: string })?.message ?? ''
       setError(message || 'Could not confirm your birth details. Please check your entries and try again.')
