@@ -29,25 +29,29 @@ export function Welcome() {
 
   return (
     <div className="relative isolate overflow-x-clip bg-midnight text-white">
-      {/* Genuinely pinned behind the whole page (position: fixed) — but
-          sized with `dvh` (dynamic viewport height), not `vh`/`svh`.
-          `dvh` is the unit built specifically to track the browser's
-          REAL current visible height as the address bar hides/shows, so
-          a fixed background stays perfectly full-bleed with no gap and
-          no snap — `vh`/`svh` stay locked to one fixed number while the
-          real viewport changes size around them, which is what reads as
-          a "jump". This keeps the pinned effect, not just avoids it. */}
-      <div className="pointer-events-none fixed inset-0 z-0 h-[100dvh]">
+      {/* Genuinely pinned (position: fixed) and sized with `dvh`'s
+          opposite: `svh` (STATIC small-viewport height — the one value
+          that never recalculates while the address bar animates). `dvh`
+          continuously re-measures in real time as the browser chrome
+          slides away, so everything inside visibly resized/rescaled
+          throughout that animation — that's the "zoom" that was
+          happening, not a one-off jump. `svh` never changes at all, so
+          there's nothing to animate or snap. When the browser chrome
+          hides, the real viewport does become slightly taller than this
+          fixed layer for a moment — but the plain page background
+          (bg-midnight) is essentially the same near-black as this
+          background's own base color, so that sliver is invisible. */}
+      <div className="pointer-events-none fixed inset-0 z-0 h-[100svh]">
         <LandingCelestialBackground />
       </div>
 
       {/* ============ HERO ============ */}
-      <section className="relative z-10 min-h-[100dvh] overflow-hidden">
+      <section className="relative z-10 min-h-[100svh] overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-3xl flex-col items-center justify-start px-6 pb-6 pt-16 text-center sm:justify-center sm:px-10 sm:py-6"
+          className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-3xl flex-col items-center justify-start px-6 pb-6 pt-16 text-center sm:justify-center sm:px-10 sm:py-6"
         >
           <CelestialHeart className="h-40 w-40 sm:h-32 sm:w-32" />
           <span aria-hidden="true" className="-mt-2 font-serif-display text-3xl leading-none text-ivory [text-shadow:0_0_16px_rgba(173,194,255,.75)]">☾</span>
