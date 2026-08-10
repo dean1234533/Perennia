@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles, Loader2 } from 'lucide-react'
+import { ArrowLeft, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles, Loader2, MoreHorizontal } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,7 @@ import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
+import { OtherProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import { getUserDoc, subscribeUserMedia, getPrivateLifestyle, type DiscoveryCandidate, type MediaDoc, type PrivateLifestyle } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
@@ -28,6 +29,7 @@ export function ProfileDetail() {
   const [result, setResult] = useState<CompatibilityResult | null>(null)
   const [liked, setLiked] = useState(false)
   const [videoViewerCategory, setVideoViewerCategory] = useState<string | null>(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   // A successful read here already means access was allowed (public, or a
   // real match — see firestore.rules) — a denied/missing read is treated
   // identically to "nothing set," never surfaced as an error.
@@ -154,6 +156,16 @@ export function ProfileDetail() {
         className="fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72"
       >
         <ArrowLeft className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="glass"
+        size="icon"
+        aria-label="Open profile options"
+        aria-haspopup="dialog"
+        onClick={() => setProfileMenuOpen(true)}
+        className="fixed right-4 top-4 z-30 md:right-8 md:top-8"
+      >
+        <MoreHorizontal className="h-5 w-5" />
       </Button>
 
       <div className="mx-auto max-w-4xl px-6 md:px-0">
@@ -335,6 +347,22 @@ export function ProfileDetail() {
           onClose={() => setVideoViewerCategory(null)}
         />
       )}
+
+      <OtherProfileActionsMenu
+        open={profileMenuOpen}
+        onClose={() => setProfileMenuOpen(false)}
+        profileName={profile.name}
+        profileId={profile.uid}
+        onBlock={() => {
+          passProfile(profile.uid)
+          navigate('/discovery')
+        }}
+        onMute={() => {
+          window.sessionStorage.setItem(`perennia:muted-profile:${profile.uid}`, 'true')
+          passProfile(profile.uid)
+          navigate('/discovery')
+        }}
+      />
     </div>
   )
 }

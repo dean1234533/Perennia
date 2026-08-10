@@ -34,6 +34,13 @@ const ORBIT_POSITIONS: OrbitPosition[] = [
   { x: 50, y: 3, size: 0.68 },
 ]
 
+const ORBIT_PLANETS = [
+  { src: '/planets-realistic/jupiter.png', name: 'Jupiter' },
+  { src: '/planets-realistic/mars.png', name: 'Mars' },
+  { src: '/planets-realistic/earth.png', name: 'Earth' },
+  { src: '/planets-realistic/saturn.png', name: 'Saturn' },
+]
+
 interface ProfileOrbitProps {
   photoUrl: string | null
   name: string
@@ -105,10 +112,13 @@ export function ProfileOrbit({
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[76%] w-[76%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/16" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[91%] w-[91%] -translate-x-1/2 -translate-y-1/2 rotate-12 rounded-[50%] border border-gold/20" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[58%] w-[102%] -translate-x-1/2 -translate-y-1/2 -rotate-6 rounded-[50%] border border-gold/14" />
-        {/* Satellite media circles */}
+        {/* Planet satellites double as shortcuts into the profile sections. */}
         {categories.slice(0, positions.length).map((cat, i) => {
           const pos = positions[i]
-          const sizePx = compact ? 34 + pos.size * 28 : 46 + pos.size * 30
+          const planet = ORBIT_PLANETS[i % ORBIT_PLANETS.length]
+          const compactSizes = [68, 44, 56, 84]
+          const regularSizes = [84, 58, 70, 102]
+          const sizePx = (compact ? compactSizes : regularSizes)[i % 4]
           return (
             <motion.button
               key={cat.id}
@@ -129,19 +139,9 @@ export function ProfileOrbit({
               className="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center cursor-pointer"
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
             >
-              <div
-                className={cn(
-                  'relative flex items-center justify-center overflow-hidden rounded-full border shadow-[0_0_24px_rgba(229,192,123,.12)] transition-colors',
-                  cat.count > 0 ? 'border-gold/50 bg-white/[0.03] group-hover:border-gold' : 'border-white/15 bg-white/[0.02] group-hover:border-white/30'
-                )}
-                style={{ width: sizePx, height: sizePx }}
-              >
-                {cat.coverUrl ? (
-                  <img src={cat.coverUrl} alt={cat.label} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-2xl opacity-75">{cat.emoji}</span>
-                )}
-                <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border border-gold/60 bg-midnight/90 text-champagne shadow-lg">
+              <div className="relative flex items-center justify-center transition-[filter] duration-300 group-hover:drop-shadow-[0_0_12px_rgba(235,197,132,.48)]" style={{ width: sizePx, height: sizePx }}>
+                <img src={planet.src} alt={planet.name} className="h-full w-full object-contain" />
+                <span className="absolute bottom-[3%] right-[2%] flex h-5 w-5 items-center justify-center rounded-full border border-gold/70 bg-midnight/95 text-champagne shadow-[0_0_10px_rgba(229,192,123,.35)]">
                   {cat.count > 0 ? <Play className="h-2.5 w-2.5 fill-current" /> : <Plus className="h-3 w-3" />}
                 </span>
               </div>
@@ -164,18 +164,20 @@ export function ProfileOrbit({
         >
           <div className="relative">
             <motion.div
-              className="absolute -inset-3 rounded-full bg-gradient-to-br from-gold/30 via-champagne/10 to-transparent blur-xl"
-              animate={{ opacity: [0.5, 0.9, 0.5] }}
+              className="absolute -inset-5 rounded-full bg-[radial-gradient(circle,rgba(88,131,235,.2)_0%,rgba(229,192,123,.08)_48%,transparent_72%)] blur-lg"
+              animate={{ opacity: [0.45, 0.72, 0.45] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />
+            <div className="pointer-events-none absolute -inset-[11px] rounded-full border border-[#8eafff]/55 shadow-[0_0_16px_rgba(83,126,236,.22)]" />
+            <div className="pointer-events-none absolute -inset-[5px] rounded-full border border-white/65 shadow-[inset_0_0_10px_rgba(111,152,255,.18)]" />
             <div className={cn(
-              'relative flex items-center justify-center overflow-hidden rounded-full border-2 border-champagne/80 bg-white/[0.03] p-1 shadow-[0_0_0_7px_rgba(255,255,255,.035),0_0_0_8px_rgba(229,192,123,.3),0_0_42px_rgba(39,83,168,.42)]',
+              'relative flex items-center justify-center overflow-hidden rounded-full border border-[#f1d6a7]/90 bg-[#06132c] p-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,.22),0_0_25px_rgba(54,96,198,.28)]',
               compact
                 ? 'h-[132px] w-[132px] sm:h-[184px] sm:w-[184px]'
                 : 'h-[158px] w-[158px] sm:h-[210px] sm:w-[210px] md:h-[244px] md:w-[244px]'
             )}>
               {photoUrl ? (
-                <img src={photoUrl} alt={name} className="h-full w-full rounded-full object-cover" />
+                <img src={photoUrl} alt={name} className="h-full w-full rounded-full border border-white/55 object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-1.5 text-white/35">
                   <ImagePlus className="h-7 w-7" />
@@ -183,6 +185,8 @@ export function ProfileOrbit({
                 </div>
               )}
             </div>
+            <span className="pointer-events-none absolute -left-[8px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#ffe1a8] shadow-[0_0_5px_2px_rgba(255,218,153,.75),0_0_14px_5px_rgba(75,116,235,.32)]" />
+            <span className="pointer-events-none absolute -right-[7px] top-[43%] h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_5px_2px_rgba(255,255,255,.72),0_0_13px_5px_rgba(80,125,246,.4)]" />
             {typeof compatibility === 'number' && (
               <div className="glass-strong absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 text-xs font-semibold text-champagne shadow-lg">
                 {compatibility}%

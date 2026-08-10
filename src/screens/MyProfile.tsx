@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { FoundingMemberBadge } from '@/components/founding500/FoundingMemberBadge'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
+import { MyProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { CircularCropper } from '@/components/shared/CircularCropper'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import { subscribeUserMedia, renameCategoryRemote, type MediaDoc } from '@/lib/firestore'
@@ -103,6 +104,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [savedPulse, setSavedPulse] = useState(false)
   const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -261,8 +263,9 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
         </AnimatePresence>
         <div className="ml-auto flex items-center gap-2">
           <button
-            aria-label={editMode ? 'Close profile editing' : 'Edit profile'}
-            onClick={() => setEditMode((value) => !value)}
+            aria-label="Open profile menu"
+            aria-haspopup="dialog"
+            onClick={() => setProfileMenuOpen(true)}
             className="mr-1 flex h-11 w-16 items-center justify-center rounded-full border border-white/20 bg-midnight/50 text-white/90 transition hover:border-gold/40"
           >
             <MoreHorizontal className="h-5 w-5" />
@@ -348,7 +351,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       </div>
 
       {/* Reference-style Photos / Videos switch and compact 3-column grid. */}
-      <section className="mt-4">
+      <section id="profile-media" className="mt-4 scroll-mt-20">
         <div className="mx-auto flex w-full max-w-[420px] rounded-full border border-champagne/60 bg-midnight/55 p-1">
           {(['photos', 'videos'] as const).map((mode) => (
             <button
@@ -698,6 +701,21 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           onDelete={handleDeleteDisplayItem}
         />
       )}
+
+      <MyProfileActionsMenu
+        open={profileMenuOpen}
+        onClose={() => setProfileMenuOpen(false)}
+        onEditProfile={() => setEditMode(true)}
+        onManageMedia={() => {
+          setEditMode(true)
+          setMediaMode('photos')
+          window.setTimeout(() => document.getElementById('profile-media')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+        }}
+        onManageHighlights={() => {
+          setEditMode(true)
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
+      />
     </div>
   )
 }

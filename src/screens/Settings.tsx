@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Bell, Shield, Sparkles, LogOut, ChevronRight, Eye, MapPin, Heart, X, Check, Crown,
-  SlidersHorizontal, Images, KeyRound, Trash2, AlertTriangle, Loader2,
+  SlidersHorizontal, Images, KeyRound, Trash2, AlertTriangle, Loader2, UserRoundX,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -22,12 +22,14 @@ function Row({
   description,
   right,
   onClick,
+  id,
 }: {
   icon: React.ElementType
   label: string
   description?: string
   right?: React.ReactNode
   onClick?: () => void
+  id?: string
 }) {
   const content = (
     <>
@@ -46,17 +48,18 @@ function Row({
 
   if (onClick) {
     return (
-      <button onClick={onClick} className="group -mx-2 flex w-full items-center justify-between gap-4 rounded-2xl px-2 py-4 text-left transition-colors hover:bg-white/[0.03] cursor-pointer">
+      <button id={id} onClick={onClick} className="group -mx-2 flex w-full scroll-mt-20 items-center justify-between gap-4 rounded-2xl px-2 py-4 text-left transition-colors hover:bg-white/[0.03] cursor-pointer">
         {content}
       </button>
     )
   }
 
-  return <div className="flex items-center justify-between gap-4 py-4">{content}</div>
+  return <div id={id} className="flex scroll-mt-20 items-center justify-between gap-4 py-4">{content}</div>
 }
 
 export function Settings() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { setAuthenticated, onboarding, updateOnboarding } = useApp()
   const { user, logOut, changePassword, deleteAccount } = useAuth()
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false)
@@ -76,6 +79,16 @@ export function Settings() {
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    const anchor = location.hash.slice(1)
+    if (!anchor) return
+    if (anchor === 'delete-account') {
+      setDeleteOpen(true)
+      return
+    }
+    window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
+  }, [location.hash])
 
   useEffect(() => {
     if (!firebaseConfigured || !user) return
@@ -229,6 +242,7 @@ export function Settings() {
               />
               <div className="h-px bg-white/5" />
               <Row
+                id="membership"
                 icon={Crown}
                 label="Founding 500 Membership"
                 description={
@@ -273,6 +287,7 @@ export function Settings() {
         },
         {
           title: 'Privacy',
+          id: 'privacy',
           delay: 0.16,
           content: (
             <>
@@ -289,11 +304,16 @@ export function Settings() {
                 description="Display your location on your profile"
                 right={<Switch checked={onboarding.showDistance} onCheckedChange={(v) => updateOnboarding({ showDistance: v })} />}
               />
+              <div className="h-px bg-white/5" />
+              <Row id="blocked-users" icon={UserRoundX} label="Blocked Users" description="Review profiles you have blocked" />
+              <div className="h-px bg-white/5" />
+              <Row id="safety" icon={Shield} label="Safety Settings" description="Profile visibility and safety controls" />
             </>
           ),
         },
         {
           title: 'Notifications',
+          id: 'notifications',
           delay: 0.22,
           content: (
             <Row
@@ -306,6 +326,7 @@ export function Settings() {
         },
         {
           title: 'Security',
+          id: 'security',
           delay: 0.28,
           content: (
             <>
@@ -321,7 +342,7 @@ export function Settings() {
           ),
         },
       ].map((section) => (
-        <motion.div key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.delay }}>
+        <motion.div id={section.id} className="scroll-mt-20" key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.delay }}>
           <p className="mb-3 mt-8 text-xs uppercase tracking-[0.25em] text-gold/60">{section.title}</p>
           <Card className="border-white/5">
             <CardContent className="divide-y divide-transparent px-5 py-1">{section.content}</CardContent>
