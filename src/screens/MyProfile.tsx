@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
-  Pencil, Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
-  GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MapPinned, Sparkles, MoreHorizontal,
+  Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
+  GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MapPinned, Sparkles, MoreHorizontal, Play,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { FoundingMemberBadge } from '@/components/founding500/FoundingMemberBadge'
-import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CircularCropper } from '@/components/shared/CircularCropper'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
@@ -26,13 +25,58 @@ import { ACCEPTED_IMAGE_TYPES } from '@/lib/media/imageProcessing'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
 import type { SelfProfile } from '@/data/selfProfile'
+import { editorial } from '@/data/editorial-images'
 
-export function MyProfile() {
+const previewProfile: SelfProfile = {
+  about: 'Family-minded, ambitious, and always up for deep talks and meaningful adventures.',
+  interests: ['Travel', 'Photography', 'Hiking'],
+  values: ['Family', 'Ambition', 'Honesty'],
+  music: ['Soul', 'Jazz'],
+  languages: ['English'],
+  favoritePlaces: ['London', 'Santorini'],
+  dreamDestinations: ['Japan', 'New Zealand'],
+  fitness: 'Hiking and strength training',
+  books: 'Biographies and philosophy',
+  movies: 'Character-driven dramas',
+  goals: 'A lasting relationship built on trust and shared adventure.',
+  profession: 'Creative Director',
+  education: 'Postgraduate Degree',
+  location: 'London, United Kingdom',
+}
+
+const previewCategories: DisplayCategory[] = [
+  { id: 'moments', label: 'Moments', emoji: '✨' },
+  { id: 'adventures', label: 'Adventures', emoji: '🪐' },
+  { id: 'people', label: 'People', emoji: '🌍' },
+  { id: 'places', label: 'Places', emoji: '🌙' },
+]
+
+const previewMedia: MediaDoc[] = [
+  editorial.portraitMale,
+  editorial.cinematicSunset,
+  editorial.portraitMoody,
+  editorial.citySkyline,
+  editorial.coupleGoldenLight,
+  editorial.handsTouching,
+].map((url, index) => ({
+  id: `preview-${index}`,
+  userId: 'preview',
+  type: 'image',
+  url,
+  thumbnailUrl: url,
+  category: previewCategories[index % previewCategories.length].id,
+  caption: '',
+  createdAt: 0,
+  order: index,
+  processingStatus: 'ready',
+}))
+
+export function MyProfile({ preview = false }: { preview?: boolean }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { onboarding, profileExtras, updateProfileExtras } = useApp()
 
-  const [media, setMedia] = useState<MediaDoc[]>([])
+  const [media, setMedia] = useState<MediaDoc[]>(preview ? previewMedia : [])
   const [editMode, setEditMode] = useState(false)
   const [activeCategory, setActiveCategory] = useState(onboarding.categories[0]?.id ?? 'moments')
   const [viewerCategory, setViewerCategory] = useState<string | null>(null)
@@ -48,23 +92,25 @@ export function MyProfile() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
-  const [draft, setDraft] = useState<SelfProfile>(profileExtras)
+  const [draft, setDraft] = useState<SelfProfile>(preview ? previewProfile : profileExtras)
   const [newInterest, setNewInterest] = useState('')
   const [savedPulse, setSavedPulse] = useState(false)
+  const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
+  const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!editMode) setDraft(profileExtras)
-  }, [profileExtras, editMode])
+    if (!editMode && !preview) setDraft(profileExtras)
+  }, [profileExtras, editMode, preview])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || preview) return
     return subscribeUserMedia(user.uid, setMedia)
-  }, [user])
+  }, [user, preview])
 
-  const categories: DisplayCategory[] = onboarding.categories.map((c) => ({
+  const categories: DisplayCategory[] = preview ? previewCategories : onboarding.categories.map((c) => ({
     id: c.id,
     label: c.label,
     emoji: DEFAULT_MEDIA_CATEGORIES.find((d) => d.id === c.id)?.emoji ?? '✨',
@@ -73,12 +119,14 @@ export function MyProfile() {
   const displayItems = media.map(toDisplayItem)
   // The gallery only ever shows photos — videos live exclusively in the
   // orbit bubbles around the profile photo, not mixed into the grid.
-  const galleryItems = displayItems.filter((i) => i.type === 'image')
-
   // Orbit bubbles only ever show videos — a category with only photos
   // renders as an empty/emoji bubble, since its content lives in the
   // gallery instead.
-  const orbitCategories = categories.map((c) => {
+  const orbitCategories = preview ? previewCategories.map((category, index) => ({
+    ...category,
+    coverUrl: previewMedia[index]?.thumbnailUrl ?? null,
+    count: 1,
+  })) : categories.map((c) => {
     const videos = media.filter((m) => m.category === c.id && m.type === 'video' && m.processingStatus === 'ready')
     return {
       id: c.id,
@@ -183,7 +231,10 @@ export function MyProfile() {
     setNewInterest('')
   }
 
-  const photoUrl = onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
+  const photoUrl = preview ? editorial.portraitMale : onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
+  const visibleMedia = displayItems.filter((item) => (
+    mediaMode === 'photos' ? item.type === 'image' : item.type === 'video'
+  ) && item.processingStatus !== 'error')
 
   return (
     <div className="profile-page mx-auto max-w-[980px] px-4 pb-32 pt-5 sm:px-6 md:pt-8">
@@ -202,16 +253,16 @@ export function MyProfile() {
           )}
         </AnimatePresence>
         <div className="ml-auto flex items-center gap-2">
-          <button aria-label="More profile options" className="mr-1 flex h-11 w-16 items-center justify-center rounded-full border border-white/20 bg-midnight/50 text-white/90 transition hover:border-gold/40">
+          <button
+            aria-label={editMode ? 'Close profile editing' : 'Edit profile'}
+            onClick={() => setEditMode((value) => !value)}
+            className="mr-1 flex h-11 w-16 items-center justify-center rounded-full border border-white/20 bg-midnight/50 text-white/90 transition hover:border-gold/40"
+          >
             <MoreHorizontal className="h-5 w-5" />
           </button>
-          {editMode ? (
+          {editMode && (
             <Button size="sm" onClick={saveExtras}>
               <Check className="h-3.5 w-3.5" /> Save
-            </Button>
-          ) : (
-            <Button size="sm" variant="glass" onClick={() => setEditMode(true)}>
-              <Pencil className="h-3.5 w-3.5" /> Edit Profile
             </Button>
           )}
         </div>
@@ -220,13 +271,14 @@ export function MyProfile() {
       {/* Orbit hero */}
       <ProfileOrbit
         photoUrl={photoUrl}
-        name={onboarding.name || 'Your Name'}
+        name={onboarding.name || (preview ? 'Martallus Alfred' : 'Your Name')}
         location={draft.location}
-        verificationStatus={onboarding.verification.status}
+        verificationStatus={preview ? 'verified' : onboarding.verification.status}
         categories={orbitCategories}
         onCategorySelect={handleCategorySelect}
         onPhotoClick={() => photoInputRef.current?.click()}
         extraBadge={<FoundingMemberBadge />}
+        compact
       />
       <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
       {photoBusy && (
@@ -235,7 +287,7 @@ export function MyProfile() {
         </p>
       )}
 
-      {onboarding.verification.status !== 'verified' && (
+      {!preview && onboarding.verification.status !== 'verified' && (
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -250,9 +302,9 @@ export function MyProfile() {
       <div className="mx-auto mt-4 max-w-3xl text-center">
         <p className="font-serif-display text-lg tracking-wide text-champagne/90 sm:text-2xl">
           <span className="mr-2 text-gold">☾</span>
-          {onboarding.sunSign || 'Sun'} <span className="mx-2 text-white/35">•</span>
-          {onboarding.moonSign ? `${onboarding.moonSign} Moon` : 'Moon'} <span className="mx-2 text-white/35">•</span>
-          {onboarding.risingSign ? `${onboarding.risingSign} Rising` : 'Rising'}
+          {onboarding.sunSign || (preview ? 'Pisces' : 'Sun')} <span className="mx-2 text-white/35">•</span>
+          {onboarding.moonSign ? `${onboarding.moonSign} Moon` : preview ? 'Virgo Moon' : 'Moon'} <span className="mx-2 text-white/35">•</span>
+          {onboarding.risingSign ? `${onboarding.risingSign} Rising` : preview ? 'Taurus Rising' : 'Rising'}
         </p>
         {!editMode && (
           <p className="mx-auto mt-3 max-w-2xl font-serif-display text-xl leading-snug text-white/75 sm:text-2xl">
@@ -261,7 +313,7 @@ export function MyProfile() {
         )}
       </div>
 
-      <div className="mt-7 grid grid-cols-3 gap-2 sm:gap-4">
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
         {[
           { label: 'Bio', icon: Feather, target: 'profile-bio' },
           { label: 'Favourite Places', icon: MapPinned, target: 'profile-details' },
@@ -277,10 +329,11 @@ export function MyProfile() {
         ))}
       </div>
 
-      {/* About */}
-      <div id="profile-bio" className="mt-10 scroll-mt-6">
-        <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About Me</p>
-        {editMode ? (
+      {/* Editing controls remain available from the ellipsis menu without
+          changing the polished public profile presentation. */}
+      {editMode && (
+        <div id="profile-bio" className="mt-8 scroll-mt-6">
+          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About Me</p>
           <textarea
             value={draft.about}
             onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
@@ -288,33 +341,79 @@ export function MyProfile() {
             rows={4}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-lg text-white/90 outline-none focus:border-gold/40"
           />
-        ) : <p className="text-sm leading-relaxed text-white/55">Your profile story, interests, and intentions live below your visual highlights.</p>}
-      </div>
+        </div>
+      )}
 
-      {/* Moments — the gallery */}
-      <div className="mt-10">
-        <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Your Universe</p>
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="font-serif-display text-3xl text-champagne">Photos &amp; Videos</h2>
-          <Button
-            size="sm"
+      {/* Reference-style Photos / Videos switch and compact 3-column grid. */}
+      <section className="mt-4">
+        <div className="mx-auto flex w-full max-w-[420px] rounded-full border border-champagne/60 bg-midnight/55 p-1">
+          {(['photos', 'videos'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setMediaMode(mode)}
+              className={`flex-1 rounded-full py-2 font-serif-display text-lg capitalize transition ${mediaMode === mode ? 'bg-white/[.07] text-ivory shadow-inner' : 'text-white/60'}`}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+
+        {editMode && (
+          <div className="mt-3 flex justify-end">
+            <Button size="sm" onClick={() => {
+              setUploadCategory(activeCategory)
+              setUploadMode(mediaMode === 'photos' ? 'photo' : 'video')
+              setUploadOpen(true)
+            }}>
+              <Upload className="h-3.5 w-3.5" /> Upload {mediaMode === 'photos' ? 'Photos' : 'Videos'}
+            </Button>
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+          {visibleMedia.slice(0, 9).map((item, index) => (
+            <motion.button
+              key={item.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.035 }}
+              type="button"
+              onClick={() => item.processingStatus !== 'processing' && setGridViewerIndex(index)}
+              className="group relative aspect-square overflow-hidden rounded-2xl border border-white/12 bg-white/[.05] sm:rounded-[1.35rem]"
+            >
+              {item.thumbnailUrl || item.url ? (
+                <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-white/25">
+                  {item.type === 'video' ? <VideoIcon className="h-6 w-6" /> : <ImageIcon className="h-6 w-6" />}
+                </span>
+              )}
+              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full border border-white/25 bg-black/45 px-2 py-1 text-[10px] text-white backdrop-blur-sm">
+                {item.type === 'video' ? <Play className="h-3 w-3 fill-current" /> : <ImageIcon className="h-3 w-3" />}
+              </span>
+              {item.processingStatus === 'processing' && (
+                <span className="absolute inset-0 flex items-center justify-center bg-black/55"><Loader2 className="h-5 w-5 animate-spin text-gold" /></span>
+              )}
+            </motion.button>
+          ))}
+        </div>
+
+        {visibleMedia.length === 0 && (
+          <button
+            type="button"
             onClick={() => {
               setUploadCategory(activeCategory)
-              setUploadMode('photo')
+              setUploadMode(mediaMode === 'photos' ? 'photo' : 'video')
               setUploadOpen(true)
             }}
+            className="mt-4 flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-white/15 bg-white/[.025] text-white/35 transition hover:border-gold/35 hover:text-white/60"
           >
-            <Upload className="h-3.5 w-3.5" /> Upload Media
-          </Button>
-        </div>
-        <MasonryGallery
-          items={galleryItems}
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-          onDelete={handleDeleteDisplayItem}
-        />
-      </div>
+            {mediaMode === 'photos' ? <ImageIcon className="h-6 w-6" /> : <VideoIcon className="h-6 w-6" />}
+            <span className="text-sm">Add {mediaMode}</span>
+          </button>
+        )}
+      </section>
 
       {/* Manage media (edit mode) */}
       <AnimatePresence>
@@ -569,6 +668,15 @@ export function MyProfile() {
           items={displayItems.filter((i) => i.category === viewerCategory && i.type === 'video' && i.processingStatus === 'ready')}
           initialIndex={viewerIndex}
           onClose={() => setViewerCategory(null)}
+          onDelete={handleDeleteDisplayItem}
+        />
+      )}
+
+      {gridViewerIndex !== null && (
+        <FullscreenMediaViewer
+          items={visibleMedia}
+          initialIndex={gridViewerIndex}
+          onClose={() => setGridViewerIndex(null)}
           onDelete={handleDeleteDisplayItem}
         />
       )}

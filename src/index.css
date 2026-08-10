@@ -105,17 +105,6 @@
   will-change: opacity, transform;
 }
 
-/* The supplied logo contains a faint rectangular photographic matte. This
- * silhouette keeps the luminous constellation itself while allowing every
- * screen to inherit the shared celestial background cleanly. */
-.celestial-heart-art {
-  clip-path: polygon(
-    50% 83%, 38% 72%, 25% 60%, 15% 48%, 10% 36%, 12% 27%,
-    20% 20%, 31% 18%, 41% 23%, 50% 32%, 59% 23%, 69% 18%,
-    80% 20%, 88% 27%, 90% 36%, 85% 48%, 75% 60%, 62% 72%
-  );
-}
-
 .birth-details-card {
   background:
     linear-gradient(145deg, rgba(27, 47, 101, .42), rgba(4, 14, 40, .72)),

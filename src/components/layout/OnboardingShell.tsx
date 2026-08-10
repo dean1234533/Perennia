@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
+import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
 
 export function OnboardingShell({
@@ -15,7 +15,7 @@ export function OnboardingShell({
   return (
     <div className="relative flex min-h-screen flex-col items-center bg-midnight text-white">
       <div className="fixed inset-0 z-0">
-        <AtmosphericBackground />
+        <LandingCelestialBackground />
       </div>
 
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-6 py-8 sm:py-10">

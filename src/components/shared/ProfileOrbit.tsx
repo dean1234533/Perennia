@@ -47,12 +47,13 @@ interface ProfileOrbitProps {
   /** Extra badges shown alongside verification status — e.g. a Founding
    *  Member pill. Only ever passed for the signed-in member's own view. */
   extraBadge?: ReactNode
+  compact?: boolean
 }
 
 function VerificationBadge({ status }: { status: ProfileOrbitProps['verificationStatus'] }) {
   if (status === 'verified') {
     return (
-      <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] uppercase tracking-wide text-emerald-300">
+      <span className="flex items-center gap-1 rounded-full border border-blue-300/45 bg-blue-600/80 px-3 py-1 text-[10px] uppercase tracking-wide text-white shadow-[0_0_18px_rgba(59,130,246,.28)]">
         <BadgeCheck className="h-3 w-3" /> Verified
       </span>
     )
@@ -82,17 +83,32 @@ export function ProfileOrbit({
   compatibility,
   onPhotoClick,
   extraBadge,
+  compact = false,
 }: ProfileOrbitProps) {
+  const positions = compact
+    ? [
+        { x: 20, y: 24, size: 0.72 },
+        { x: 81, y: 34, size: 0.56 },
+        { x: 18, y: 68, size: 0.62 },
+        { x: 82, y: 74, size: 0.76 },
+      ]
+    : ORBIT_POSITIONS
+
   return (
     <div className="flex flex-col items-center">
-      <div className="profile-orbit relative mx-auto h-[320px] w-full max-w-[410px] sm:h-[410px] sm:max-w-[500px] md:h-[470px] md:max-w-[560px]">
+      <div className={cn(
+        'profile-orbit relative mx-auto w-full',
+        compact
+          ? 'h-[270px] max-w-[390px] sm:h-[330px] sm:max-w-[470px]'
+          : 'h-[320px] max-w-[410px] sm:h-[410px] sm:max-w-[500px] md:h-[470px] md:max-w-[560px]'
+      )}>
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[76%] w-[76%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/16" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[91%] w-[91%] -translate-x-1/2 -translate-y-1/2 rotate-12 rounded-[50%] border border-gold/20" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[58%] w-[102%] -translate-x-1/2 -translate-y-1/2 -rotate-6 rounded-[50%] border border-gold/14" />
         {/* Satellite media circles */}
-        {categories.slice(0, ORBIT_POSITIONS.length).map((cat, i) => {
-          const pos = ORBIT_POSITIONS[i]
-          const sizePx = 46 + pos.size * 30
+        {categories.slice(0, positions.length).map((cat, i) => {
+          const pos = positions[i]
+          const sizePx = compact ? 34 + pos.size * 28 : 46 + pos.size * 30
           return (
             <motion.button
               key={cat.id}
@@ -152,7 +168,12 @@ export function ProfileOrbit({
               animate={{ opacity: [0.5, 0.9, 0.5] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <div className="relative flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-2 border-champagne/80 bg-white/[0.03] p-1 shadow-[0_0_0_9px_rgba(255,255,255,.04),0_0_0_10px_rgba(229,192,123,.35),0_0_55px_rgba(39,83,168,.5)] sm:h-[210px] sm:w-[210px] md:h-[244px] md:w-[244px]">
+            <div className={cn(
+              'relative flex items-center justify-center overflow-hidden rounded-full border-2 border-champagne/80 bg-white/[0.03] p-1 shadow-[0_0_0_7px_rgba(255,255,255,.035),0_0_0_8px_rgba(229,192,123,.3),0_0_42px_rgba(39,83,168,.42)]',
+              compact
+                ? 'h-[132px] w-[132px] sm:h-[184px] sm:w-[184px]'
+                : 'h-[158px] w-[158px] sm:h-[210px] sm:w-[210px] md:h-[244px] md:w-[244px]'
+            )}>
               {photoUrl ? (
                 <img src={photoUrl} alt={name} className="h-full w-full rounded-full object-cover" />
               ) : (
@@ -175,9 +196,9 @@ export function ProfileOrbit({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="-mt-1 flex flex-col items-center gap-2 text-center sm:-mt-3"
+        className={cn('flex flex-col items-center gap-2 text-center', compact ? '-mt-2 sm:-mt-4' : '-mt-1 sm:-mt-3')}
       >
-        <h1 className="font-serif-display text-4xl font-medium tracking-wide text-ivory sm:text-6xl">
+        <h1 className={cn('font-serif-display font-medium tracking-wide text-ivory', compact ? 'text-4xl sm:text-5xl' : 'text-4xl sm:text-6xl')}>
           {name}
           {age ? `, ${age}` : ''}
         </h1>

@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { uploadProfilePhoto } from '@/lib/media/mediaService'
+import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
 
 export function ProfilePhoto() {
   const { profileLoaded } = useApp()
@@ -95,7 +96,11 @@ function ProfilePhotoForm() {
 
         <Button
           size="lg" className="w-full" disabled={!preview || saving}
-          onClick={() => navigate(onboarding.verification.status === 'verified' && onboarding.verification.detailsConfirmedAt ? '/your-story' : '/verify')}
+          onClick={() => navigate(
+            hasDevelopmentVerificationBypass() || (onboarding.verification.status === 'verified' && onboarding.verification.detailsConfirmedAt)
+              ? '/your-story'
+              : '/verify'
+          )}
         >
           {saving ? 'Saving…' : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
         </Button>

@@ -71,6 +71,10 @@ function App() {
             <Route path="/settings" element={<RequireFoundingMembership><AppShell><Settings /></AppShell></RequireFoundingMembership>} />
             <Route path="/matching-preferences" element={<RequireFoundingMembership><AppShell><MatchingPreferences /></AppShell></RequireFoundingMembership>} />
 
+            {import.meta.env.DEV && (
+              <Route path="/dev/profile-preview" element={<AppShell><MyProfile preview /></AppShell>} />
+            )}
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

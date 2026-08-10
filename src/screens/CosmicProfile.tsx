@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { ZodiacWheel } from '@/components/shared/ZodiacWheel'
 import { useApp } from '@/context/AppContext'
 import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
+import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
 
 const traits = ['Intuitive', 'Loyal', 'Passionate', 'Idealistic', 'Warm', 'Determined']
 
@@ -25,7 +26,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
   const finish = async () => {
     // The final screen is addressable by URL, so it also validates the
     // required onboarding milestones instead of trusting page order alone.
-    if (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt) {
+    if (!hasDevelopmentVerificationBypass() && (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt)) {
       navigate('/verify')
       return
     }

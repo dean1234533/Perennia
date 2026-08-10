@@ -16,6 +16,7 @@ import {
   identityVerificationConfigured,
   VerificationNotConfiguredError,
 } from '@/lib/identityVerification'
+import { enableDevelopmentVerificationBypass } from '@/lib/developmentVerification'
 
 type LocalStage = 'idle' | 'launching' | 'pending' | 'confirming' | 'error'
 
@@ -105,6 +106,11 @@ export function Verify() {
     }
   }
 
+  const skipForTesting = () => {
+    enableDevelopmentVerificationBypass()
+    navigate(continueDestination)
+  }
+
   const activeStep = detailsConfirmed ? 4 : detailsReady ? 3 : stage === 'pending' ? 2 : stage === 'launching' ? 1 : 0
 
   return (
@@ -160,6 +166,14 @@ export function Verify() {
               </div>
               <h2 className="font-serif-display text-3xl">Checking Your Identity</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/55">Stripe is validating your document and matching your live face to its photograph. This screen updates automatically.</p>
+              {import.meta.env.DEV && (
+                <div className="mx-auto mt-7 max-w-md border-t border-white/10 pt-6">
+                  <Button type="button" variant="outline" className="w-full" onClick={skipForTesting}>
+                    Skip identity check for testing <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <p className="mt-3 text-xs text-white/35">Development mode only — identity verification remains required in production.</p>
+                </div>
+              )}
             </motion.div>
           ) : !configured ? (
             <motion.div key="configuration" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -167,6 +181,11 @@ export function Verify() {
               <h2 className="font-serif-display text-3xl">Verification Setup Required</h2>
               <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/55">Stripe Identity keys must be configured before anyone can continue. Verification cannot be skipped or simulated.</p>
               <p className="mx-auto mt-5 max-w-lg rounded-xl border border-white/10 bg-white/[.03] p-4 text-xs text-white/45">Configure <code className="text-champagne">STRIPE_SECRET_KEY</code>, <code className="text-champagne">STRIPE_WEBHOOK_SECRET</code>, and <code className="text-champagne">VITE_STRIPE_PUBLISHABLE_KEY</code>.</p>
+              {import.meta.env.DEV && (
+                <Button type="button" variant="outline" className="mt-6 w-full max-w-md" onClick={skipForTesting}>
+                  Skip identity check for testing <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
             </motion.div>
           ) : (
             <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -188,6 +207,14 @@ export function Verify() {
                 </button>
               </div>
               <p className="mt-5 flex items-center justify-center gap-2 text-xs text-white/40"><ShieldCheck className="h-4 w-4" /> Secure document, liveness and face-match verification by Stripe</p>
+              {import.meta.env.DEV && (
+                <div className="mt-6 border-t border-white/10 pt-5">
+                  <Button type="button" variant="outline" className="w-full" onClick={skipForTesting}>
+                    Skip identity check for testing <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <p className="mt-3 text-xs text-white/35">Development mode only — this option is removed from production.</p>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -33,40 +33,44 @@ export function Welcome() {
         <LandingCelestialBackground />
       </div>
 
-      {/* Nav — wordmark + the one login action. No signup button here; the
-          only place to join is the hero's primary CTA. */}
-      <header className="relative z-20 flex items-center justify-between px-6 py-6 md:px-12">
-        <div className="flex items-center gap-2">
-          <CelestialHeart className="h-10 w-10" />
-          <span className="font-serif-display text-2xl text-gradient-gold">Perennia</span>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-          Log In
-        </Button>
-      </header>
-
       {/* ============ HERO ============ */}
-      <section className="relative min-h-[92vh] overflow-hidden sm:min-h-screen">
+      <section className="relative min-h-screen overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 pb-10 text-center"
+          className="relative z-10 mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-start px-6 pb-6 pt-16 text-center sm:justify-center sm:px-10 sm:py-6"
         >
-          <CelestialHeart className="mb-2 h-32 w-32 sm:h-40 sm:w-40" />
-          <p className="mb-4 text-xs uppercase tracking-[.42em] text-gold/80">Written in the stars. Chosen by you.</p>
-          <h1 className="font-serif-display text-6xl tracking-wide text-ivory [text-shadow:0_4px_32px_rgba(0,0,0,.8)] sm:text-8xl">Perennia</h1>
-          <p className="mt-2 font-serif-display text-2xl italic text-champagne/90 sm:text-3xl">For Love That Fits, Naturally.</p>
-          <p className="mx-auto mb-9 mt-5 max-w-xl text-sm leading-relaxed text-white/60 sm:text-base">
+          <CelestialHeart className="h-40 w-40 sm:h-32 sm:w-32" />
+          <span aria-hidden="true" className="-mt-2 font-serif-display text-3xl leading-none text-ivory [text-shadow:0_0_16px_rgba(173,194,255,.75)]">☾</span>
+
+          <h1 className="mt-1 font-serif-display text-[4.1rem] font-medium uppercase leading-none tracking-[0.025em] text-ivory [text-shadow:0_3px_28px_rgba(157,175,255,.35)] sm:text-[6rem] lg:text-[6.5rem]">
+            Perennia
+          </h1>
+
+          <div aria-hidden="true" className="my-3 flex w-full max-w-md items-center justify-center gap-3 text-lavender">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/75 to-white/25" />
+            <span className="h-1 w-1 rounded-full bg-white/80" />
+            <span className="h-2.5 w-2.5 rotate-45 border border-lavender/80" />
+            <span className="h-4 w-4 rotate-45 border border-lavender bg-nebula-purple/35 shadow-[0_0_14px_rgba(142,108,246,.8)]" />
+            <span className="h-2.5 w-2.5 rotate-45 border border-lavender/80" />
+            <span className="h-1 w-1 rounded-full bg-white/80" />
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent via-white/75 to-white/25" />
+          </div>
+
+          <p className="text-xs font-medium uppercase tracking-[0.34em] text-champagne sm:text-sm">
+            For Love That Fits, Naturally.
+          </p>
+          <p className="mx-auto mb-5 mt-3 max-w-xl text-sm leading-6 text-white/60 sm:text-base sm:leading-7">
             Perennia combines a structured compatibility system with astrological insight to
             introduce you to people with genuine long-term potential.
           </p>
 
-          <div className="flex w-full max-w-xs flex-col items-center gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:gap-4">
+          <div className="flex w-full max-w-md flex-col items-center gap-3">
             <Button
               size="lg"
               onClick={() => navigate('/signup')}
-              className="group w-full uppercase tracking-wide sm:w-auto"
+              className="group h-14 w-full border border-ivory/80 uppercase tracking-[0.15em] shadow-[0_0_24px_rgba(229,192,123,.22)] sm:text-base"
             >
               Begin Your Story
               <motion.span
@@ -81,7 +85,7 @@ export function Welcome() {
               size="lg"
               variant="ghost"
               onClick={() => navigate('/login')}
-              className="w-full border border-lavender/30 bg-navy/50 uppercase tracking-wide text-white/85 backdrop-blur-sm shadow-[0_0_24px_-10px_rgba(142,108,246,0.5)] hover:bg-navy/65 hover:border-lavender/50 hover:text-white sm:w-auto"
+              className="h-14 w-full border border-lavender/35 bg-navy/45 uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm hover:border-lavender/55 hover:bg-navy/65 hover:text-white sm:text-base"
             >
               Log In
             </Button>
