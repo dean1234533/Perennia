@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -43,7 +44,17 @@ function MenuGroup({ title, children }: { title: string; children: ReactNode }) 
 }
 
 function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; onClose: () => void; onBack?: () => void; title: string; children: ReactNode }) {
-  return (
+  // Portaled straight to <body> — this overlay was getting rendered as a
+  // descendant of AppShell's <main>, which sets its own `position:relative;
+  // z-index:10`. That makes <main> a real stacking context: everything
+  // inside it (including this "fixed" menu, no matter its own z-index)
+  // gets painted as a single z-10 layer, which loses outright to the
+  // bottom nav bar's sibling z-40 — a fixed position on a mobile screen
+  // literally could not out-rank it. Portaling escapes that trap so this
+  // menu's z-index is finally compared against the nav's directly, as true
+  // top-level siblings, instead of being nested three levels too deep to
+  // ever win.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -54,7 +65,7 @@ function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; 
           <motion.div
             role="dialog" aria-modal="true" aria-label={title}
             initial={{ opacity: 0, y: -12, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: .98 }}
-            className="max-h-[calc(100vh-5rem)] w-full max-w-sm overflow-y-auto rounded-[1.6rem] border border-blue-200/20 bg-[#07142b]/95 p-4 shadow-[0_0_45px_rgba(73,90,220,.22)] backdrop-blur-2xl"
+            className="max-h-[calc(100dvh-5rem)] w-full max-w-sm overflow-y-auto rounded-[1.6rem] border border-blue-200/20 bg-[#07142b]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(73,90,220,.22)] backdrop-blur-2xl"
           >
             <div className="mb-4 flex items-center justify-between px-2">
               <div className="flex min-w-0 items-center gap-2">
@@ -73,7 +84,8 @@ function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; 
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
