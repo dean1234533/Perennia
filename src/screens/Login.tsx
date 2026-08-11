@@ -19,15 +19,18 @@ export function Login() {
   // continue that flow rather than dropping the member back at Discovery.
   const destination = next?.startsWith('/founding-500') ? next : '/discovery'
   const { setAuthenticated } = useApp()
-  const { logIn } = useAuth()
+  const { logIn, resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetMessage, setResetMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setResetMessage('')
     setLoading(true)
 
     if (firebaseConfigured) {
@@ -52,8 +55,51 @@ export function Login() {
     }, 900)
   }
 
+  const handleForgotPassword = async () => {
+    setError('')
+    setResetMessage('')
+
+    const registeredEmail = email.trim()
+    if (!registeredEmail) {
+      setError('Enter your registered email address to reset your password.')
+      return
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registeredEmail)) {
+      setError('Enter a valid email address to reset your password.')
+      return
+    }
+
+    if (!firebaseConfigured) {
+      setError('Password reset is unavailable in this local preview.')
+      return
+    }
+
+    setResetLoading(true)
+    try {
+      await resetPassword(registeredEmail)
+      setResetMessage('If an account exists for this email, we’ve sent a password-reset link.')
+    } catch (resetError) {
+      const code = typeof resetError === 'object' && resetError && 'code' in resetError
+        ? String(resetError.code)
+        : ''
+
+      if (code === 'auth/invalid-email') {
+        setError('Enter a valid email address to reset your password.')
+      } else if (code === 'auth/too-many-requests') {
+        setError('Too many reset requests. Please wait a moment and try again.')
+      } else if (code === 'auth/network-request-failed') {
+        setError('We couldn’t connect. Check your connection and try again.')
+      } else {
+        setError('We couldn’t send the reset email. Please try again.')
+      }
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
   return (
-    <div className="relative flex min-h-screen flex-col items-center bg-midnight text-white">
+    <div className="relative flex min-h-[100svh] flex-col items-center overflow-y-auto bg-midnight text-white">
       {/* Real celestial photography, swapped by viewport — portrait crop on
           mobile, wide landscape on desktop, rather than one image stretched
           to fit both. */}
@@ -79,7 +125,7 @@ export function Login() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-sm text-center"
           >
-            <h1 className="font-serif-display text-4xl md:text-5xl">Welcome Back</h1>
+            <h1 className="font-serif-display text-4xl text-[#f2dfbd] md:text-5xl">Welcome Back</h1>
             <p className="mt-4 text-sm text-white/55">Sign in to continue your story.</p>
 
             <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-5 text-left">
@@ -103,8 +149,13 @@ export function Login() {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-[11px] uppercase tracking-[0.2em] text-white/45">Password</Label>
-                  <button type="button" className="text-[11px] text-white/40 hover:text-gold cursor-pointer">
-                    Forgot?
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={resetLoading}
+                    className="cursor-pointer text-[11px] text-white/55 transition-colors hover:text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne/45 disabled:cursor-wait disabled:opacity-50"
+                  >
+                    {resetLoading ? 'Sending…' : 'Forgot password?'}
                   </button>
                 </div>
                 <div className="relative">
@@ -133,7 +184,24 @@ export function Login() {
                 </motion.p>
               )}
 
-              <Button type="submit" size="lg" className="mt-2 w-full" disabled={loading}>
+              {resetMessage && (
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  role="status"
+                  className="rounded-xl border border-blue-300/25 bg-blue-950/35 px-4 py-2.5 text-xs leading-5 text-blue-100"
+                >
+                  {resetMessage}
+                </motion.p>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                variant="ghost"
+                className="mt-2 w-full border border-blue-200/40 bg-gradient-to-r from-[#173a78]/95 via-[#303a92]/95 to-[#442c7f]/95 text-ivory shadow-[0_10px_32px_-12px_rgba(98,130,255,.75)] hover:border-blue-100/55 hover:from-[#1d478d] hover:via-[#3b47a8] hover:to-[#523695] hover:text-white hover:shadow-[0_12px_38px_-10px_rgba(111,137,255,.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100/60 focus-visible:ring-offset-2 focus-visible:ring-offset-midnight"
+                disabled={loading}
+              >
                 {loading ? 'Signing In…' : (
                   <>
                     Sign In <ArrowRight className="h-4 w-4" />
@@ -142,11 +210,11 @@ export function Login() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-white/40">
+            <p className="mt-6 text-center text-xs text-white/60 [text-shadow:0_1px_10px_rgba(2,7,24,.75)]">
               New to Perennia?{' '}
               <button
                 onClick={() => navigate(next ? `/signup?next=${encodeURIComponent(next)}` : '/signup')}
-                className="text-gold hover:underline cursor-pointer"
+                className="cursor-pointer text-champagne hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne/45"
               >
                 Create an account
               </button>

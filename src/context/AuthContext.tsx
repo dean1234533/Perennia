@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
@@ -21,6 +22,7 @@ interface AuthContextValue {
    *  later, in the "About You" onboarding step, not at signup. */
   signUp: (email: string, password: string) => Promise<User>
   logIn: (email: string, password: string) => Promise<User>
+  resetPassword: (email: string) => Promise<void>
   logOut: () => Promise<void>
   /** Reauthenticates with the current password only — no other change.
    *  Used to gate sensitive actions (e.g. editing confirmed birth details)
@@ -66,6 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return cred.user
   }
 
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email, {
+      url: `${window.location.origin}/login`,
+      handleCodeInApp: false,
+    })
+  }
+
   const logOut = async () => {
     await signOut(auth)
     setUser(null)
@@ -93,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading: !authReady, authReady, signUp, logIn, logOut, reauthenticate, changePassword, deleteAccount: deleteAccountAction }}
+      value={{ user, loading: !authReady, authReady, signUp, logIn, resetPassword, logOut, reauthenticate, changePassword, deleteAccount: deleteAccountAction }}
     >
       {children}
     </AuthContext.Provider>
