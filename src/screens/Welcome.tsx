@@ -32,12 +32,12 @@ function IntentionFeature({
 }) {
   return (
     <FadeUp delay={delay} className="relative flex gap-4 sm:gap-5">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-champagne/45 bg-midnight/35 text-champagne shadow-[0_0_24px_rgba(229,192,123,.12)] backdrop-blur-sm sm:h-16 sm:w-16">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-champagne/45 bg-white/[.025] text-champagne shadow-[0_0_24px_rgba(229,192,123,.12)] sm:h-16 sm:w-16">
         {icon}
       </div>
       <div className="pt-1">
         <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-ivory sm:text-base">{heading}</h3>
-        <p className="mt-2 max-w-md text-sm leading-6 text-white/65 sm:text-[0.95rem] sm:leading-7">{children}</p>
+        <p className="mt-2 max-w-md text-sm leading-6 text-white/72 sm:text-[0.95rem] sm:leading-7">{children}</p>
       </div>
     </FadeUp>
   )
@@ -142,7 +142,7 @@ export function Welcome() {
       </section>
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
-      <section className="relative z-10 flex min-h-[40rem] w-full items-center overflow-hidden px-6 py-24 sm:min-h-[46rem] sm:px-12 sm:py-28 lg:min-h-[48rem] lg:px-20">
+      <section className="relative z-10 flex min-h-[64rem] w-full items-center overflow-hidden px-6 py-24 sm:min-h-[68rem] sm:px-12 sm:py-28 lg:min-h-[56rem] lg:px-20">
         <div className="mx-auto w-full max-w-7xl">
           <FadeUp className="max-w-4xl text-left">
             <p className="mb-5 text-[0.68rem] font-medium uppercase tracking-[0.32em] text-gold/80 sm:mb-7 sm:text-xs sm:tracking-[0.4em]">
@@ -153,6 +153,47 @@ export function Welcome() {
               <span className="block pt-1 text-gradient-gold italic sm:pt-2">found.</span>
               <span className="block pt-1 text-ivory [text-shadow:0_3px_28px_rgba(158,176,220,.22)] sm:pt-2">They’re recognized.</span>
             </h2>
+          </FadeUp>
+
+          {/* What We Believe — deliberately subordinate in scale to the
+              statement above; generous top margin preserves the breathing
+              space the brief calls for between the two. */}
+          <FadeUp delay={0.15} className="mt-20 max-w-2xl text-left sm:mt-28 lg:mt-32">
+            <p className="text-[0.68rem] font-medium uppercase tracking-[0.32em] text-gold/80 sm:text-xs sm:tracking-[0.4em]">
+              What We Believe
+            </p>
+            <h3 className="mt-5 font-serif-display text-xl font-medium leading-[1.2] text-ivory sm:mt-6 sm:text-2xl lg:text-[1.85rem]">
+              Not more matches.
+              <br />
+              Something worth building.
+            </h3>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/65 sm:mt-6 sm:text-base sm:leading-8">
+              Perennia is built for people looking for more than a moment — for connection with
+              the potential to become something lasting.
+            </p>
+
+            <p className="mt-10 font-serif-display text-lg italic text-gradient-gold sm:mt-12 sm:text-xl">
+              And lasting love can become something bigger.
+            </p>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/65 sm:mt-6 sm:text-base sm:leading-8">
+              Strong relationships can create stronger foundations for families. By helping people
+              begin with greater compatibility and intention, we believe Perennia can play a part
+              in creating more enduring partnerships, more stable families and fewer relationships
+              breaking down where fundamental incompatibility was there from the beginning.
+            </p>
+
+            <div aria-hidden="true" className="mt-10 flex items-center gap-3 text-gold/60 sm:mt-12">
+              <span className="h-px w-10 bg-gradient-to-r from-transparent to-gold/50" />
+              <span className="h-1 w-1 rotate-45 bg-gold/60" />
+              <span className="h-px w-10 bg-gradient-to-l from-transparent to-gold/50" />
+            </div>
+            <p className="mt-6 text-[0.65rem] font-medium uppercase tracking-[0.32em] text-white/50 sm:text-xs sm:tracking-[0.4em]">
+              Compatibility · Intention · Longevity
+            </p>
+
+            <p className="mt-8 font-serif-display text-sm italic text-white/40 sm:mt-10 sm:text-base">
+              For Love That Fits, Naturally.
+            </p>
           </FadeUp>
         </div>
       </section>
@@ -222,34 +263,8 @@ export function Welcome() {
       </section>
 
       {/* ============ BUILT ON INTENTION ============ */}
-      <section className="relative z-10 min-h-[62rem] w-full overflow-hidden sm:min-h-[58rem] lg:min-h-[48rem]">
-        {/* The page's pinned celestial atmosphere remains the real background.
-            London is deliberately just an alpha cutout above it — never a
-            second rectangular sky/background image. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-gradient-to-b from-transparent via-[#06112d]/20 to-[#020714]/80" />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[46%] overflow-hidden opacity-85 sm:h-[52%] lg:left-[34%] lg:h-[72%] lg:opacity-95">
-          <img
-            src="/landing/london-cutout.png"
-            alt=""
-            width="1270"
-            height="820"
-            loading="lazy"
-            decoding="async"
-            className="absolute bottom-[17%] left-1/2 w-[52rem] max-w-none -translate-x-1/2 object-contain drop-shadow-[0_0_30px_rgba(30,68,150,.28)] sm:w-[68rem] lg:bottom-[20%] lg:w-[76rem]"
-          />
-          <img
-            src="/landing/london-cutout.png"
-            alt=""
-            width="1270"
-            height="820"
-            loading="lazy"
-            decoding="async"
-            className="intention-skyline-reflection absolute bottom-[-46%] left-1/2 w-[52rem] max-w-none -translate-x-1/2 scale-y-[-1] object-contain opacity-30 sm:w-[68rem] lg:bottom-[-41%] lg:w-[76rem]"
-          />
-          <div className="intention-river absolute inset-x-0 bottom-0 h-[36%]" />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-24 lg:px-16">
+      <section className="relative z-10 w-full overflow-hidden px-5 py-24 sm:px-10 sm:py-28 lg:py-32">
+        <div className="mx-auto w-full max-w-7xl">
           <FadeUp className="text-center lg:text-left">
             <p className="text-xs font-medium uppercase tracking-[0.38em] text-champagne sm:text-sm">Built on Intention</p>
             <div aria-hidden="true" className="mx-auto mt-5 flex w-28 items-center gap-3 text-gold lg:mx-0">
@@ -259,7 +274,7 @@ export function Welcome() {
             </div>
           </FadeUp>
 
-          <div className="mt-14 grid max-w-2xl gap-10 sm:gap-12 lg:mt-16 lg:max-w-[34rem]">
+          <div className="mx-auto mt-14 grid max-w-2xl gap-10 sm:gap-12 lg:mx-0 lg:mt-16 lg:max-w-[38rem]">
             <IntentionFeature icon={<ShieldCheck className="h-7 w-7" strokeWidth={1.35} />} heading="Verified Members Only" delay={0.05}>
               Every profile is identity verified to help keep the Perennia community genuine and safer.
             </IntentionFeature>
