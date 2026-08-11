@@ -50,21 +50,97 @@ export interface CityMatch {
   lon: number
 }
 
+/** Strips accents/diacritics so "munchen" matches "München" and "sao paulo"
+ *  matches "São Paulo" — typing a city without its native diacritics is the
+ *  normal case on most keyboards, not an edge case. */
+function normalizeForSearch(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
 /** Real ranked city matches from the same ~138k-city dataset `geocodePlace`
- *  uses, for a typeahead dropdown rather than free-text entry. */
-export function searchCityMatches(query: string, countryCode?: string, limit = 8): CityMatch[] {
-  const q = query.trim().toLowerCase()
+ *  uses, for a typeahead dropdown rather than free-text entry. Synchronous,
+ *  offline — this is the fast/common path searchCityMatches tries first. */
+function searchCityMatchesLocal(query: string, countryCode?: string, limit = 8): CityMatch[] {
+  const q = normalizeForSearch(query.trim())
   if (q.length < 2) return []
 
-  let matches = cities.filter((c) => c.name.toLowerCase().startsWith(q))
-  if (countryCode) {
-    matches = matches.filter((c) => c.country === countryCode)
+  const pool = countryCode ? cities.filter((c) => c.country === countryCode) : cities
+
+  // Prefix match first (most relevant, matches typeahead expectations);
+  // fall back to substring match so a city typed as part of a longer local
+  // name (or not started from its exact first letters) still surfaces
+  // instead of silently returning nothing.
+  let matches = pool.filter((c) => normalizeForSearch(c.name).startsWith(q))
+  if (matches.length === 0) {
+    matches = pool.filter((c) => normalizeForSearch(c.name).includes(q))
   }
 
   return [...matches]
     .sort((a, b) => b.population - a.population)
     .slice(0, limit)
     .map((c) => ({ name: c.name, country: c.country, lat: c.loc.coordinates[1], lon: c.loc.coordinates[0] }))
+}
+
+interface GeonamesResult {
+  name: string
+  countryCode: string
+  lat: string
+  lng: string
+}
+
+/** Live fallback against GeoNames' search API, which indexes alternate
+ *  names in many languages (e.g. "München" for Munich). Only ever called
+ *  when the offline dataset finds nothing, and fails silently (empty
+ *  array) on any error — this is an enhancement, never a required
+ *  dependency for the birth-place flow to work. */
+async function searchCityMatchesRemote(
+  query: string,
+  countryCode: string | undefined,
+  username: string,
+  limit = 8
+): Promise<CityMatch[]> {
+  const UNSET_SENTINEL = 'not_configured'
+  if (!username || username === UNSET_SENTINEL) return []
+
+  const params = new URLSearchParams({
+    q: query,
+    maxRows: String(limit),
+    featureClass: 'P', // populated places only
+    username,
+  })
+  if (countryCode) params.set('country', countryCode)
+
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    const response = await fetch(`https://secure.geonames.org/searchJSON?${params}`, {
+      signal: controller.signal,
+    })
+    clearTimeout(timeout)
+    if (!response.ok) return []
+
+    const data = (await response.json()) as { geonames?: GeonamesResult[] }
+    return (data.geonames ?? []).map((g) => ({
+      name: g.name,
+      country: g.countryCode,
+      lat: Number(g.lat),
+      lon: Number(g.lng),
+    }))
+  } catch {
+    return []
+  }
+}
+
+export async function searchCityMatches(
+  query: string,
+  countryCode?: string,
+  geonamesUsernameValue?: string,
+  limit = 8
+): Promise<CityMatch[]> {
+  const local = searchCityMatchesLocal(query, countryCode, limit)
+  if (local.length > 0) return local
+  if (!geonamesUsernameValue || query.trim().length < 2) return []
+  return searchCityMatchesRemote(query, countryCode, geonamesUsernameValue, limit)
 }
 
 export function geocodePlace(placeText: string): GeocodeResult {

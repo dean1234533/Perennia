@@ -34,6 +34,7 @@ import {
   likeRateLimitMaxRequests,
   likeRateLimitWindowSeconds,
   resendApiKey,
+  geonamesUsername,
 } from './config/env'
 import { getCompatibilityInputSchema, computeNatalChartInputSchema, geocodeLocationInputSchema, searchCitiesInputSchema } from './validation/compatibility.validation'
 import { createFoundingCheckoutInputSchema, updateFounding500ConfigInputSchema, createBillingPortalInputSchema } from './validation/founding500.validation'
@@ -187,9 +188,11 @@ export const computeNatalChart = onCall({}, async (request) => {
 // ---------------------------------------------------------------------------
 // searchCities — real ranked city matches (same ~138k-city dataset as
 // geocodeLocation/computeNatalChart) for a live typeahead dropdown, instead
-// of free-text place entry.
+// of free-text place entry. Falls back to a live GeoNames lookup when the
+// offline dataset finds nothing (e.g. a city typed in a language/spelling
+// the local dataset doesn't carry) — see astrology.service.ts.
 // ---------------------------------------------------------------------------
-export const searchCities = onCall({}, async (request) => {
+export const searchCities = onCall({ secrets: [geonamesUsername] }, async (request) => {
   if (!request.auth) {
     throw unauthenticated('Sign in to search cities.')
   }
@@ -198,7 +201,7 @@ export const searchCities = onCall({}, async (request) => {
     throw invalidArgument(parsed.error.issues.map((i) => i.message).join('; '))
   }
   try {
-    return searchCityMatches(parsed.data.query, parsed.data.country)
+    return await searchCityMatches(parsed.data.query, parsed.data.country, geonamesUsername.value())
   } catch (err) {
     throw internal('searchCities failed', err)
   }

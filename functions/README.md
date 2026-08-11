@@ -178,6 +178,30 @@ tier without verifying a custom domain; switch `FROM_ADDRESS` in
 `services/email.service.ts` to a verified domain address before real
 production use.
 
+### 8. City search fallback setup (GeoNames)
+
+The bundled offline city dataset (`all-the-cities`, ~138k cities) only
+carries one name per city — often the English form (e.g. "Munich", not
+"München") — so a city typed in a different language/spelling can return
+zero local matches. `searchCities` falls back to a live lookup against
+[GeoNames](https://www.geonames.org)'s search API only when the local
+dataset finds nothing (see `services/astrology.service.ts`,
+`searchCityMatchesRemote`).
+
+1. Create a free account at [geonames.org](https://www.geonames.org/login).
+2. On your [account page](https://www.geonames.org/manageaccount), click
+   "Click here to enable" under "Free Web Service" — new accounts don't
+   have API access on by default.
+3. Set your GeoNames username as a secret:
+
+```bash
+firebase functions:secrets:set GEONAMES_USERNAME
+```
+
+This is optional — if unset, `searchCities` simply skips the fallback and
+relies on the local dataset only (no error, since it's an enhancement, not
+a required dependency).
+
 ## Local development
 
 ```bash

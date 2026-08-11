@@ -33,6 +33,15 @@ export const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
 // throws a clear failed-precondition error instead of pretending to work.
 export const resendApiKey = defineSecret('RESEND_API_KEY')
 
+// --- City search fallback (GeoNames) -------------------------------------
+// Not set in this environment yet — see functions/README.md "City search
+// fallback setup". The bundled offline city dataset (all-the-cities) only
+// carries one name per city (often English, e.g. "Munich" not "München"),
+// so a city typed in a different language/spelling can return zero local
+// matches. When unset, searchCities simply skips this fallback rather than
+// erroring — it's an enhancement, not a required dependency.
+export const geonamesUsername = defineSecret('GEONAMES_USERNAME')
+
 // --- Sub-score table ranges (Western Zodiac tab) ------------------------
 // Columns read directly off a screenshot of the real sheet: three side by
 // side 3-column tables (label | score | rule-applied) at B:D, F:H, J:L.
