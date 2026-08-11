@@ -50,7 +50,7 @@ function AlignmentCard({ icon, heading, children, divided = false }: { icon: Rea
         {icon}
       </div>
       <h3 className="font-serif-display text-[1rem] leading-[1.05] text-ivory sm:text-xl lg:text-2xl">{heading}</h3>
-      <p className="mt-3 text-[0.68rem] leading-[1.55] text-white/58 sm:text-sm sm:leading-6">{children}</p>
+      <p className="mt-3 text-[0.68rem] leading-[1.55] text-white/65 sm:text-sm sm:leading-6">{children}</p>
     </div>
   )
 }
@@ -109,7 +109,7 @@ export function Welcome() {
           <p className="text-xs font-medium uppercase tracking-[0.34em] text-champagne sm:text-sm">
             For Love That Fits, Naturally.
           </p>
-          <p className="mx-auto mb-5 mt-3 max-w-xl text-sm leading-6 text-white/60 sm:text-base sm:leading-7">
+          <p className="mx-auto mb-5 mt-3 max-w-xl text-sm leading-6 text-white/68 sm:text-base sm:leading-7">
             Perennia combines a structured compatibility system with astrological insight to
             introduce you to people with genuine long-term potential.
           </p>
@@ -142,7 +142,7 @@ export function Welcome() {
       </section>
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
-      <section className="relative z-10 flex min-h-[64rem] w-full items-center overflow-hidden px-6 py-24 sm:min-h-[68rem] sm:px-12 sm:py-28 lg:min-h-[56rem] lg:px-20">
+      <section className="relative z-10 flex w-full items-center overflow-hidden px-6 py-24 sm:min-h-[68rem] sm:px-12 sm:py-28 lg:min-h-[56rem] lg:px-20">
         <div className="mx-auto w-full max-w-7xl">
           <FadeUp className="max-w-4xl text-left">
             <p className="mb-5 text-[0.68rem] font-medium uppercase tracking-[0.32em] text-gold/80 sm:mb-7 sm:text-xs sm:tracking-[0.4em]">
@@ -151,7 +151,7 @@ export function Welcome() {
             <h2 className="font-serif-display text-[clamp(2.05rem,9vw,5.75rem)] font-medium leading-[0.96] tracking-[-0.025em]">
               <span className="block text-ivory [text-shadow:0_3px_28px_rgba(158,176,220,.22)]">Some connections aren’t</span>
               <span className="block pt-1 text-gradient-gold italic sm:pt-2">found.</span>
-              <span className="block pt-1 text-ivory [text-shadow:0_3px_28px_rgba(158,176,220,.22)] sm:pt-2">They’re recognized.</span>
+              <span className="block pt-1 text-ivory [text-shadow:0_3px_28px_rgba(158,176,220,.22)] sm:pt-2">They’re recognised.</span>
             </h2>
           </FadeUp>
 
@@ -167,7 +167,7 @@ export function Welcome() {
               <br />
               Something worth building.
             </h3>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/65 sm:mt-6 sm:text-base sm:leading-8">
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/72 sm:mt-6 sm:text-base sm:leading-8">
               Perennia is built for people looking for more than a moment — for connection with
               the potential to become something lasting.
             </p>
@@ -175,11 +175,10 @@ export function Welcome() {
             <p className="mt-10 font-serif-display text-lg italic text-gradient-gold sm:mt-12 sm:text-xl">
               And lasting love can become something bigger.
             </p>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/65 sm:mt-6 sm:text-base sm:leading-8">
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/72 sm:mt-6 sm:text-base sm:leading-8">
               Strong relationships can create stronger foundations for families. By helping people
-              begin with greater compatibility and intention, we believe Perennia can play a part
-              in creating more enduring partnerships, more stable families and fewer relationships
-              breaking down where fundamental incompatibility was there from the beginning.
+              begin with greater compatibility and intention, Perennia is built to encourage more
+              enduring partnerships from the start.
             </p>
 
             <div aria-hidden="true" className="mt-10 flex items-center gap-3 text-gold/60 sm:mt-12">
@@ -187,11 +186,11 @@ export function Welcome() {
               <span className="h-1 w-1 rotate-45 bg-gold/60" />
               <span className="h-px w-10 bg-gradient-to-l from-transparent to-gold/50" />
             </div>
-            <p className="mt-6 text-[0.65rem] font-medium uppercase tracking-[0.32em] text-white/50 sm:text-xs sm:tracking-[0.4em]">
+            <p className="mt-6 text-[0.65rem] font-medium uppercase tracking-[0.32em] text-white/58 sm:text-xs sm:tracking-[0.4em]">
               Compatibility · Intention · Longevity
             </p>
 
-            <p className="mt-8 font-serif-display text-sm italic text-white/40 sm:mt-10 sm:text-base">
+            <p className="mt-8 font-serif-display text-sm italic text-white/48 sm:mt-10 sm:text-base">
               For Love That Fits, Naturally.
             </p>
           </FadeUp>
@@ -199,11 +198,11 @@ export function Welcome() {
       </section>
 
       {/* ============ RARE ALIGNMENT ============ */}
-      <section className="relative z-10 flex min-h-[48rem] w-full items-center justify-center overflow-hidden px-4 py-24 sm:min-h-[54rem] sm:px-8 sm:py-28 lg:min-h-[52rem]">
+      <section className="relative z-10 flex w-full items-center justify-center overflow-hidden px-4 py-24 sm:px-8 sm:py-28 lg:min-h-[52rem]">
         <div className="mx-auto w-full max-w-7xl">
           <FadeUp className="text-center">
-            <h2 className="font-serif-display text-[3.35rem] font-medium leading-[0.98] tracking-[-0.02em] sm:text-[5.1rem] lg:text-[6.25rem]">
-              <span className="block text-gradient-gold italic">Rare alignment</span>
+            <h2 className="font-serif-display text-[clamp(2.15rem,12vw,3.35rem)] font-medium leading-[0.98] tracking-[-0.02em] sm:text-[5.1rem] lg:text-[6.25rem]">
+              <span className="block text-gradient-gold not-italic uppercase tracking-[0.025em]">Rare Alignment</span>
               <span className="block text-ivory [text-shadow:0_3px_26px_rgba(160,178,222,.2)]">isn’t a feature.</span>
               <span className="block pt-1 text-gradient-gold italic sm:pt-2">It’s a feeling.</span>
             </h2>
@@ -254,7 +253,7 @@ export function Welcome() {
                   <Sparkles className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-gold" strokeWidth={1.5} />
                 </span>
               }
-              heading={<>Intentional<br />and Safe</>}
+              heading={<>Safe by<br />Design</>}
             >
               A trusted space for everyone serious about building a future.
             </AlignmentCard>
@@ -292,7 +291,7 @@ export function Welcome() {
           No background of its own — rendered directly over the page's
           existing pinned celestial layer, same as "Built on Intention"
           above it, so there's no visible seam between sections. */}
-      <section className="relative z-10 flex min-h-[56rem] w-full items-center justify-center overflow-hidden px-6 py-24 sm:min-h-[64rem] sm:py-32 lg:min-h-[58rem]">
+      <section className="relative z-10 flex w-full items-center justify-center overflow-hidden px-6 py-24 sm:py-32 lg:min-h-[58rem]">
         <FadeUp className="flex w-full max-w-3xl flex-col items-center text-center">
           <span aria-hidden="true" className="font-serif-display text-3xl leading-none text-gold [text-shadow:0_0_20px_rgba(229,192,123,.72)] sm:text-4xl">✦</span>
 
