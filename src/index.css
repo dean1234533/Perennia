@@ -144,10 +144,18 @@
   will-change: opacity, transform;
 }
 
+/* Premium "celestial glass": translucent enough that the page's starfield
+   remains visible through the card (stars, blue light, nebula), but still
+   dark/tinted enough to keep form text and fields easily readable. Defined
+   standalone (not layered under .glass-strong) so it doesn't compete with
+   that class's own background/backdrop-filter. */
 .birth-details-card {
   background:
-    linear-gradient(145deg, rgba(27, 47, 101, .42), rgba(4, 14, 40, .72)),
-    radial-gradient(circle at 78% 8%, rgba(139, 92, 246, .14), transparent 34%);
+    linear-gradient(145deg, rgba(12, 20, 48, .55), rgba(4, 9, 26, .6)),
+    radial-gradient(circle at 78% 8%, rgba(139, 92, 246, .12), transparent 34%);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(180, 200, 255, .16);
 }
 
 .about-you-card {

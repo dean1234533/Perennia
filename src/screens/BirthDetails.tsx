@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { Clock, Globe2, ArrowRight, Loader2, ShieldCheck, Calendar, Pencil, MapPin, X } from 'lucide-react'
+import { Clock, Globe2, ArrowRight, Loader2, ShieldCheck, Pencil, MapPin, X } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { CityCombobox } from '@/components/shared/CityCombobox'
 import { EditBirthDetailsModal } from '@/components/shared/EditBirthDetailsModal'
@@ -160,7 +159,7 @@ function EditCurrentLocationModal({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs text-white/45">Country</label>
-              <Select icon={<Globe2 className="h-4 w-4" />} value={country} onChange={(e) => { setCountry(e.target.value); setCity(null) }}>
+              <Select icon={<Globe2 className="h-4 w-4" />} value={country} onChange={(e) => { if (e.target.value !== country) { setCountry(e.target.value); setCity(null) } }}>
                 <option value="" disabled>Select country</option>
                 {COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code}>{c.name}</option>
@@ -172,6 +171,7 @@ function EditCurrentLocationModal({ onClose }: { onClose: () => void }) {
               <CityCombobox
                 key={country}
                 countryCode={country}
+                initialValue={city?.name ?? ''}
                 disabled={!country}
                 placeholder="Select city / area"
                 onSelect={setCity}
@@ -193,7 +193,6 @@ function BirthDetailsForm() {
   const navigate = useNavigate()
   const { onboarding, updateOnboarding } = useApp()
 
-  const [birthDate, setBirthDate] = useState(onboarding.birthDate)
   const [time, setTime] = useState(onboarding.birthTime)
   const [timeUnknown, setTimeUnknown] = useState(onboarding.birthTimeUnknown)
 
@@ -217,15 +216,29 @@ function BirthDetailsForm() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const needsManualBirthDate = !onboarding.birthDate
+  // Only reset the paired city when the country genuinely changes — a
+  // handler that unconditionally cleared it on every fire could otherwise
+  // desync the visible (still-selected-looking) city from the actual
+  // stored value if it were ever invoked with an unchanged value.
+  const handleBirthCountryChange = (value: string) => {
+    if (value === birthCountry) return
+    setBirthCountry(value)
+    setBirthCity(null)
+  }
+  const handleCurrentCountryChange = (value: string) => {
+    if (value === currentCountry) return
+    setCurrentCountry(value)
+    setCurrentCity(null)
+  }
 
   // Named so the disabled Confirm button can explain itself — otherwise a
   // missed step (most easily: typing a city without clicking an actual
   // suggestion from the dropdown, which is the only thing that sets
   // birthCity/currentCity) makes the button silently do nothing with zero
-  // feedback about why.
+  // feedback about why. Checks the actual stored birthCity/currentCity
+  // values (CityMatch | null), never the combobox's own display text.
   const missingFields: string[] = []
-  if (needsManualBirthDate && !birthDate) missingFields.push('birth date')
+  if (!onboarding.birthDate) missingFields.push("birth date — this comes from identity verification; contact support if it's missing")
   if (!timeUnknown && !time) missingFields.push('time of birth (or check "I don\'t know")')
   if (!birthCountry) missingFields.push('birth country')
   else if (!birthCity) missingFields.push('birth city — select it from the dropdown')
@@ -244,7 +257,7 @@ function BirthDetailsForm() {
     setError('')
     setSaving(true)
 
-    const resolvedBirthDate = needsManualBirthDate ? birthDate : onboarding.birthDate
+    const resolvedBirthDate = onboarding.birthDate
     const birthPlace = `${birthCity!.name}, ${birthCountry}`
 
     try {
@@ -311,22 +324,9 @@ function BirthDetailsForm() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="birth-details-card glass-strong w-full max-w-2xl rounded-[2rem] border-blue-200/30 p-6 shadow-[0_0_48px_rgba(76,96,220,.18)] sm:p-9 md:p-12"
+        className="birth-details-card w-full max-w-2xl rounded-[2rem] p-6 shadow-[0_0_48px_rgba(76,96,220,.18)] sm:p-9 md:p-12"
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-          {needsManualBirthDate && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-lavender/70">Birth Date</p>
-              <div className="relative">
-                {!birthDate && <Calendar className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold/50" />}
-                <Input type="date" className={birthDate ? '[color-scheme:dark]' : 'pl-11 [color-scheme:dark]'} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
-              </div>
-              <p className="text-xs text-white/35">
-                Identity verification didn't return a birth date, so please confirm it here.
-              </p>
-            </div>
-          )}
-
           <div className="flex flex-col gap-3">
             <h2 className="font-serif-display text-2xl text-blue-100 sm:text-3xl">Time of Birth</h2>
             <Select
@@ -368,7 +368,7 @@ function BirthDetailsForm() {
               <Select
                 icon={<Globe2 className="h-4 w-4" />}
                 value={birthCountry}
-                onChange={(e) => { setBirthCountry(e.target.value); setBirthCity(null) }}
+                onChange={(e) => handleBirthCountryChange(e.target.value)}
               >
                 <option value="" disabled>Select country</option>
                 {COUNTRIES.map((c) => (
@@ -381,38 +381,10 @@ function BirthDetailsForm() {
               <CityCombobox
                 key={birthCountry}
                 countryCode={birthCountry}
+                initialValue={birthCity?.name ?? ''}
                 disabled={!birthCountry}
                 placeholder="Select city / town"
                 onSelect={setBirthCity}
-              />
-            </div>
-          </div>
-
-          <div className="h-px bg-white/10" />
-
-          <div className="flex flex-col gap-3">
-            <h2 className="font-serif-display text-2xl text-blue-100 sm:text-3xl">Current Location</h2>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/45">Country</label>
-              <Select
-                icon={<Globe2 className="h-4 w-4" />}
-                value={currentCountry}
-                onChange={(e) => { setCurrentCountry(e.target.value); setCurrentCity(null) }}
-              >
-                <option value="" disabled>Select country</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>{c.name}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/45">City / Area</label>
-              <CityCombobox
-                key={currentCountry}
-                countryCode={currentCountry}
-                disabled={!currentCountry}
-                placeholder="Select city / area"
-                onSelect={setCurrentCity}
               />
             </div>
           </div>
@@ -433,9 +405,42 @@ function BirthDetailsForm() {
           <p className="flex items-start gap-2 text-xs leading-relaxed text-white/40">
             <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             These birth details will be locked after confirmation because they are used to
-            calculate your astrological profile and compatibility. If you need to change them
-            later, please contact Perennia Support.
+            calculate your astrological profile and compatibility. You can securely update them
+            later through a quick identity re-check.
           </p>
+
+          <div className="h-px bg-white/10" />
+
+          <div className="flex flex-col gap-3">
+            <h2 className="font-serif-display text-2xl text-blue-100 sm:text-3xl">Current Location</h2>
+            <p className="text-xs leading-relaxed text-white/40 sm:text-sm">
+              You can update your current location later if you move or relocate.
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-white/45">Country</label>
+              <Select
+                icon={<Globe2 className="h-4 w-4" />}
+                value={currentCountry}
+                onChange={(e) => handleCurrentCountryChange(e.target.value)}
+              >
+                <option value="" disabled>Select country</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-white/45">City / Area</label>
+              <CityCombobox
+                key={currentCountry}
+                countryCode={currentCountry}
+                initialValue={currentCity?.name ?? ''}
+                disabled={!currentCountry}
+                placeholder="Select city / area"
+                onSelect={setCurrentCity}
+              />
+            </div>
+          </div>
 
           {error && (
             <motion.p

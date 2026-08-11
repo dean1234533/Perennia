@@ -263,7 +263,7 @@ export function EditBirthDetailsModal({ onClose }: { onClose: () => void }) {
 
               <div className="flex flex-col gap-2">
                 <label className="text-xs text-white/45">Birth Country</label>
-                <Select icon={<Globe2 className="h-4 w-4" />} value={birthCountry} onChange={(e) => { setBirthCountry(e.target.value); setBirthCity(null) }}>
+                <Select icon={<Globe2 className="h-4 w-4" />} value={birthCountry} onChange={(e) => { if (e.target.value !== birthCountry) { setBirthCountry(e.target.value); setBirthCity(null) } }}>
                   <option value="" disabled>Select country</option>
                   {COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>{c.name}</option>
@@ -276,6 +276,7 @@ export function EditBirthDetailsModal({ onClose }: { onClose: () => void }) {
                 <CityCombobox
                   key={birthCountry}
                   countryCode={birthCountry}
+                  initialValue={birthCity?.name ?? ''}
                   disabled={!birthCountry}
                   placeholder="Select city / town"
                   onSelect={setBirthCity}
