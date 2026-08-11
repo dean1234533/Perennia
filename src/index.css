@@ -27,6 +27,25 @@
   --animate-haze: haze 24s ease-in-out infinite;
 }
 
+/* Browsers paint autofilled inputs with their own opaque yellow/cream fill
+   that can't be overridden via `background` — this is the standard
+   workaround: an absurdly large inset box-shadow paints over it (clipped
+   to the input's own border-radius), and the long transition delay stops
+   Chrome from flashing yellow for an instant before the shadow applies.
+   Applies to every input site-wide so autofill/password-manager fill never
+   breaks the dark celestial glass styling, on any field, in any state. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+input:autofill {
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(12, 20, 56, .92) inset;
+  box-shadow: 0 0 0px 1000px rgba(12, 20, 56, .92) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 /* Positioning for the CTA overlaid on the final section's baked-in
    artwork. The `<picture>` element in Welcome.tsx picks exactly one of
    mobile/desktop crops per viewport (native browser art-direction — no

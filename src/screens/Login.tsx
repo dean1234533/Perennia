@@ -5,7 +5,7 @@ import { Mail, Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { BrandMark } from '@/components/shared/BrandMark'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
@@ -70,7 +70,7 @@ export function Login() {
       <div className="absolute inset-0 bg-gradient-to-b from-midnight/40 via-midnight/20 to-midnight" />
 
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-6 py-8 sm:py-10">
-        <BrandMark />
+        <CelestialHeart className="mb-8 h-20 w-20 sm:mb-10 sm:h-24 sm:w-24" />
 
         <div className="login-form-stage flex w-full flex-1 flex-col items-center justify-center">
           <motion.div
