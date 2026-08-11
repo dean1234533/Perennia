@@ -46,23 +46,6 @@ input:autofill {
   transition: background-color 9999s ease-in-out 0s;
 }
 
-/* Positioning for the CTA overlaid on the final section's baked-in
-   artwork. The `<picture>` element in Welcome.tsx picks exactly one of
-   mobile/desktop crops per viewport (native browser art-direction — no
-   CSS display-toggling of sibling <img>s). These rules track that same
-   picking logic so the CTA always lines up with whichever crop is on
-   screen. */
-.landing-final-cta {
-  top: 82%;
-}
-
-/* Desktop crop: real landscape screens with a mouse/trackpad. */
-@media (min-width: 1024px) and (orientation: landscape) and (pointer: fine) {
-  .landing-final-cta {
-    top: 62%;
-  }
-}
-
 @media (min-width: 768px) and (max-width: 1180px) {
   .login-form-stage {
     justify-content: flex-start;

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Heart, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, Heart, Shield, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
@@ -40,6 +40,18 @@ function IntentionFeature({
         <p className="mt-2 max-w-md text-sm leading-6 text-white/65 sm:text-[0.95rem] sm:leading-7">{children}</p>
       </div>
     </FadeUp>
+  )
+}
+
+function AlignmentCard({ icon, heading, children, divided = false }: { icon: React.ReactNode; heading: React.ReactNode; children: React.ReactNode; divided?: boolean }) {
+  return (
+    <div className={`flex min-w-0 flex-col items-center px-2 py-7 text-center sm:px-6 sm:py-10 lg:px-10 ${divided ? 'border-l border-white/15' : ''}`}>
+      <div className="relative mb-5 flex h-12 w-12 items-center justify-center text-champagne drop-shadow-[0_0_11px_rgba(229,192,123,.42)] sm:h-14 sm:w-14">
+        {icon}
+      </div>
+      <h3 className="font-serif-display text-[1rem] leading-[1.05] text-ivory sm:text-xl lg:text-2xl">{heading}</h3>
+      <p className="mt-3 text-[0.68rem] leading-[1.55] text-white/58 sm:text-sm sm:leading-6">{children}</p>
+    </div>
   )
 }
 
@@ -130,36 +142,87 @@ export function Welcome() {
       </section>
 
       {/* ============ A DIFFERENT KIND OF BEGINNING ============ */}
-      <section className="relative z-10 h-[75vh] min-h-[520px] w-full overflow-hidden">
-        <picture className="block w-full">
-          <source media="(min-width: 768px)" srcSet="/landingPage-Desktop2.JPG" />
-          <img src="/landingPage-Mobile2.JPG" alt="" width="256" height="384" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-        </picture>
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
-        <div className="absolute inset-0 flex items-center">
-          <div className="max-w-xl px-6 md:px-16">
-            <FadeUp>
-              <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold/80 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)]">A Different Kind of Beginning</p>
-              <h2 className="font-serif-display text-4xl leading-[1.1] [text-shadow:0_4px_24px_rgba(0,0,0,0.85)] md:text-6xl">
-                Some connections aren't <span className="text-gradient-gold italic">found</span>.
-                <br />
-                They're recognized.
-              </h2>
-            </FadeUp>
-          </div>
+      <section className="relative z-10 flex min-h-[40rem] w-full items-center overflow-hidden px-6 py-24 sm:min-h-[46rem] sm:px-12 sm:py-28 lg:min-h-[48rem] lg:px-20">
+        <div className="mx-auto w-full max-w-7xl">
+          <FadeUp className="max-w-4xl text-left">
+            <p className="mb-5 text-[0.68rem] font-medium uppercase tracking-[0.32em] text-gold/80 sm:mb-7 sm:text-xs sm:tracking-[0.4em]">
+              A Different Kind of Beginning
+            </p>
+            <h2 className="font-serif-display text-[clamp(2.05rem,9vw,5.75rem)] font-medium leading-[0.96] tracking-[-0.025em]">
+              <span className="block text-ivory [text-shadow:0_3px_28px_rgba(158,176,220,.22)]">Some connections aren’t</span>
+              <span className="block pt-1 text-gradient-gold italic sm:pt-2">found.</span>
+              <span className="block pt-1 text-ivory [text-shadow:0_3px_28px_rgba(158,176,220,.22)] sm:pt-2">They’re recognized.</span>
+            </h2>
+          </FadeUp>
         </div>
       </section>
 
       {/* ============ RARE ALIGNMENT ============ */}
-      <section className="relative z-10 flex w-full items-center justify-center">
-        <picture className="block w-full">
-          <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop3.JPG" />
-          <img src="/landingPage-Mobile3.JPG" alt="Rare alignment isn't a feature. It's a feeling." width="543" height="724" loading="lazy" decoding="async" className="h-auto w-full" />
-        </picture>
+      <section className="relative z-10 flex min-h-[48rem] w-full items-center justify-center overflow-hidden px-4 py-24 sm:min-h-[54rem] sm:px-8 sm:py-28 lg:min-h-[52rem]">
+        <div className="mx-auto w-full max-w-7xl">
+          <FadeUp className="text-center">
+            <h2 className="font-serif-display text-[3.35rem] font-medium leading-[0.98] tracking-[-0.02em] sm:text-[5.1rem] lg:text-[6.25rem]">
+              <span className="block text-gradient-gold italic">Rare alignment</span>
+              <span className="block text-ivory [text-shadow:0_3px_26px_rgba(160,178,222,.2)]">isn’t a feature.</span>
+              <span className="block pt-1 text-gradient-gold italic sm:pt-2">It’s a feeling.</span>
+            </h2>
+
+            <div aria-hidden="true" className="mx-auto mt-9 flex w-full max-w-xl items-center gap-3 text-gold sm:mt-12 sm:gap-5">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/55 to-gold/80" />
+              <span className="h-1 w-1 rotate-45 bg-gold/70" />
+              <span className="relative flex h-8 w-8 rotate-45 items-center justify-center border border-gold/75 shadow-[0_0_16px_rgba(229,192,123,.28)]">
+                <span className="h-2.5 w-2.5 border border-gold/90 bg-gold/10" />
+              </span>
+              <span className="h-1 w-1 rotate-45 bg-gold/70" />
+              <span className="h-px flex-1 bg-gradient-to-l from-transparent via-gold/55 to-gold/80" />
+            </div>
+          </FadeUp>
+
+          <FadeUp delay={0.12} className="mx-auto mt-12 grid w-full max-w-6xl grid-cols-3 overflow-hidden rounded-[1.75rem] border border-champagne/25 bg-white/[.025] shadow-[0_18px_70px_rgba(2,7,25,.2),inset_0_1px_rgba(255,255,255,.05)] backdrop-blur-[3px] sm:mt-16 sm:rounded-[2rem]">
+            <AlignmentCard
+              icon={
+                <span className="relative inline-flex">
+                  <Heart className="h-10 w-10" strokeWidth={1.25} />
+                  <Sparkles className="absolute -right-2 -top-2 h-4 w-4 text-gold" strokeWidth={1.4} />
+                </span>
+              }
+              heading={<>Meaningful<br />Connections</>}
+            >
+              We focus on genuine compatibility to help you find lasting bonds.
+            </AlignmentCard>
+
+            <AlignmentCard
+              divided
+              icon={
+                <span className="relative block h-11 w-14" aria-hidden="true">
+                  <span className="absolute left-1 top-2 h-8 w-8 rounded-full border-[1.5px] border-champagne" />
+                  <span className="absolute right-1 top-2 h-8 w-8 rounded-full border-[1.5px] border-champagne" />
+                  <span className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-gold shadow-[0_0_8px_rgba(229,192,123,.75)]" />
+                </span>
+              }
+              heading={<>Built for<br />Lasting Love</>}
+            >
+              Not just matches, but relationships that grow and endure.
+            </AlignmentCard>
+
+            <AlignmentCard
+              divided
+              icon={
+                <span className="relative inline-flex">
+                  <Shield className="h-11 w-11" strokeWidth={1.2} />
+                  <Sparkles className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-gold" strokeWidth={1.5} />
+                </span>
+              }
+              heading={<>Intentional<br />and Safe</>}
+            >
+              A trusted space for everyone serious about building a future.
+            </AlignmentCard>
+          </FadeUp>
+        </div>
       </section>
 
       {/* ============ BUILT ON INTENTION ============ */}
-      <section className="relative z-10 min-h-[62rem] w-full overflow-hidden border-y border-white/[.04] sm:min-h-[58rem] lg:min-h-[48rem]">
+      <section className="relative z-10 min-h-[62rem] w-full overflow-hidden sm:min-h-[58rem] lg:min-h-[48rem]">
         {/* The page's pinned celestial atmosphere remains the real background.
             London is deliberately just an alpha cutout above it — never a
             second rectangular sky/background image. */}
@@ -210,18 +273,48 @@ export function Welcome() {
         </div>
       </section>
 
-      {/* ============ BEGIN YOUR STORY ============ */}
-      <section className="relative z-10 flex w-full items-start justify-center overflow-hidden">
-        <picture className="block w-full">
-          <source media="(min-width: 1024px) and (orientation: landscape) and (pointer: fine)" srcSet="/landingPage-Desktop5.png" />
-          <img src="/landingPage-Mobile5.png" alt="Stories, not statistics." width="1024" height="1536" loading="lazy" decoding="async" className="landing-final-artwork h-auto w-full" />
-        </picture>
-        <div className="landing-final-cta absolute inset-x-0 z-10 flex justify-center px-6">
-          <Button size="lg" onClick={() => navigate('/signup')} className="group w-full max-w-sm sm:w-auto sm:min-w-72">
+      {/* ============ STORIES, NOT STATISTICS ============
+          No background of its own — rendered directly over the page's
+          existing pinned celestial layer, same as "Built on Intention"
+          above it, so there's no visible seam between sections. */}
+      <section className="relative z-10 flex min-h-[56rem] w-full items-center justify-center overflow-hidden px-6 py-24 sm:min-h-[64rem] sm:py-32 lg:min-h-[58rem]">
+        <FadeUp className="flex w-full max-w-3xl flex-col items-center text-center">
+          <span aria-hidden="true" className="font-serif-display text-3xl leading-none text-gold [text-shadow:0_0_20px_rgba(229,192,123,.72)] sm:text-4xl">✦</span>
+
+          <h2 className="mt-6 font-serif-display text-[4.1rem] font-medium leading-[0.86] tracking-[-0.025em] text-ivory [text-shadow:0_4px_28px_rgba(159,178,224,.22)] sm:text-[6.6rem] lg:text-[7.25rem]">
+            Stories,
+            <br />
+            Not
+            <br />
+            <span className="inline-block pt-2 text-gradient-gold italic sm:pt-4">Statistics</span>
+          </h2>
+
+          <div aria-hidden="true" className="mt-9 flex w-44 items-center gap-3 text-gold sm:mt-12 sm:w-56">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/70" />
+            <span className="font-serif-display text-sm leading-none">✦</span>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/70" />
+          </div>
+
+          <p className="mx-auto mt-10 max-w-xl text-lg font-light leading-8 tracking-[0.015em] text-white/70 sm:mt-12 sm:text-xl sm:leading-9">
+            We’re not here to
+            <br />
+            impress you with numbers.
+          </p>
+          <p className="mx-auto mt-6 max-w-xl text-lg font-light leading-8 tracking-[0.015em] text-white/70 sm:mt-8 sm:text-xl sm:leading-9">
+            We’re here to help you
+            <br />
+            find the one the numbers
+            <br />
+            can’t explain.
+          </p>
+
+          <Heart className="mt-10 h-9 w-9 text-gold drop-shadow-[0_0_12px_rgba(229,192,123,.35)] sm:mt-12" strokeWidth={1.2} />
+
+          <Button size="lg" onClick={() => navigate('/signup')} className="group mt-8 h-16 w-full max-w-md rounded-full border border-ivory/65 text-sm uppercase tracking-[0.17em] shadow-[0_0_30px_rgba(229,192,123,.25)] sm:mt-10 sm:w-auto sm:min-w-96 sm:text-base">
             Begin Your Story
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
-        </div>
+        </FadeUp>
       </section>
 
       <footer className="relative z-10 border-t border-white/5 bg-midnight/75 px-6 py-8 text-center text-xs text-white/30 backdrop-blur-sm">
