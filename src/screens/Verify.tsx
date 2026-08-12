@@ -60,7 +60,7 @@ export function Verify() {
   const continueDestination = searchParams.get('next') || '/birth-details'
   const previewPending = import.meta.env.DEV && searchParams.get('preview') === 'pending'
   const { user } = useAuth()
-  const { onboarding } = useApp()
+  const { onboarding, updateOnboarding } = useApp()
   const [stage, setStage] = useState<LocalStage>(previewPending ? 'pending' : 'idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [refreshing, setRefreshing] = useState(false)
@@ -160,7 +160,16 @@ export function Verify() {
   }
 
   const skipForTesting = () => {
-    enableDevelopmentVerificationBypass()
+    // Dev-only convenience: real verification is what actually supplies
+    // birthDate (Stripe's verified_outputs), and Birth Details no longer
+    // accepts it as manual entry — skipping here without filling something
+    // in would make it impossible to ever get past Birth Details locally.
+    // Never overwrites a real value, and this whole function is only ever
+    // reachable from a button rendered behind `import.meta.env.DEV`.
+    if (import.meta.env.DEV) {
+      enableDevelopmentVerificationBypass()
+      if (!onboarding.birthDate) updateOnboarding({ birthDate: '1995-06-15' })
+    }
     navigate(continueDestination)
   }
 
