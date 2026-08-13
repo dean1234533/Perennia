@@ -1,0 +1,457 @@
+.cosmic-profile {
+  width: min(1180px, 100%);
+  padding: 0 0 2rem;
+}
+
+.cosmic-app-shell-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+}
+
+.cosmic-profile-header {
+  margin: 0 auto 2.5rem;
+  max-width: 680px;
+  text-align: center;
+}
+
+.cosmic-eyebrow {
+  margin-bottom: .7rem;
+  color: rgba(229, 192, 123, .76);
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .27em;
+  text-transform: uppercase;
+}
+
+.cosmic-profile-header h1 {
+  margin: 0;
+  color: #f3e2ba;
+  font-family: var(--font-serif);
+  font-size: clamp(2.6rem, 5vw, 4.8rem);
+  font-weight: 500;
+  line-height: .98;
+  text-shadow: 0 0 30px rgba(229, 192, 123, .16);
+}
+
+.cosmic-profile-header > p:last-child {
+  margin: 1rem auto 0;
+  max-width: 510px;
+  color: rgba(255, 255, 255, .7);
+  font-size: .98rem;
+  line-height: 1.65;
+}
+
+.cosmic-western-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, .72fr) minmax(0, 1.8fr);
+  gap: clamp(2rem, 5vw, 5.5rem);
+  align-items: center;
+}
+
+.cosmic-wheel-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+}
+
+.cosmic-wheel-column > div:not(.cosmic-wheel-halo) {
+  filter: drop-shadow(0 0 26px rgba(229, 192, 123, .2));
+}
+
+.cosmic-wheel-halo {
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  border: 1px solid rgba(229, 192, 123, .09);
+  border-radius: 50%;
+  box-shadow: 0 0 90px rgba(72, 99, 197, .16), inset 0 0 70px rgba(155, 110, 220, .09);
+}
+
+.cosmic-wheel-column p {
+  margin-top: 1.15rem;
+  color: rgba(243, 226, 186, .58);
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-style: italic;
+  letter-spacing: .05em;
+}
+
+.cosmic-section-heading {
+  display: grid;
+  grid-template-columns: minmax(20px, 1fr) auto minmax(20px, 1fr);
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.1rem;
+}
+
+.cosmic-section-heading span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(229, 192, 123, .55));
+}
+
+.cosmic-section-heading span:last-child {
+  background: linear-gradient(90deg, rgba(229, 192, 123, .55), transparent);
+}
+
+.cosmic-section-heading h2 {
+  margin: 0;
+  color: #f3e2ba;
+  font-family: var(--font-serif);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 500;
+  letter-spacing: .025em;
+  text-transform: none;
+}
+
+.cosmic-western-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.cosmic-placement-card,
+.cosmic-chinese-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(190, 204, 236, .16);
+  background:
+    linear-gradient(145deg, rgba(18, 34, 67, .55), rgba(5, 13, 35, .58)),
+    radial-gradient(circle at 85% 0%, rgba(116, 94, 215, .11), transparent 48%);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .035), 0 14px 38px rgba(0, 0, 0, .13);
+  backdrop-filter: blur(13px) saturate(130%);
+  -webkit-backdrop-filter: blur(13px) saturate(130%);
+}
+
+.cosmic-placement-card {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+  min-height: 92px;
+  padding: .9rem .85rem;
+  border-radius: 16px;
+}
+
+.cosmic-planet-symbol,
+.cosmic-chinese-symbol {
+  flex: 0 0 auto;
+  color: var(--cosmic-accent, #e5c07b);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--cosmic-accent, #e5c07b) 55%, transparent);
+}
+
+.cosmic-planet-symbol {
+  width: 2.1rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.9rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.cosmic-placement-copy {
+  min-width: 0;
+}
+
+.cosmic-placement-card h3,
+.cosmic-chinese-card h3 {
+  margin: 0;
+  color: rgba(255, 255, 255, .58);
+  font-size: .61rem;
+  font-weight: 500;
+  letter-spacing: .1em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.cosmic-placement-card p,
+.cosmic-chinese-card p {
+  display: flex;
+  gap: .42rem;
+  align-items: baseline;
+  margin: .32rem 0 0;
+  color: #f5ead1;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.05;
+}
+
+.cosmic-placement-card p span {
+  color: var(--cosmic-accent, #e5c07b);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.08rem;
+}
+
+.cosmic-accent-gold { --cosmic-accent: #e8c273; }
+.cosmic-accent-moon { --cosmic-accent: #f4dc9e; }
+.cosmic-accent-earth { --cosmic-accent: #d5985b; }
+.cosmic-accent-coral { --cosmic-accent: #f07e75; }
+.cosmic-accent-cyan { --cosmic-accent: #8edced; }
+.cosmic-accent-pink { --cosmic-accent: #d86ac3; }
+.cosmic-accent-amber { --cosmic-accent: #dfad56; }
+.cosmic-accent-blue { --cosmic-accent: #7eb9ef; }
+.cosmic-accent-violet { --cosmic-accent: #b48df2; }
+.cosmic-accent-green { --cosmic-accent: #91cc68; }
+
+.cosmic-unavailable {
+  color: rgba(255, 255, 255, .38) !important;
+  font-family: var(--font-sans) !important;
+  font-size: .78rem !important;
+}
+
+.cosmic-loading {
+  margin: .75rem 0 0;
+  color: rgba(255, 255, 255, .46);
+  font-size: .73rem;
+  text-align: right;
+}
+
+.cosmic-chinese-section {
+  margin-top: 3.25rem;
+}
+
+.cosmic-chinese-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.cosmic-chinese-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 154px;
+  padding: 1rem .65rem;
+  border-color: rgba(229, 192, 123, .18);
+  border-radius: 18px;
+  text-align: center;
+}
+
+.cosmic-chinese-symbol {
+  margin-bottom: .62rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.cosmic-chinese-card p {
+  justify-content: center;
+  font-size: 1.48rem;
+}
+
+.cosmic-profile-note {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: .5rem;
+  margin: 1.25rem auto 0;
+  max-width: 680px;
+  color: rgba(255, 255, 255, .48);
+  font-size: .76rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.cosmic-profile-note svg {
+  width: .9rem;
+  height: .9rem;
+  flex: 0 0 auto;
+  margin-top: .12rem;
+  color: rgba(229, 192, 123, .68);
+}
+
+.cosmic-enter-button {
+  display: flex !important;
+  width: min(390px, 100%) !important;
+  min-height: 58px !important;
+  margin: 1.4rem auto 0 !important;
+  border: 1px solid rgba(229, 192, 123, .7) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(110deg, rgba(31, 27, 30, .72), rgba(76, 53, 34, .55), rgba(22, 21, 32, .78)) !important;
+  color: #f5d994 !important;
+  font-family: var(--font-serif) !important;
+  font-size: 1.45rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 0 24px rgba(229, 192, 123, .2), inset 0 1px rgba(255, 255, 255, .12) !important;
+}
+
+.cosmic-enter-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 34px rgba(229, 192, 123, .3), inset 0 1px rgba(255, 255, 255, .16) !important;
+}
+
+.cosmic-enter-button:focus-visible {
+  outline: 2px solid #f3e2ba;
+  outline-offset: 4px;
+}
+
+.cosmic-enter-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+@media (max-width: 980px) {
+  .cosmic-western-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .cosmic-western-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cosmic-chinese-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .cosmic-profile {
+    padding-bottom: 1rem;
+  }
+
+  .cosmic-app-shell-wrap {
+    padding: 4.5rem 1rem 2rem;
+  }
+
+  .cosmic-profile-header {
+    margin-bottom: 1.3rem;
+  }
+
+  .cosmic-profile-header h1 {
+    font-size: clamp(2.55rem, 13vw, 3.55rem);
+  }
+
+  .cosmic-profile-header > p:last-child {
+    max-width: 340px;
+    font-size: .86rem;
+    line-height: 1.55;
+  }
+
+  .cosmic-western-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .cosmic-wheel-column {
+    min-height: 290px;
+  }
+
+  .cosmic-wheel-halo {
+    width: 280px;
+    height: 280px;
+  }
+
+  .cosmic-wheel-column p {
+    margin-top: .65rem;
+  }
+
+  .cosmic-western-section {
+    width: 100%;
+  }
+
+  .cosmic-section-heading {
+    gap: .7rem;
+    margin-bottom: .8rem;
+  }
+
+  .cosmic-section-heading h2 {
+    font-size: 1.55rem;
+  }
+
+  .cosmic-western-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+  }
+
+  .cosmic-placement-card {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .38rem;
+    min-height: 112px;
+    padding: .7rem .4rem;
+    text-align: center;
+  }
+
+  .cosmic-planet-symbol {
+    font-size: 1.72rem;
+  }
+
+  .cosmic-placement-card h3 {
+    min-height: 1.7em;
+    font-size: .55rem;
+  }
+
+  .cosmic-placement-card p {
+    justify-content: center;
+    font-size: 1.08rem;
+  }
+
+  .cosmic-chinese-section {
+    margin-top: 2.4rem;
+  }
+
+  .cosmic-chinese-grid {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .cosmic-chinese-card {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    min-height: 72px;
+    padding: .65rem .9rem;
+    text-align: left;
+  }
+
+  .cosmic-chinese-symbol {
+    grid-row: 1;
+    margin: 0;
+    font-size: 1.72rem;
+  }
+
+  .cosmic-chinese-card p {
+    justify-content: flex-start;
+    font-size: 1.22rem;
+  }
+
+  .cosmic-profile-note {
+    margin-top: 1rem;
+    max-width: 330px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 355px) {
+  .cosmic-western-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cosmic-placement-card {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 82px;
+    padding: .75rem;
+    text-align: left;
+  }
+
+  .cosmic-placement-card h3 {
+    min-height: 0;
+  }
+
+  .cosmic-placement-card p {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-enter-button:hover:not(:disabled) {
+    transform: none;
+  }
+}

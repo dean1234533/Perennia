@@ -160,12 +160,9 @@ export function Verify() {
   }
 
   const skipForTesting = async () => {
-    // Dev-only convenience: real verification is what actually supplies
-    // birthDate (Stripe's verified_outputs), and Birth Details no longer
-    // accepts it as manual entry — skipping here without filling something
-    // in would make it impossible to ever get past Birth Details locally.
-    // Never overwrites a real value, and this whole function is only ever
-    // reachable from a button rendered behind `import.meta.env.DEV`.
+    // Dev-only convenience for a local build with no completed Stripe
+    // session. Deployed Stripe test mode is handled independently by the
+    // backend using Stripe's trusted `livemode` flag.
     if (import.meta.env.DEV) {
       enableDevelopmentVerificationBypass()
       // Finish persisting the fallback before Birth Details reads it.

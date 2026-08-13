@@ -167,6 +167,14 @@ export interface NatalPositions {
   sunSign: string
   moonSign: string
   risingSign: string
+  mercurySign: string
+  venusSign: string
+  marsSign: string
+  jupiterSign: string
+  saturnSign: string
+  uranusSign: string
+  neptuneSign: string
+  plutoSign: string
 }
 
 const MEAN_OBLIQUITY_DEG = 23.4392911 // J2000 mean obliquity of the ecliptic; drifts ~0.013°/century, negligible here
@@ -182,6 +190,12 @@ export function computeNatalPositions(birthDate: string, birthTime: string, geo:
   const sunLon = Astronomy.SunPosition(utcDate).elon
   const moonLon = Astronomy.EclipticGeoMoon(utcDate).lon
 
+  // astronomy-engine returns true geocentric vectors for the planets. Passing
+  // those through its ecliptic conversion keeps every displayed placement on
+  // the same accurate ephemeris/timezone path as the existing Sun and Moon.
+  const planetSign = (body: Astronomy.Body) =>
+    signFromLongitude(Astronomy.Ecliptic(Astronomy.GeoVector(body, utcDate, true)).elon)
+
   const gstHours = Astronomy.SiderealTime(utcDate)
   const lstDeg = ((gstHours + geo.lon / 15) * 15 + 360) % 360
   const latRad = (geo.lat * Math.PI) / 180
@@ -196,6 +210,14 @@ export function computeNatalPositions(birthDate: string, birthTime: string, geo:
     sunSign: signFromLongitude(sunLon),
     moonSign: signFromLongitude(moonLon),
     risingSign: signFromLongitude(ascDeg),
+    mercurySign: planetSign(Astronomy.Body.Mercury),
+    venusSign: planetSign(Astronomy.Body.Venus),
+    marsSign: planetSign(Astronomy.Body.Mars),
+    jupiterSign: planetSign(Astronomy.Body.Jupiter),
+    saturnSign: planetSign(Astronomy.Body.Saturn),
+    uranusSign: planetSign(Astronomy.Body.Uranus),
+    neptuneSign: planetSign(Astronomy.Body.Neptune),
+    plutoSign: planetSign(Astronomy.Body.Pluto),
   }
 }
 

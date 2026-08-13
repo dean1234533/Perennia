@@ -8,14 +8,16 @@ const FRAME_SIZE = 280
 
 interface CircularCropperProps {
   file: File
-  onConfirm: (blob: Blob) => void
+  onConfirm: (blob: Blob) => void | Promise<void>
   onCancel: () => void
+  variant?: 'default' | 'profile-photo'
 }
 
 /** A real, functional circular crop tool — drag to reposition, slider to
  *  zoom, live circular preview. Produces an actual re-encoded crop (see
  *  cropAndEncode), not a cosmetic-only mock. */
-export function CircularCropper({ file, onConfirm, onCancel }: CircularCropperProps) {
+export function CircularCropper({ file, onConfirm, onCancel, variant = 'default' }: CircularCropperProps) {
+  const isProfilePhoto = variant === 'profile-photo'
   const [imgUrl, setImgUrl] = useState<string | null>(null)
   const [natural, setNatural] = useState({ width: 0, height: 0 })
   const [coverScale, setCoverScale] = useState(1)
@@ -83,7 +85,7 @@ export function CircularCropper({ file, onConfirm, onCancel }: CircularCropperPr
       const sourceX = -offset.x / scale
       const sourceY = -offset.y / scale
       const blob = await cropAndEncode(file, { sourceX, sourceY, sourceSize })
-      onConfirm(blob)
+      await onConfirm(blob)
     } finally {
       setSaving(false)
     }
@@ -94,16 +96,28 @@ export function CircularCropper({ file, onConfirm, onCancel }: CircularCropperPr
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-black/90 p-6 backdrop-blur-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cropper-title"
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-[safe_center] gap-5 overflow-y-auto p-5 sm:gap-6 sm:p-6 ${
+        isProfilePhoto ? 'bg-midnight/35 backdrop-blur-md' : 'bg-black/90 backdrop-blur-xl'
+      }`}
     >
-      <p className="font-serif-display text-xl text-champagne">Position Your Photo</p>
+      <p id="cropper-title" className={`font-serif-display text-champagne ${isProfilePhoto ? 'text-2xl tracking-wide sm:text-3xl' : 'text-xl'}`}>
+        Position Your Photo
+      </p>
 
       <div
-        className="relative touch-none overflow-hidden rounded-full border-2 border-gold/50 shadow-2xl"
+        className={`relative shrink-0 touch-none overflow-hidden rounded-full border-2 ${
+          isProfilePhoto
+            ? 'border-gold/80 shadow-[0_0_42px_rgba(224,183,94,0.30)]'
+            : 'border-gold/50 shadow-2xl'
+        }`}
         style={{ width: FRAME_SIZE, height: FRAME_SIZE, cursor: dragState.current ? 'grabbing' : 'grab' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onPointerLeave={onPointerUp}
       >
         {imgUrl && (
@@ -125,28 +139,54 @@ export function CircularCropper({ file, onConfirm, onCancel }: CircularCropperPr
       </div>
 
       <div className="flex w-full max-w-xs items-center gap-3">
-        <ZoomIn className="h-4 w-4 text-white/50" />
+        <ZoomIn className={`h-4 w-4 shrink-0 ${isProfilePhoto ? 'text-gold/80' : 'text-white/50'}`} />
         <input
           type="range"
+          aria-label="Zoom photo"
           min={1}
           max={3}
           step={0.01}
           value={zoom}
           onChange={(e) => handleZoomChange(Number(e.target.value))}
-          className="w-full accent-gold"
+          className={isProfilePhoto
+            ? 'h-1.5 w-full cursor-pointer appearance-none rounded-full border border-gold/20 bg-white/15 accent-gold outline-none transition focus-visible:ring-2 focus-visible:ring-gold/60 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-gold [&::-moz-range-thumb]:shadow-[0_0_12px_rgba(224,183,94,0.65)] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gold [&::-webkit-slider-thumb]:shadow-[0_0_12px_rgba(224,183,94,0.65)]'
+            : 'w-full accent-gold'}
         />
       </div>
 
-      <p className="text-xs text-white/40">Drag to reposition · use the slider to zoom</p>
+      <p className={`text-center text-xs ${isProfilePhoto ? 'text-white/70' : 'text-white/40'}`}>
+        Drag to reposition · use the slider to zoom
+      </p>
 
-      <div className="flex gap-3">
-        <Button variant="glass" onClick={onCancel} disabled={saving}>
-          <X className="h-4 w-4" /> Cancel
-        </Button>
-        <Button onClick={handleConfirm} disabled={saving || !imgUrl}>
-          <Check className="h-4 w-4" /> {saving ? 'Saving…' : 'Use This Photo'}
-        </Button>
-      </div>
+      {isProfilePhoto ? (
+        <div className="flex w-full max-w-sm flex-col-reverse gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/[0.03] px-7 text-sm font-medium text-white/75 transition hover:border-white/40 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <X className="h-4 w-4" aria-hidden="true" /> Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={saving || !imgUrl}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-gold/80 bg-gold/[0.06] px-7 text-sm font-medium text-champagne shadow-[0_0_20px_rgba(224,183,94,0.22),inset_0_0_15px_rgba(224,183,94,0.06)] transition hover:border-gold hover:bg-gold/[0.11] hover:shadow-[0_0_28px_rgba(224,183,94,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/65 disabled:cursor-not-allowed disabled:border-white/15 disabled:text-white/30 disabled:shadow-none"
+          >
+            <Check className="h-4 w-4" aria-hidden="true" /> {saving ? 'Saving…' : 'Use This Photo'}
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <Button variant="glass" onClick={onCancel} disabled={saving}>
+            <X className="h-4 w-4" /> Cancel
+          </Button>
+          <Button onClick={handleConfirm} disabled={saving || !imgUrl}>
+            <Check className="h-4 w-4" /> {saving ? 'Saving…' : 'Use This Photo'}
+          </Button>
+        </div>
+      )}
     </motion.div>
   )
 }

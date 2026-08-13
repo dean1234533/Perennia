@@ -37,16 +37,18 @@ export function PricingTimeline({ pricing, currency, promoPeriodMonths }: Pricin
   ]
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center" role="list" aria-label="Membership pricing timeline">
       {steps.map((step, i) => (
-        <div key={step.label} className="flex flex-col items-center">
+        <div key={step.label} className="flex w-full flex-col items-center" role="listitem">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className={`w-full max-w-xs rounded-2xl px-6 py-4 text-center ${
-              step.emphasis ? 'glass-strong border border-gold/30 glow-gold' : 'glass border border-white/5'
+            className={`w-full max-w-sm rounded-2xl border px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.035),0_16px_45px_rgba(2,7,20,.14)] backdrop-blur-md ${
+              step.emphasis
+                ? 'border-gold/35 bg-[#17142b]/55 shadow-[inset_0_1px_0_rgba(255,255,255,.05),0_0_24px_rgba(229,192,123,.1)]'
+                : 'border-white/10 bg-[#071126]/45'
             }`}
           >
             <p className={`mb-1 text-[10px] uppercase tracking-[0.25em] ${step.emphasis ? 'text-gold' : 'text-white/40'}`}>

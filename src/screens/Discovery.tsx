@@ -1,21 +1,80 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { BadgeCheck, MapPin, SlidersHorizontal, Sparkles, Loader2, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  BadgeCheck,
+  Droplets,
+  Flame,
+  Gem,
+  Heart,
+  Leaf,
+  Loader2,
+  MapPin,
+  Mountain,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { MatchingPreferencesPanel } from '@/components/shared/MatchingPreferencesPanel'
 import { fetchDiscoveryCandidates, getPrivateLifestyle, type DiscoveryCandidate, type PrivateLifestyle } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
+import { subscribeFoundingMembership } from '@/lib/founding500'
+import { firebaseConfigured } from '@/lib/firebase'
 import { calculateAge } from '@/lib/age'
 import { milesBetween } from '@/lib/distance'
+import './Discovery.css'
+
+const MINIMUM_COMPATIBILITY = 80
+
+const zodiacGlyphs: Record<string, string> = {
+  aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋', leo: '♌', virgo: '♍',
+  libra: '♎', scorpio: '♏', sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓',
+}
+
+const chineseAnimalGlyphs: Record<string, string> = {
+  rat: '🐀', ox: '🐂', tiger: '🐅', rabbit: '🐇', dragon: '🐉', snake: '🐍',
+  horse: '🐎', goat: '🐐', sheep: '🐑', monkey: '🐒', rooster: '🐓', dog: '🐕', pig: '🐖',
+}
+
+function AstrologyChip({ icon, value, label, tone = 'violet' }: { icon: ReactNode; value: string; label: string; tone?: 'blue' | 'gold' | 'violet' | 'silver' }) {
+  return (
+    <div className={`discovery-astro-chip discovery-astro-chip--${tone}`}>
+      <span className="discovery-astro-icon" aria-hidden="true">{icon}</span>
+      <span className="discovery-astro-copy">
+        <strong>{value}</strong>
+        <small>{label}</small>
+      </span>
+    </div>
+  )
+}
+
+function WesternChip({ sign, label, tone }: { sign: string; label: string; tone: 'blue' | 'gold' | 'violet' }) {
+  const glyph = zodiacGlyphs[sign.trim().toLowerCase()] ?? '✦'
+  return <AstrologyChip icon={glyph} value={sign} label={label} tone={tone} />
+}
+
+function ElementIcon({ element }: { element: string }) {
+  const key = element.trim().toLowerCase()
+  if (key === 'wood') return <Leaf />
+  if (key === 'fire') return <Flame />
+  if (key === 'earth') return <Mountain />
+  if (key === 'metal') return <Gem />
+  return <Droplets />
+}
+
+function PolarityIcon() {
+  return <span className="discovery-yinyang">◐</span>
+}
 
 export function Discovery() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { passedIds, likedIds, blockedIds, onboarding } = useApp()
+  const { passedIds, likedIds, blockedIds, onboarding, likeProfile, passProfile } = useApp()
   const [filter, setFilter] = useState<'all' | 'nearby'>('all')
   const [filterOpen, setFilterOpen] = useState(false)
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
@@ -23,6 +82,17 @@ export function Discovery() {
   const [scores, setScores] = useState<Record<string, CompatibilityResult>>({})
   const [failedUids, setFailedUids] = useState<Set<string>>(new Set())
   const [lifestyles, setLifestyles] = useState<Record<string, PrivateLifestyle | null>>({})
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [direction, setDirection] = useState<1 | -1>(1)
+  const [actionPending, setActionPending] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
+  const touchStartY = useRef<number | null>(null)
+  const wheelLockedUntil = useRef(0)
+
+  useEffect(() => {
+    if (!firebaseConfigured || !user) return
+    return subscribeFoundingMembership(user.uid, (record) => setIsPremium(record?.tier === 'premium'))
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -35,9 +105,7 @@ export function Discovery() {
       .finally(() => {
         if (!cancelled) setLoadingCandidates(false)
       })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [user])
 
   const interestedIn = onboarding.gender === 'male' ? 'female' : onboarding.gender === 'female' ? 'male' : null
@@ -57,18 +125,12 @@ export function Discovery() {
     if (interestedIn && c.gender !== interestedIn) return false
     const age = calculateAge(c.birthDate)
     if (age !== null && (age < ageMin || age > ageMax)) return false
-    // Fail open on distance when either side hasn't set a real location yet
-    // — we'd rather show someone than hide them over missing data.
     if (maxDistanceMiles !== null) {
       const distance = distanceTo(c)
       if (distance !== null && distance > maxDistanceMiles) return false
     }
     if (relationshipGoal && c.relationshipGoal && c.relationshipGoal !== relationshipGoal) return false
     if (wantsChildren) {
-      // A candidate's lifestyle is only in `lifestyles` once fetched — and
-      // only fetchable at all if they made it public/matching-only (private
-      // reads fail closed server-side, see firestore.rules). Fails open
-      // when we simply don't have an answer yet.
       const theirAnswer = lifestyles[c.uid]?.items.find((l) => l.label === 'Wants Children')?.value
       if (theirAnswer && theirAnswer !== wantsChildren) return false
     }
@@ -76,20 +138,15 @@ export function Discovery() {
     return true
   })
 
-  // Best-effort real lifestyle lookup for the "Wants Children" filter,
-  // capped and batched the same way as compatibility scoring below.
   useEffect(() => {
     if (!wantsChildren) return
     const toFetch = eligible.filter((c) => !(c.uid in lifestyles)).slice(0, 30)
     if (toFetch.length === 0) return
     let cancelled = false
     Promise.all(toFetch.map((c) => getPrivateLifestyle(c.uid).then((l) => [c.uid, l] as const))).then((results) => {
-      if (cancelled) return
-      setLifestyles((prev) => ({ ...prev, ...Object.fromEntries(results) }))
+      if (!cancelled) setLifestyles((prev) => ({ ...prev, ...Object.fromEntries(results) }))
     })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantsChildren, eligible.map((c) => c.uid).join(',')])
 
@@ -98,12 +155,6 @@ export function Discovery() {
     onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
   )
 
-  // Real per-candidate compatibility from the Fusion System backend, cached
-  // so re-renders don't re-call. Capped per pass to keep this cheap. Only
-  // ever called for candidates with a genuinely complete birth chart —
-  // getCompatibility validates each sign against a fixed vocabulary and
-  // rejects (400) an empty/incomplete one, which happens for any real
-  // member who hasn't finished their own birth details yet.
   const hasCompleteChart = (c: DiscoveryCandidate) =>
     !!(c.sunSign && c.moonSign && c.risingSign && c.chineseAnimal && c.chineseElement && c.yinYang)
 
@@ -122,248 +173,216 @@ export function Discovery() {
     }
 
     let cancelled = false
-    Promise.all(
-      toFetch.map(async (c) => {
-        try {
-          const result = await getCompatibility({
-            personA,
-            personB: {
-              sunSign: c.sunSign,
-              moonSign: c.moonSign,
-              risingSign: c.risingSign,
-              chineseAnimal: c.chineseAnimal,
-              chineseElement: c.chineseElement,
-              yinYang: c.yinYang,
-            },
-          })
-          return { uid: c.uid, result }
-        } catch (err) {
-          console.warn(`[Perennia] Failed to compute compatibility for ${c.uid}:`, err)
-          return { uid: c.uid, result: null }
-        }
-      })
-    ).then((results) => {
+    Promise.all(toFetch.map(async (c) => {
+      try {
+        const result = await getCompatibility({
+          personA,
+          personB: {
+            sunSign: c.sunSign,
+            moonSign: c.moonSign,
+            risingSign: c.risingSign,
+            chineseAnimal: c.chineseAnimal,
+            chineseElement: c.chineseElement,
+            yinYang: c.yinYang,
+          },
+        })
+        return { uid: c.uid, result }
+      } catch (err) {
+        console.warn(`[Perennia] Failed to compute compatibility for ${c.uid}:`, err)
+        return { uid: c.uid, result: null }
+      }
+    })).then((results) => {
       if (cancelled) return
       const resolved = results.filter((r): r is { uid: string; result: CompatibilityResult } => r.result !== null)
       const failed = results.filter((r) => r.result === null).map((r) => r.uid)
       if (resolved.length) setScores((prev) => ({ ...prev, ...Object.fromEntries(resolved.map((r) => [r.uid, r.result])) }))
       if (failed.length) setFailedUids((prev) => new Set([...prev, ...failed]))
     })
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligible.map((c) => c.uid).join(','), selfChartComplete, onboarding.sunSign, onboarding.moonSign, onboarding.risingSign, onboarding.chineseAnimal, onboarding.chineseElement, onboarding.yinYang])
 
   const visible = eligible
-    .filter((c) => scores[c.uid])
-    .map((c) => ({ ...c, compatibility: scores[c.uid].compatibility, compatibilityLabel: scores[c.uid].band, distance: distanceTo(c) }))
+    .filter((c) => scores[c.uid]?.compatibility >= MINIMUM_COMPATIBILITY)
+    .map((c) => ({ ...c, compatibility: scores[c.uid].compatibility, distance: distanceTo(c) }))
     .sort((a, b) => {
       if (filter === 'nearby' && a.distance !== null && b.distance !== null) return a.distance - b.distance
       return b.compatibility - a.compatibility
     })
 
-  const [featured, ...rest] = visible
-  // "Still loading" only while at least one eligible candidate could still
-  // resolve to a real score — candidates with an incomplete chart or a
-  // failed lookup never will, and shouldn't keep the spinner up forever.
   const loading = loadingCandidates || (
     eligible.length > 0 && selfChartComplete && visible.length === 0 &&
     eligible.some((c) => hasCompleteChart(c) && !failedUids.has(c.uid) && !scores[c.uid])
   )
 
+  useEffect(() => {
+    setActiveIndex((current) => Math.min(current, Math.max(visible.length - 1, 0)))
+  }, [visible.length])
+
+  const goToProfile = useCallback((step: 1 | -1) => {
+    setDirection(step)
+    setActiveIndex((current) => Math.max(0, Math.min(visible.length - 1, current + step)))
+  }, [visible.length])
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (filterOpen || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+        event.preventDefault()
+        goToProfile(1)
+      }
+      if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+        event.preventDefault()
+        goToProfile(-1)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [filterOpen, goToProfile])
+
+  const active = visible[activeIndex]
+
+  function onWheel(event: React.WheelEvent) {
+    if (window.innerWidth < 768 || Math.abs(event.deltaY) < 28 || Date.now() < wheelLockedUntil.current) return
+    wheelLockedUntil.current = Date.now() + 650
+    goToProfile(event.deltaY > 0 ? 1 : -1)
+  }
+
+  function onTouchEnd(event: React.TouchEvent) {
+    if (touchStartY.current === null) return
+    const distance = touchStartY.current - event.changedTouches[0].clientY
+    touchStartY.current = null
+    if (Math.abs(distance) >= 72) goToProfile(distance > 0 ? 1 : -1)
+  }
+
+  async function handlePass() {
+    if (!active || actionPending) return
+    setActionPending(true)
+    setDirection(1)
+    try {
+      await passProfile(active.uid)
+    } catch (err) {
+      console.warn('[Perennia] Failed to pass profile:', err)
+    } finally {
+      setActionPending(false)
+    }
+  }
+
+  async function handleLike() {
+    if (!active || actionPending) return
+    setActionPending(true)
+    setDirection(1)
+    try {
+      const matchId = await likeProfile(active.uid)
+      if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: active.uid, compatibility: active.compatibility } })
+    } catch (err) {
+      console.warn('[Perennia] Failed to like profile:', err)
+    } finally {
+      setActionPending(false)
+    }
+  }
+
   return (
-    <div className="px-6 pt-8 pb-16 md:px-10 md:pt-12 lg:px-14">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
-      >
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Curated for you</p>
-          <h1 className="font-serif-display text-4xl md:text-5xl">Your Discovery Collection</h1>
-          <p className="mt-3 max-w-lg text-white/50">
-            {visible.length} highly compatible people, selected by our compatibility engine — not an endless feed.
-          </p>
+    <div className="discovery-page" onWheel={onWheel}>
+      <header className="discovery-toolbar" aria-label="Discovery controls">
+        <div className="discovery-segmented" role="group" aria-label="Sort profiles">
+          <button className={filter === 'all' ? 'is-active' : ''} onClick={() => { setFilter('all'); setActiveIndex(0) }}>All Matches</button>
+          <button className={filter === 'nearby' ? 'is-active' : ''} onClick={() => { setFilter('nearby'); setActiveIndex(0) }}>Nearby</button>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors cursor-pointer ${filter === 'all' ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50'}`}
-          >
-            All Matches
-          </button>
-          <button
-            onClick={() => setFilter('nearby')}
-            className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors cursor-pointer ${filter === 'nearby' ? 'bg-gold/15 text-champagne border border-gold/30' : 'glass text-white/50'}`}
-          >
-            Nearby
-          </button>
-          <Button variant="glass" size="icon" onClick={() => setFilterOpen(true)}>
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
-      </motion.div>
+        <button className="discovery-filter-button" onClick={() => setFilterOpen(true)} aria-label="Open discovery filters">
+          <SlidersHorizontal />
+        </button>
+      </header>
 
       {!selfChartComplete ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center"
-        >
-          <Sparkles className="h-8 w-8 text-gold/50" />
-          <p className="font-serif-display text-2xl text-champagne">Complete Your Cosmic Profile</p>
-          <p className="max-w-sm text-sm text-white/50">
-            Add your birth date, time, and place so we can calculate real compatibility with other members.
-          </p>
-          <Button onClick={() => navigate('/birth-details')}>Add Birth Details</Button>
-        </motion.div>
+        <DiscoveryState icon={<Sparkles />} title="Complete Your Cosmic Profile" body="Add your birth date, time, and place so Perennia can calculate real compatibility." action={<button onClick={() => navigate('/birth-details')}>Add Birth Details</button>} />
       ) : loading ? (
-        <div className="flex flex-col items-center gap-3 py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-gold" />
-        </div>
+        <div className="discovery-loading" role="status" aria-label="Loading compatible profiles"><Loader2 /></div>
       ) : candidates.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center"
-        >
-          <p className="font-serif-display text-2xl text-champagne">No one here yet</p>
-          <p className="max-w-sm text-sm text-white/50">
-            You're one of our very first members — check back soon as more people join Perennia.
-          </p>
-        </motion.div>
+        <DiscoveryState title="No eligible profiles are available" body="There are no Discovery profiles available for your account right now." />
       ) : visible.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center"
-        >
-          <p className="font-serif-display text-2xl text-champagne">You've seen everyone for now</p>
-          <p className="max-w-sm text-sm text-white/50">
-            Check back soon as more members join — we'll surface anyone new automatically.
-          </p>
-        </motion.div>
-      ) : (
-        <>
-          {/* Featured match — editorial, full-width, image + info split */}
-          <motion.div
-            layoutId={`card-${featured.uid}`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            whileHover={{ y: -4 }}
-            onClick={() => navigate(`/profile/${featured.uid}`)}
-            className="group mb-6 grid cursor-pointer grid-cols-1 overflow-hidden rounded-[2rem] glass glow-purple md:grid-cols-5"
-          >
-            <div className="relative h-80 overflow-hidden md:col-span-3 md:h-[420px]">
-              <motion.img
-                layoutId={`card-img-${featured.uid}`}
-                src={featured.profilePhotoUrl}
-                alt={featured.name}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r" />
-              <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full border border-gold/30 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-widest text-champagne shadow-lg backdrop-blur-md">
-                <Sparkles className="h-3 w-3" /> Top Alignment
-              </div>
-            </div>
-            <div className="flex flex-col justify-center gap-4 p-8 md:col-span-2 md:p-10">
-              <div className="flex items-center gap-1">
-                <h2 className="font-serif-display text-3xl text-white md:text-4xl">
-                  {featured.name.split(' ')[0]}{calculateAge(featured.birthDate) ? `, ${calculateAge(featured.birthDate)}` : ''}
-                </h2>
-                {featured.verification?.status === 'verified' && <BadgeCheck className="h-5 w-5 text-gold" />}
-              </div>
-              {(featured.profileExtras?.location || featured.profileExtras?.profession) && (
-                <div className="flex items-center gap-1.5 text-sm text-white/50">
-                  <MapPin className="h-3.5 w-3.5" /> {[featured.profileExtras?.location, featured.profileExtras?.profession].filter(Boolean).join(' · ')}
+        <DiscoveryState title="No compatible profiles found" body="No profiles currently meet your preferences and compatibility threshold." />
+      ) : active ? (
+        <div className="discovery-stage">
+          <AnimatePresence mode="wait" initial={false} custom={direction}>
+            <motion.article
+              key={active.uid}
+              custom={direction}
+              initial={{ opacity: 0, y: direction > 0 ? 34 : -34 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: direction > 0 ? -28 : 28 }}
+              transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+              className="discovery-card"
+              onTouchStart={(event) => { touchStartY.current = event.touches[0].clientY }}
+              onTouchEnd={onTouchEnd}
+            >
+              <div className="discovery-photo-panel">
+                <img src={active.profilePhotoUrl} alt={`Portrait of ${active.name}`} />
+                <div className="discovery-photo-shade" />
+                <div className="discovery-mobile-identity">
+                  <Identity candidate={active} />
                 </div>
-              )}
-              {featured.profileExtras?.about && (
-                <p className="line-clamp-3 text-sm leading-relaxed text-white/55">{featured.profileExtras.about}</p>
-              )}
-              <div className="mt-2 flex items-center gap-3">
-                <div className="glass-strong rounded-2xl px-4 py-2">
-                  <span className="font-serif-display text-gradient-gold text-2xl">{featured.compatibility}%</span>
-                </div>
-                <Badge variant="purple">{featured.compatibilityLabel}</Badge>
               </div>
-            </div>
-          </motion.div>
 
-          {/* Remaining matches — editorial grid */}
-          {rest.length > 0 && (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {rest.map((p, i) => (
-                <motion.div
-                  key={p.uid}
-                  layoutId={`card-${p.uid}`}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={{ y: -6 }}
-                  onClick={() => navigate(`/profile/${p.uid}`)}
-                  className="group cursor-pointer overflow-hidden rounded-[1.75rem] glass transition-shadow duration-500 hover:shadow-[0_20px_60px_-15px_rgba(107,79,214,0.5)]"
+              <div className="discovery-profile-panel">
+                <div className="discovery-desktop-identity">
+                  <Identity candidate={active} />
+                </div>
+
+                <div
+                  className="discovery-score"
+                  style={{ '--score': `${active.compatibility * 3.6}deg` } as CSSProperties}
+                  aria-label={`${active.compatibility}% compatible`}
                 >
-                  <div className="relative h-80 overflow-hidden">
-                    <motion.img
-                      layoutId={`card-img-${p.uid}`}
-                      src={p.profilePhotoUrl}
-                      alt={p.name}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <div><strong>{active.compatibility}<span>%</span></strong><small>Compatible</small></div>
+                </div>
 
-                    <div className="absolute right-4 top-4">
-                      <div className="glass-strong flex items-center gap-1.5 rounded-full px-3 py-1.5">
-                        <span className="font-serif-display text-sm text-gradient-gold">{p.compatibility}%</span>
-                      </div>
-                    </div>
+                <section className="discovery-astrology" aria-label={`${active.name}'s astrology snapshot`}>
+                  <WesternChip sign={active.sunSign} label="Sun" tone="blue" />
+                  <WesternChip sign={active.moonSign} label="Moon" tone="gold" />
+                  <WesternChip sign={active.risingSign} label="Rising" tone="violet" />
+                  {isPremium && (
+                    <>
+                      <AstrologyChip icon={chineseAnimalGlyphs[active.chineseAnimal.trim().toLowerCase()] ?? '✦'} value={active.chineseAnimal} label="Chinese Sign" tone="gold" />
+                      <AstrologyChip icon={<ElementIcon element={active.chineseElement} />} value={active.chineseElement} label="Element" tone="blue" />
+                      <AstrologyChip icon={<PolarityIcon />} value={active.yinYang} label="Polarity" tone="silver" />
+                    </>
+                  )}
+                </section>
 
-                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <div className="mb-1.5 flex items-center gap-1.5">
-                        <h3 className="font-serif-display text-2xl text-white">
-                          {p.name.split(' ')[0]}{calculateAge(p.birthDate) ? `, ${calculateAge(p.birthDate)}` : ''}
-                        </h3>
-                        {p.verification?.status === 'verified' && <BadgeCheck className="h-4 w-4 text-gold" />}
-                      </div>
-                      {p.profileExtras?.location && (
-                        <div className="mb-2 flex items-center gap-1 text-xs text-white/60">
-                          <MapPin className="h-3 w-3" />
-                          {p.profileExtras.location}
-                        </div>
-                      )}
-                      <Badge variant="purple">{p.compatibilityLabel}</Badge>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                <div className="discovery-actions">
+                  <button className="discovery-action discovery-action--pass" onClick={handlePass} disabled={actionPending} aria-label={`Pass on ${active.name}`}>
+                    <X />
+                  </button>
+                  <button className="discovery-action discovery-action--like" onClick={handleLike} disabled={actionPending} aria-label={`Like ${active.name}`}>
+                    {actionPending ? <Loader2 className="discovery-action-spinner" /> : <Heart />}
+                  </button>
+                  <button className="discovery-view-profile" onClick={() => navigate(`/profile/${active.uid}`)}>
+                    View Profile <ArrowRight />
+                  </button>
+                </div>
+              </div>
+            </motion.article>
+          </AnimatePresence>
+
+          <div className="discovery-vertical-nav" aria-label="Browse profiles vertically">
+            <button onClick={() => goToProfile(-1)} disabled={activeIndex === 0} aria-label="Previous profile"><ArrowUp /></button>
+            <div className="discovery-vertical-line"><span /></div>
+            <p><span>{activeIndex + 1}</span> / {visible.length}</p>
+            <button onClick={() => goToProfile(1)} disabled={activeIndex === visible.length - 1} aria-label="Next profile"><ArrowDown /></button>
+          </div>
+
+          <p className="discovery-swipe-hint"><ArrowUp /> Swipe vertically to discover <ArrowDown /></p>
+        </div>
+      ) : null}
 
       <AnimatePresence>
         {filterOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
-            onClick={(e) => e.target === e.currentTarget && setFilterOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="glass-strong max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl p-6"
-            >
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="font-serif-display text-xl text-champagne">Discovery Filters</h3>
-                <button onClick={() => setFilterOpen(false)} className="text-white/50 hover:text-white cursor-pointer">
-                  <X className="h-5 w-5" />
-                </button>
+          <motion.div className="discovery-filter-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => e.target === e.currentTarget && setFilterOpen(false)}>
+            <motion.div className="discovery-filter-panel" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} role="dialog" aria-modal="true" aria-label="Discovery filters">
+              <div className="discovery-filter-heading">
+                <h2>Discovery Filters</h2>
+                <button onClick={() => setFilterOpen(false)} aria-label="Close filters"><X /></button>
               </div>
               <MatchingPreferencesPanel onSaved={() => setFilterOpen(false)} />
             </motion.div>
@@ -371,5 +390,30 @@ export function Discovery() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function Identity({ candidate }: { candidate: DiscoveryCandidate & { compatibility: number; distance: number | null } }) {
+  const age = calculateAge(candidate.birthDate)
+  const location = candidate.profileExtras?.location || [candidate.city, candidate.country].filter(Boolean).join(', ')
+  return (
+    <div className="discovery-identity">
+      <div className="discovery-name-row">
+        <h1>{candidate.name.split(' ')[0]}{age !== null ? `, ${age}` : ''}</h1>
+        {candidate.verification?.status === 'verified' && <BadgeCheck aria-label="Verified profile" />}
+      </div>
+      {location && <p><MapPin /> {location}</p>}
+    </div>
+  )
+}
+
+function DiscoveryState({ icon, title, body, action }: { icon?: ReactNode; title: string; body: string; action?: ReactNode }) {
+  return (
+    <motion.div className="discovery-state" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      {icon && <span className="discovery-state-icon">{icon}</span>}
+      <h1>{title}</h1>
+      <p>{body}</p>
+      {action}
+    </motion.div>
   )
 }

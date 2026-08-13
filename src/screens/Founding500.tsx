@@ -11,6 +11,9 @@ import { firebaseConfigured } from '@/lib/firebase'
 import { ensureFounding500Config, subscribeFounding500Config } from '@/lib/founding500'
 import type { Founding500Config, MembershipTier } from '@/types/founding500'
 
+const FLOW_PRIMARY_BUTTON = 'min-h-12 border border-gold/75 bg-[#0a1023]/45 text-champagne shadow-[0_0_18px_rgba(229,192,123,.22),inset_0_0_18px_rgba(229,192,123,.05)] backdrop-blur-md hover:border-gold hover:bg-gold/10 hover:text-white hover:shadow-[0_0_28px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:bg-[#0a1023]/35 disabled:text-white/45 disabled:shadow-none disabled:opacity-100'
+const FLOW_SECONDARY_BUTTON = 'min-h-12 border border-blue-200/35 bg-[#071126]/45 text-blue-100 shadow-[0_0_16px_rgba(96,135,255,.14)] backdrop-blur-md hover:border-blue-200/60 hover:bg-blue-300/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/60 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:text-white/45 disabled:opacity-100'
+
 const BENEFITS = [
   { icon: Crown, title: 'Locked-in founding pricing', body: 'Your introductory rate is preserved for a full year — never adjusted while you remain a member.' },
   { icon: Sparkles, title: 'A permanent founding number', body: 'Your place among the first 500 is recorded forever, from #1 to #500.' },
@@ -51,7 +54,7 @@ export function Founding500() {
   }
 
   return (
-    <div className="relative min-h-screen bg-midnight text-white">
+    <div className="relative min-h-screen overflow-x-clip bg-midnight text-white">
       <AtmosphericBackground />
       <div
         className="pointer-events-none absolute inset-0 z-0"
@@ -62,13 +65,14 @@ export function Founding500() {
         variant="glass"
         size="icon"
         onClick={() => navigate(-1)}
-        className="fixed left-4 top-4 z-30 md:left-8 md:top-8"
+        aria-label="Go back"
+        className={`fixed left-4 top-4 z-30 md:left-8 md:top-8 ${FLOW_SECONDARY_BUTTON}`}
       >
         <ArrowLeft className="h-4 w-4" />
       </Button>
 
       {/* Hero */}
-      <div className="relative z-10 mx-auto max-w-3xl px-6 pb-16 pt-24 text-center md:pt-32">
+      <div className="relative z-10 mx-auto max-w-3xl px-5 pb-12 pt-24 text-center sm:px-6 md:pb-14 md:pt-20">
         {next && (
           <motion.p
             initial={{ opacity: 0, y: -8 }}
@@ -89,7 +93,7 @@ export function Founding500() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif-display text-gradient-gold mb-6 text-5xl tracking-wide md:text-7xl"
+          className="font-serif-display text-gradient-gold mb-5 text-5xl tracking-[.06em] sm:text-6xl md:text-7xl"
         >
           FOUNDING 500
         </motion.h1>
@@ -97,7 +101,7 @@ export function Founding500() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mx-auto mb-14 max-w-lg text-white/60"
+          className="mx-auto mb-9 max-w-lg text-sm leading-relaxed text-white/75 sm:text-base"
         >
           Become one of the first 500 members of Perennia and receive introductory pricing
           reserved for our founding community.
@@ -114,8 +118,13 @@ export function Founding500() {
 
       {/* Tier selection */}
       {config && (
-        <div className="relative z-10 mx-auto max-w-5xl px-6 pb-20">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="relative z-10 mx-auto max-w-6xl px-5 pb-16 sm:px-6 md:pb-20">
+          <div className="mb-7 flex items-center gap-4" aria-hidden="true">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/55" />
+            <p className="text-[11px] uppercase tracking-[.32em] text-champagne sm:text-xs">Choose Your Membership</p>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/55" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
             <TierCard
               tier="essential"
               title="Essential"
@@ -124,6 +133,7 @@ export function Founding500() {
               currency={config.currency}
               promoPeriodMonths={config.promoPeriodMonths}
               isFull={isFull}
+              className="order-2 md:order-1"
               onSelect={() => handleSelectTier('essential')}
             />
             <TierCard
@@ -135,6 +145,7 @@ export function Founding500() {
               promoPeriodMonths={config.promoPeriodMonths}
               isFull={isFull}
               featured
+              className="order-1 md:order-2"
               onSelect={() => handleSelectTier('premium')}
             />
           </div>
@@ -155,7 +166,7 @@ export function Founding500() {
 
       {/* Pricing timelines */}
       {config && (
-        <div className="relative z-10 mx-auto max-w-5xl px-6 pb-20">
+        <div className="relative z-10 mx-auto max-w-5xl px-5 pb-16 sm:px-6 md:pb-20">
           <div className="mb-10 text-center">
             <p className="mb-2 text-xs uppercase tracking-[0.3em] text-gold/70">Your Pricing Journey</p>
             <h2 className="font-serif-display text-3xl text-champagne md:text-4xl">Exactly What You'll Pay, and When</h2>
@@ -171,7 +182,7 @@ export function Founding500() {
             </div>
           </div>
 
-          <div className="glass mx-auto mt-14 max-w-2xl rounded-2xl px-8 py-6 text-center">
+          <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-white/10 bg-[#071126]/42 px-6 py-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.035),0_18px_50px_rgba(2,7,20,.14)] backdrop-blur-md sm:px-8">
             <p className="mb-2 text-xs uppercase tracking-widest text-gold/60">Future Standard Pricing</p>
             <p className="text-sm leading-relaxed text-white/55">
               From year two onward, Perennia's standard pricing is {formatPrice(config.essential.futurePrice, config.currency)}/month
@@ -183,12 +194,12 @@ export function Founding500() {
       )}
 
       {/* Benefits */}
-      <div className="relative z-10 mx-auto max-w-4xl px-6 pb-24">
+      <div className="relative z-10 mx-auto max-w-6xl px-5 pb-16 sm:px-6 md:pb-20">
         <div className="mb-10 text-center">
           <p className="mb-2 text-xs uppercase tracking-[0.3em] text-gold/70">Why Founding Members</p>
           <h2 className="font-serif-display text-3xl text-champagne md:text-4xl">More Than Early Access</h2>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {BENEFITS.map((b, i) => (
             <motion.div
               key={b.title}
@@ -196,13 +207,13 @@ export function Founding500() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.06, duration: 0.5 }}
-              className="glass flex items-start gap-4 rounded-2xl p-5"
+              className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-[#071126]/42 p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.035),0_16px_45px_rgba(2,7,20,.14)] backdrop-blur-md sm:p-5"
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/10">
                 <b.icon className="h-4 w-4 text-gold" />
               </div>
               <div>
-                <p className="mb-1 text-sm font-medium text-champagne">{b.title}</p>
+                <p className="mb-1 text-xs font-medium leading-snug text-champagne sm:text-sm">{b.title}</p>
                 <p className="text-xs leading-relaxed text-white/50">{b.body}</p>
               </div>
             </motion.div>
@@ -216,18 +227,18 @@ export function Founding500() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass-strong glow-gold relative z-10 mx-auto mb-24 flex max-w-2xl flex-col items-center rounded-[2rem] px-8 py-14 text-center"
+          className="relative z-10 mx-auto mb-24 flex max-w-2xl flex-col items-center px-5 py-7 text-center sm:px-8"
         >
           <ShieldCheck className="mb-4 h-7 w-7 text-gold" />
           <h2 className="font-serif-display mb-3 text-2xl md:text-3xl">Your Place Is Waiting</h2>
           <p className="mb-8 max-w-sm text-sm text-white/55">
-            {config.memberLimit - config.currentMemberCount} of 500 founding places remain.
+            {config.memberLimit - config.currentMemberCount} of {config.memberLimit} founding places remain.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" onClick={() => handleSelectTier('essential')}>
+          <div className="flex w-full max-w-lg flex-col gap-3 sm:flex-row">
+            <Button size="lg" variant="outline" className={`w-full ${FLOW_SECONDARY_BUTTON}`} onClick={() => handleSelectTier('essential')}>
               <Check className="h-4 w-4" /> Join as Essential
             </Button>
-            <Button size="lg" variant="glass" onClick={() => handleSelectTier('premium')}>
+            <Button size="lg" variant="outline" className={`w-full ${FLOW_PRIMARY_BUTTON}`} onClick={() => handleSelectTier('premium')}>
               <Crown className="h-4 w-4" /> Join as Premium
             </Button>
           </div>
@@ -245,6 +256,7 @@ function TierCard({
   promoPeriodMonths,
   isFull,
   featured,
+  className,
   onSelect,
 }: {
   tier: MembershipTier
@@ -255,6 +267,7 @@ function TierCard({
   promoPeriodMonths: number
   isFull: boolean
   featured?: boolean
+  className?: string
   onSelect: () => void
 }) {
   return (
@@ -263,9 +276,11 @@ function TierCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className={`relative overflow-hidden rounded-[1.75rem] p-8 ${
-        featured ? 'glass-strong border border-gold/30 glow-gold' : 'glass border border-white/5'
-      }`}
+      className={`relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border p-6 shadow-[inset_0_1px_0_rgba(255,255,255,.045),0_24px_65px_rgba(2,7,20,.2)] backdrop-blur-md sm:p-8 ${
+        featured
+          ? 'border-gold/45 bg-[#16132a]/55 shadow-[inset_0_1px_0_rgba(255,255,255,.05),0_0_34px_rgba(229,192,123,.13)]'
+          : 'border-blue-200/20 bg-[#071126]/52'
+      } ${className ?? ''}`}
     >
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs uppercase tracking-[0.25em] text-gold/70">Founding 500 Member</p>
@@ -276,21 +291,29 @@ function TierCard({
         )}
       </div>
       <h3 className="font-serif-display mb-3 text-3xl text-champagne">{title}</h3>
-      <p className="mb-6 text-sm leading-relaxed text-white/55">{description}</p>
+      <p className="mb-6 text-sm leading-relaxed text-white/70">{description}</p>
 
-      <div className="mb-6">
-        <p className="font-serif-display text-gradient-gold text-4xl">
-          {formatPrice(pricing.introPrice, currency)}<span className="text-base text-white/40"> / month</span>
-        </p>
-        <p className="mt-1 text-xs text-white/40">First {promoPeriodMonths} months</p>
-        <p className="mt-3 text-xs text-white/40">
-          Then {formatPrice(pricing.year1Price, currency)}/month during your first year
-        </p>
+      <div className="mb-7 grid grid-cols-3 divide-x divide-white/10">
+        <PricePoint price={pricing.introPrice} currency={currency} label={`First ${promoPeriodMonths} months`} emphasis={featured} />
+        <PricePoint price={pricing.year1Price} currency={currency} label="Rest of your first year" />
+        <PricePoint price={pricing.futurePrice} currency={currency} label="From year 2 onward" />
       </div>
 
-      <Button size="lg" className="w-full" variant={featured ? 'gold' : 'glass'} onClick={onSelect} disabled={isFull}>
+      <Button size="lg" className={`mt-auto w-full ${featured ? FLOW_PRIMARY_BUTTON : FLOW_SECONDARY_BUTTON}`} variant="outline" onClick={onSelect} disabled={isFull}>
         {isFull ? 'The Founding 500 Is Full' : `Choose ${title}`}
       </Button>
     </motion.div>
+  )
+}
+
+function PricePoint({ price, currency, label, emphasis }: { price: number; currency: string; label: string; emphasis?: boolean }) {
+  return (
+    <div className="min-w-0 px-2 first:pl-0 last:pr-0 sm:px-4">
+      <p className={`font-serif-display text-xl sm:text-2xl ${emphasis ? 'text-gradient-gold' : 'text-champagne'}`}>
+        {formatPrice(price, currency)}
+      </p>
+      <p className="mt-0.5 text-[10px] text-white/45">/ month</p>
+      <p className="mt-2 text-[10px] leading-snug text-white/50 sm:text-[11px]">{label}</p>
+    </div>
   )
 }

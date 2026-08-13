@@ -15,6 +15,7 @@ import { log } from '../utils/logger'
 let stripeClient: Stripe | null = null
 
 const UNSET_SENTINEL = 'not_configured'
+const STRIPE_TEST_MODE_BIRTH_DATE = '1995-06-15'
 
 function getStripe(secretKey: string): Stripe {
   if (!secretKey || secretKey === UNSET_SENTINEL) {
@@ -64,11 +65,9 @@ export async function confirmVerificationDetails(uid: string) {
   const snapshot = await userRef.get()
   if (!snapshot.exists) throw failedPrecondition('Your account profile could not be found.')
   const data = snapshot.data()
-  // legalName/birthDate are a bonus when Stripe's document type returns them
-  // (not every document/region does) — never required to proceed, since the
-  // real Birth Details onboarding step already asks for birth date manually
-  // when it wasn't captured here. Blocking on them stranded verified members
-  // on this screen with no way forward.
+  // A live DOB is extracted from Stripe's verified outputs. A non-live Stripe
+  // session receives the backend-only designated test DOB when results are
+  // persisted; neither value is accepted from the browser.
   if (data?.verification?.status !== 'verified') {
     throw failedPrecondition('Identity verification is not complete yet.')
   }
@@ -97,6 +96,21 @@ async function persistVerificationResult(params: {
   }
 
   if (verified) {
+    const userRef = db.collection('users').doc(uid)
+    const existing = await userRef.get()
+    const hasBirthDate = !!existing.get('birthDate')
+    const hasDisplayName = !!existing.get('name')
+
+    // Stripe test mode does not perform a real document verification, so a
+    // successful simulated session may have no verified_outputs.dob. Use the
+    // designated test DOB on the trusted backend in that one case. The
+    // session's `livemode` flag comes directly from Stripe and cannot be
+    // supplied by the browser, so this fallback is impossible in live mode.
+    if (!session.livemode && !hasBirthDate) {
+      update.birthDate = STRIPE_TEST_MODE_BIRTH_DATE
+      log.info('identity_test_birth_date_applied', { uid, sessionId: session.id })
+    }
+
     try {
       const stripe = getStripe(secretKey)
       const full = session.verified_outputs
@@ -105,11 +119,8 @@ async function persistVerificationResult(params: {
       const outputs = full.verified_outputs
       const dob = outputs?.dob
 
-      const userRef = db.collection('users').doc(uid)
-      const existing = await userRef.get()
-      const hasBirthDate = !!existing.get('birthDate')
-      const hasDisplayName = !!existing.get('name')
-
+      // Prefer an actual Stripe-provided DOB whenever the simulated or live
+      // session contains one; it safely replaces the test fallback above.
       if (dob?.year && dob.month && dob.day && !hasBirthDate) {
         const mm = String(dob.month).padStart(2, '0')
         const dd = String(dob.day).padStart(2, '0')

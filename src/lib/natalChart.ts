@@ -8,6 +8,14 @@ export interface NatalChartResult {
   sunSign: string
   moonSign: string
   risingSign: string
+  mercurySign: string
+  venusSign: string
+  marsSign: string
+  jupiterSign: string
+  saturnSign: string
+  uranusSign: string
+  neptuneSign: string
+  plutoSign: string
   animal: string
   element: string
   yinYang: 'Yin' | 'Yang'

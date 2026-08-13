@@ -11,6 +11,8 @@ import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
 
+const FLOW_PRIMARY_BUTTON = 'min-h-12 border border-gold/75 bg-[#0a1023]/45 text-champagne shadow-[0_0_18px_rgba(229,192,123,.22),inset_0_0_18px_rgba(229,192,123,.05)] backdrop-blur-md hover:border-gold hover:bg-gold/10 hover:text-white hover:shadow-[0_0_28px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:text-white/45 disabled:opacity-100'
+
 export function Founding500Success() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -32,10 +34,10 @@ export function Founding500Success() {
   }, [record])
 
   return (
-    <div className="relative min-h-screen bg-midnight text-white">
+    <div className="relative min-h-screen overflow-x-clip bg-midnight text-white">
       <AtmosphericBackground />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-5 py-16 text-center sm:px-6">
         {!record ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-gold" />
@@ -55,13 +57,13 @@ export function Founding500Success() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-strong glow-gold w-full rounded-[2.5rem] px-8 py-14"
+            className="w-full py-6 sm:py-10"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 14, delay: 0.15 }}
-              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold/15"
+              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-gold/35 bg-gold/10 shadow-[0_0_34px_rgba(229,192,123,.2)] backdrop-blur-md"
             >
               <BadgeCheck className="h-8 w-8 text-gold" />
             </motion.div>
@@ -76,18 +78,18 @@ export function Founding500Success() {
               <Sparkles className="h-4 w-4 text-gold" />
             </div>
 
-            <div className="mb-8 grid grid-cols-2 gap-4 text-left">
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mx-auto mb-10 grid w-full max-w-xl grid-cols-2 gap-3 text-left sm:gap-4">
+              <div className="rounded-2xl border border-white/10 bg-[#071126]/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md sm:p-5">
                 <p className="text-[10px] uppercase tracking-widest text-white/40">Membership Tier</p>
                 <p className="font-serif-display text-lg text-champagne">{record.tier === 'premium' ? 'Premium' : 'Essential'}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="rounded-2xl border border-white/10 bg-[#071126]/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md sm:p-5">
                 <p className="text-[10px] uppercase tracking-widest text-white/40">Current Price</p>
                 <p className="font-serif-display text-lg text-champagne">
                   {record.pricing.currency.toUpperCase() === 'GBP' ? '£' : '$'}{record.pricing.introPrice.toFixed(2)}/mo
                 </p>
               </div>
-              <div className="col-span-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="col-span-2 flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-[#071126]/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md">
                 <ShieldCheck className={`h-4 w-4 ${onboarding.verification.status === 'verified' ? 'text-emerald-400' : 'text-white/30'}`} />
                 <p className="text-xs text-white/60">
                   {onboarding.verification.status === 'verified' ? 'Identity verified' : 'Verification pending'}
@@ -95,7 +97,7 @@ export function Founding500Success() {
               </div>
             </div>
 
-            <div className="mb-10">
+            <div className="mx-auto mb-10 w-full max-w-md">
               <p className="mb-5 text-xs uppercase tracking-widest text-white/40">Your Pricing Timeline</p>
               <PricingTimeline
                 pricing={record.pricing}
@@ -104,7 +106,7 @@ export function Founding500Success() {
               />
             </div>
 
-            <Button size="lg" className="w-full" onClick={() => navigate(destination)}>
+            <Button size="lg" variant="outline" className={`mx-auto w-full max-w-md ${FLOW_PRIMARY_BUTTON}`} onClick={() => navigate(destination)}>
               Enter Perennia
             </Button>
           </motion.div>
