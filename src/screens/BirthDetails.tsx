@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
@@ -11,6 +11,8 @@ import { EditBirthDetailsModal } from '@/components/shared/EditBirthDetailsModal
 import { useApp } from '@/context/AppContext'
 import { computeNatalChart } from '@/lib/natalChart'
 import { firebaseConfigured } from '@/lib/firebase'
+import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
+import { refreshIdentityVerificationStatus } from '@/lib/identityVerification'
 import { COUNTRIES, countryName } from '@/data/countries'
 import { TIME_OPTIONS } from '@/lib/timeOptions'
 import type { CityMatch } from '@/lib/citySearchApi'
@@ -24,7 +26,49 @@ function formatBirthDate(dateStr: string): string {
 }
 
 export function BirthDetails() {
-  const { onboarding } = useApp()
+  const { onboarding, updateOnboarding } = useApp()
+  const [recoveringBirthDate, setRecoveringBirthDate] = useState(false)
+  const recoveryAttempted = useRef(false)
+
+  useEffect(() => {
+    if (onboarding.birthDate || recoveryAttempted.current) return
+
+    // Repair an older local test session that navigated before the bypass
+    // date write completed.
+    if (hasDevelopmentVerificationBypass()) {
+      recoveryAttempted.current = true
+      setRecoveringBirthDate(true)
+      void updateOnboarding({ birthDate: '1995-06-15' })
+        .catch(() => undefined)
+        .finally(() => setRecoveringBirthDate(false))
+      return
+    }
+
+    // Reconcile trusted Stripe output when the verification webhook marked
+    // the account verified before its DOB reached the user document.
+    if (
+      firebaseConfigured &&
+      onboarding.verification.status === 'verified' &&
+      onboarding.verification.provider === 'stripe_identity' &&
+      onboarding.verification.verificationReference
+    ) {
+      recoveryAttempted.current = true
+      setRecoveringBirthDate(true)
+      void refreshIdentityVerificationStatus()
+        .catch(() => undefined)
+        .finally(() => setRecoveringBirthDate(false))
+    }
+  }, [onboarding.birthDate, onboarding.verification, updateOnboarding])
+
+  if (recoveringBirthDate && !onboarding.birthDate) {
+    return (
+      <OnboardingShell step={4} totalSteps={12}>
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-navy/40 px-5 py-4 text-sm text-white/65">
+          <Loader2 className="h-5 w-5 animate-spin text-gold" /> Loading your verified birth date…
+        </div>
+      </OnboardingShell>
+    )
+  }
 
   // Once a member has confirmed their birth details here, the field is
   // locked (also enforced server-side in firestore.rules) — this screen

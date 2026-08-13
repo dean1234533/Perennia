@@ -53,6 +53,7 @@ export interface UserDoc {
   name: string
   email: string
   phone: string
+  onboardingResumePath: string
   verification: VerificationState
   onboardingComplete: boolean
   /** Real legal name extracted from the member's government ID during
@@ -135,6 +136,7 @@ export const defaultPreferences: MatchingPreferences = {
 
 const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   phone: '',
+  onboardingResumePath: '',
   verification: defaultVerification,
   onboardingComplete: false,
   legalName: '',

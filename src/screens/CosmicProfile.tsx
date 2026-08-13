@@ -42,7 +42,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       navigate('/relationship-goals')
       return
     }
-    if (profileExtras.interests.length < MIN_ONBOARDING_INTERESTS) {
+    if (profileExtras.interests.length < MIN_ONBOARDING_INTERESTS || !profileExtras.lifestyleVibe) {
       navigate('/interests')
       return
     }

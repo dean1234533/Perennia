@@ -1,7 +1,21 @@
-import { type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
+import { useApp } from '@/context/AppContext'
+
+const RESUMABLE_ONBOARDING_PATHS = new Set([
+  '/verify',
+  '/birth-details',
+  '/preferences',
+  '/relationship-goals',
+  '/interests',
+  '/about-you',
+  '/profile-photo',
+  '/your-story',
+  '/cosmic-profile',
+])
 
 export function OnboardingShell({
   children,
@@ -12,6 +26,24 @@ export function OnboardingShell({
   step?: number
   totalSteps?: number
 }) {
+  const location = useLocation()
+  const { onboarding, onboardingComplete, profileLoaded, updateOnboarding } = useApp()
+
+  // Store the actual screen being viewed. This makes a later sign-in resume
+  // optional steps exactly, rather than guessing solely from required fields.
+  useEffect(() => {
+    if (
+      profileLoaded &&
+      !onboardingComplete &&
+      RESUMABLE_ONBOARDING_PATHS.has(location.pathname) &&
+      onboarding.onboardingResumePath !== location.pathname
+    ) {
+      void updateOnboarding({ onboardingResumePath: location.pathname }).catch((error) => {
+        console.warn('[Perennia] Failed to save onboarding position:', error)
+      })
+    }
+  }, [location.pathname, onboarding.onboardingResumePath, onboardingComplete, profileLoaded, updateOnboarding])
+
   return (
     <div className="relative flex min-h-screen flex-col items-center bg-midnight text-white">
       {/* Absolutely (not fixed-)positioned so it stretches to cover the

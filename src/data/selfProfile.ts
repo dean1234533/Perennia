@@ -1,11 +1,14 @@
 /** Mock "your own" profile content — the editable side of the profile experience.
- *  Lifestyle lives separately (users/{uid}/private/lifestyle, see
- *  lib/firestore.ts) since it's the one field with a real privacy setting —
- *  keeping it off this doc is what makes "private" actually private at the
+ *  Sensitive lifestyle answers live separately (users/{uid}/private/lifestyle,
+ *  see lib/firestore.ts) since they have a real privacy setting. The broad
+ *  lifestyleVibe and openToNewThings fields are non-sensitive profile context —
+ *  keeping those answers off this doc is what makes "private" actually private at the
  *  Firestore-rules level, not just hidden in the UI. */
 export interface SelfProfile {
   about: string
   interests: string[]
+  lifestyleVibe: string
+  openToNewThings: boolean
   values: string[]
   music: string[]
   languages: string[]
@@ -26,6 +29,8 @@ export interface SelfProfile {
 export const emptySelfProfile: SelfProfile = {
   about: '',
   interests: [],
+  lifestyleVibe: '',
+  openToNewThings: false,
   values: [],
   music: [],
   languages: [],

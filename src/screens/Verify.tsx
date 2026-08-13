@@ -159,7 +159,7 @@ export function Verify() {
     }
   }
 
-  const skipForTesting = () => {
+  const skipForTesting = async () => {
     // Dev-only convenience: real verification is what actually supplies
     // birthDate (Stripe's verified_outputs), and Birth Details no longer
     // accepts it as manual entry — skipping here without filling something
@@ -168,7 +168,8 @@ export function Verify() {
     // reachable from a button rendered behind `import.meta.env.DEV`.
     if (import.meta.env.DEV) {
       enableDevelopmentVerificationBypass()
-      if (!onboarding.birthDate) updateOnboarding({ birthDate: '1995-06-15' })
+      // Finish persisting the fallback before Birth Details reads it.
+      if (!onboarding.birthDate) await updateOnboarding({ birthDate: '1995-06-15' })
     }
     navigate(continueDestination)
   }

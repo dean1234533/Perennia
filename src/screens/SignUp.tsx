@@ -34,12 +34,10 @@ export function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // A Founding 500 signup (or any other deep-linked flow) carries its
-  // destination through as `?next=`, so we skip straight to identity
-  // verification (per the Founding 500 flow spec) instead of forcing new
-  // members through the full dating-profile onboarding chain. `next` is
-  // re-attached to /verify so it still lands on the real destination after.
-  const destination = next ? `/verify?next=${encodeURIComponent(next)}` : '/verify'
+  // Payment is the final onboarding handoff. Even when signup originated on
+  // the Founding 500 page, a new account begins the normal verified profile
+  // journey and cannot deep-link from verification straight to checkout.
+  const destination = '/verify'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

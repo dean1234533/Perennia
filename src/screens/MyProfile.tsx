@@ -32,6 +32,8 @@ import { editorial } from '@/data/editorial-images'
 const previewProfile: SelfProfile = {
   about: 'Family-minded, ambitious, and always up for deep talks and meaningful adventures.',
   interests: ['Travel', 'Photography', 'Hiking'],
+  lifestyleVibe: 'Active & Adventurous',
+  openToNewThings: true,
   values: ['Family', 'Ambition', 'Honesty'],
   music: ['Soul', 'Jazz'],
   languages: ['English'],

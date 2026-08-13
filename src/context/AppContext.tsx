@@ -25,6 +25,7 @@ export interface OnboardingData {
   email: string
   phone: string
   password: string
+  onboardingResumePath: string
   verification: VerificationState
   legalName: string
   aboutYouCompletedAt: string
@@ -66,7 +67,7 @@ export interface OnboardingData {
 
 interface AppContextValue {
   onboarding: OnboardingData
-  updateOnboarding: (data: Partial<OnboardingData>) => void
+  updateOnboarding: (data: Partial<OnboardingData>) => Promise<void>
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
@@ -106,6 +107,7 @@ const defaultOnboarding: OnboardingData = {
   email: '',
   phone: '',
   password: '',
+  onboardingResumePath: '',
   verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null, detailsConfirmedAt: null },
   legalName: '',
   aboutYouCompletedAt: '',
@@ -159,19 +161,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
   const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
   const [hideBottomNav, setHideBottomNav] = useState(false)
-  const [profileLoaded, setProfileLoaded] = useState(!firebaseConfigured)
+  const [profileLoadedUid, setProfileLoadedUid] = useState<string | null>(null)
+  const profileLoaded = !firebaseConfigured || (!!user && profileLoadedUid === user.uid)
+  const userUid = user?.uid
 
   // Sync the signed-in user's doc (onboarding fields + like/pass/match state).
   useEffect(() => {
-    if (!firebaseConfigured || !user) return
-    const unsub = subscribeUserDoc(user.uid, (data: UserDoc | null) => {
-      setProfileLoaded(true)
+    if (!firebaseConfigured) return
+
+    // Never expose one account's loaded profile state during an auth switch.
+    // The uid-bound loaded flag keeps routing on a spinner until the current
+    // member's own document has arrived.
+    setProfileLoadedUid(null)
+    setOnboarding(defaultOnboarding)
+    setProfileExtras(emptySelfProfile)
+    setRemoteOnboardingComplete(false)
+    setLikedIds([])
+    setPassedIds([])
+    setBlockedIds([])
+    setMatchedIds([])
+    if (!userUid) return
+
+    const uid = userUid
+    const unsub = subscribeUserDoc(uid, (data: UserDoc | null) => {
+      setProfileLoadedUid(uid)
       if (!data) return
       setOnboarding((prev) => ({
         ...prev,
         name: data.name,
         email: data.email,
         phone: data.phone ?? '',
+        onboardingResumePath: data.onboardingResumePath ?? '',
         verification: data.verification ?? prev.verification,
         legalName: data.legalName ?? '',
         aboutYouCompletedAt: data.aboutYouCompletedAt ?? '',
@@ -225,7 +245,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (data.profileExtras) setProfileExtras({ ...emptySelfProfile, ...data.profileExtras })
     })
     return unsub
-  }, [user])
+  }, [userUid])
 
   const updateProfileExtras = useCallback(
     async (extras: SelfProfile) => {
@@ -248,14 +268,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const updateOnboarding = useCallback(
-    (data: Partial<OnboardingData>) => {
+    async (data: Partial<OnboardingData>) => {
       setOnboarding((prev) => ({ ...prev, ...data }))
       if (firebaseConfigured && user) {
         const { password: _password, ...remote } = data
         if (Object.keys(remote).length > 0) {
-          updateUserDoc(user.uid, remote).catch((err) =>
+          await updateUserDoc(user.uid, remote).catch((err) => {
             console.warn('[Perennia] Failed to sync onboarding data:', err)
-          )
+          })
         }
       }
     },

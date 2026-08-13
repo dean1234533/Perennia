@@ -14,10 +14,10 @@ export function Login() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const next = searchParams.get('next')
-  // Logging in always lands on Discovery — EXCEPT when `next` is a Founding
-  // 500 destination (e.g. mid-checkout), where it means something real:
-  // continue that flow rather than dropping the member back at Discovery.
-  const destination = next?.startsWith('/founding-500') ? next : '/discovery'
+  // Always enter through the guarded app route. That guard first restores an
+  // incomplete onboarding journey and only checks payment after onboarding
+  // is complete, so a stale Founding-500 deep link cannot skip profile setup.
+  const destination = '/discovery'
   const { setAuthenticated } = useApp()
   const { logIn, resetPassword } = useAuth()
   const [email, setEmail] = useState('')
