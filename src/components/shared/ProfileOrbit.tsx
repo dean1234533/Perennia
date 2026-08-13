@@ -55,6 +55,7 @@ interface ProfileOrbitProps {
    *  Member pill. Only ever passed for the signed-in member's own view. */
   extraBadge?: ReactNode
   compact?: boolean
+  editableHighlights?: boolean
 }
 
 function VerificationBadge({ status }: { status: ProfileOrbitProps['verificationStatus'] }) {
@@ -91,6 +92,7 @@ export function ProfileOrbit({
   onPhotoClick,
   extraBadge,
   compact = false,
+  editableHighlights = false,
 }: ProfileOrbitProps) {
   const positions = compact
     ? [
@@ -141,9 +143,11 @@ export function ProfileOrbit({
             >
               <div className="relative flex items-center justify-center transition-[filter] duration-300 group-hover:drop-shadow-[0_0_12px_rgba(235,197,132,.48)]" style={{ width: sizePx, height: sizePx }}>
                 <img src={planet.src} alt={planet.name} className="h-full w-full object-contain" />
-                <span className="absolute bottom-[3%] right-[2%] flex h-5 w-5 items-center justify-center rounded-full border border-gold/70 bg-midnight/95 text-champagne shadow-[0_0_10px_rgba(229,192,123,.35)]">
-                  {cat.count > 0 ? <Play className="h-2.5 w-2.5 fill-current" /> : <Plus className="h-3 w-3" />}
-                </span>
+                {(cat.count > 0 || editableHighlights) && (
+                  <span className="absolute bottom-[3%] right-[2%] flex h-5 w-5 items-center justify-center rounded-full border border-gold/70 bg-midnight/95 text-champagne shadow-[0_0_10px_rgba(229,192,123,.35)]">
+                    {cat.count > 0 ? <Play className="h-2.5 w-2.5 fill-current" /> : <Plus className="h-3 w-3" />}
+                  </span>
+                )}
               </div>
               <span className="sr-only">{cat.label}</span>
             </motion.button>
@@ -173,7 +177,7 @@ export function ProfileOrbit({
             <div className={cn(
               'relative flex items-center justify-center overflow-hidden rounded-full border border-[#f1d6a7]/90 bg-[#06132c] p-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,.22),0_0_25px_rgba(54,96,198,.28)]',
               compact
-                ? 'h-[132px] w-[132px] sm:h-[184px] sm:w-[184px]'
+                ? 'h-[184px] w-[184px] sm:h-[224px] sm:w-[224px]'
                 : 'h-[158px] w-[158px] sm:h-[210px] sm:w-[210px] md:h-[244px] md:w-[244px]'
             )}>
               {photoUrl ? (

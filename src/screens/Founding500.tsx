@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Sparkles, ShieldCheck, Compass, MessageCircleHeart, Crown, Heart } from 'lucide-react'
+import { ArrowLeft, Sparkles, ShieldCheck, Compass, MessageCircleHeart, Crown, Heart, Gem, Star, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { MemberCounter } from '@/components/founding500/MemberCounter'
@@ -62,8 +62,8 @@ export function Founding500() {
         style={{ background: 'radial-gradient(90% 60% at 50% 0%, rgba(124,58,237,0.18) 0%, transparent 60%)' }}
       />
 
-      <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Go back" className={`fixed left-4 top-4 z-30 md:left-7 md:top-6 ${FLOW_SECONDARY_BUTTON}`}>
-        <ArrowLeft className="h-4 w-4" /><span className="sr-only">Back</span>
+      <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Go back" className={`fixed left-4 top-4 z-30 md:left-7 md:top-6 md:w-auto md:px-4 ${FLOW_SECONDARY_BUTTON}`}>
+        <ArrowLeft className="h-4 w-4" /><span className="hidden md:inline">Back</span>
       </Button>
 
       {user?.email && (
@@ -162,8 +162,8 @@ export function Founding500() {
           </section>
 
           {!isFull && (
-            <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mx-auto flex w-full max-w-3xl flex-col items-center rounded-[1.5rem] border border-white/10 bg-[#071126]/38 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.04)] backdrop-blur-md md:col-start-1 md:row-start-2 md:-mt-1">
-              <ShieldCheck className="mb-1 h-6 w-6 text-gold" />
+            <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative mx-auto mt-3 flex w-full max-w-3xl flex-col items-center rounded-[1.5rem] border border-white/12 bg-[#071126]/38 px-5 pb-4 pt-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.04)] backdrop-blur-md md:col-start-1 md:row-start-2 md:-mt-1">
+              <span className="absolute -top-5 flex h-10 w-10 items-center justify-center rounded-full border border-gold/35 bg-[#12162c] shadow-[0_0_18px_rgba(229,192,123,.22)]"><ShieldCheck className="h-5 w-5 text-gold" /></span>
               <h2 className="font-serif-display text-2xl text-champagne md:text-3xl">Your Place Is Waiting</h2>
               <p className="mb-3 text-xs text-white/60">{config.memberLimit - config.currentMemberCount} of {config.memberLimit} founding places remain.</p>
               <Button size="lg" variant="outline" className={`w-full max-w-xl ${FLOW_PRIMARY_BUTTON}`} onClick={() => handleSelectTier('premium')}>Secure My Place Now <span aria-hidden="true">→</span></Button>
@@ -179,14 +179,15 @@ export function Founding500() {
 function SectionRule({ children }: { children: string }) {
   return (
     <div className="mb-3 flex items-center gap-3" aria-hidden="true">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/55" />
+      <span className="relative h-px flex-1 bg-gradient-to-r from-transparent to-gold/55"><i className="absolute right-0 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rotate-45 bg-gold shadow-[0_0_8px_rgba(229,192,123,.7)]" /></span>
       <p className="text-center text-[10px] uppercase tracking-[.28em] text-champagne">{children}</p>
-      <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/55" />
+      <span className="relative h-px flex-1 bg-gradient-to-l from-transparent to-gold/55"><i className="absolute left-0 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rotate-45 bg-gold shadow-[0_0_8px_rgba(229,192,123,.7)]" /></span>
     </div>
   )
 }
 
 function TierCard({
+  tier,
   title,
   description,
   pricing,
@@ -223,16 +224,22 @@ function TierCard({
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs uppercase tracking-[0.25em] text-gold/70">Founding 500 Member</p>
         {featured && (
-          <span className="shrink-0 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
-            Most Chosen
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold/35 bg-gold/[.08] px-3 py-1 text-[10px] uppercase tracking-widest text-gold">
+            <Star className="h-3 w-3 fill-gold/30" /> Most Chosen
           </span>
         )}
       </div>
-      <h3 className="font-serif-display mb-2 text-3xl text-champagne">{title}</h3>
+      <div className="mb-1 flex items-center justify-between gap-4">
+        <h3 className="font-serif-display text-3xl text-champagne">{title}</h3>
+        <span className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${tier === 'premium' ? 'bg-violet-500/10 shadow-[0_0_28px_rgba(168,85,247,.35)]' : 'bg-blue-400/10 shadow-[0_0_25px_rgba(96,165,250,.28)]'}`} aria-hidden="true">
+          <i className={`absolute inset-2 rotate-45 rounded-lg border ${tier === 'premium' ? 'border-violet-300/25 bg-violet-500/10' : 'border-blue-200/25 bg-blue-400/10'}`} />
+          <Gem className={`relative h-8 w-8 ${tier === 'premium' ? 'text-violet-300' : 'text-blue-200'}`} strokeWidth={1.25} />
+        </span>
+      </div>
       <p className="mb-4 text-xs leading-relaxed text-white/70 sm:text-sm">{description}</p>
 
       <div className="mb-5 grid grid-cols-3 divide-x divide-white/10">
-        <PricePoint price={pricing.introPrice} currency={currency} label={`First ${promoPeriodMonths} months`} emphasis={featured} />
+        <PricePoint price={pricing.introPrice} currency={currency} label={`First ${promoPeriodMonths} months`} emphasis={featured} intro />
         <PricePoint price={pricing.year1Price} currency={currency} label="Rest of your first year" />
         <PricePoint price={pricing.futurePrice} currency={currency} label="From year 2 onward" />
       </div>
@@ -244,10 +251,11 @@ function TierCard({
   )
 }
 
-function PricePoint({ price, currency, label, emphasis }: { price: number; currency: string; label: string; emphasis?: boolean }) {
+function PricePoint({ price, currency, label, emphasis, intro }: { price: number; currency: string; label: string; emphasis?: boolean; intro?: boolean }) {
   return (
     <div className="min-w-0 px-2 first:pl-0 last:pr-0 sm:px-4">
-      <p className={`font-serif-display text-xl sm:text-2xl ${emphasis ? 'text-gradient-gold' : 'text-champagne'}`}>
+      <p className={`flex items-center gap-1 font-serif-display text-xl sm:text-2xl ${emphasis ? 'text-gradient-gold' : 'text-champagne'}`}>
+        {intro && <Tag className={`h-4 w-4 shrink-0 ${emphasis ? 'text-gold' : 'text-blue-200'}`} strokeWidth={1.4} />}
         {formatPrice(price, currency)}
       </p>
       <p className="mt-0.5 text-[10px] text-white/45">/ month</p>

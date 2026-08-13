@@ -11,6 +11,8 @@ import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
+import { ProfileExperience } from '@/components/shared/ProfileExperience'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { FoundingMemberBadge } from '@/components/founding500/FoundingMemberBadge'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { MyProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
@@ -28,6 +30,9 @@ import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
 import type { SelfProfile } from '@/data/selfProfile'
 import type { StoryPrompt } from '@/lib/firestore'
 import { editorial } from '@/data/editorial-images'
+import { calculateAge } from '@/lib/age'
+import { subscribeFoundingMembership } from '@/lib/founding500'
+import type { FoundingMemberRecord } from '@/types/founding500'
 
 const previewProfile: SelfProfile = {
   about: 'Family-minded, ambitious, and always up for deep talks and meaningful adventures.',
@@ -107,6 +112,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [membership, setMembership] = useState<FoundingMemberRecord | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -118,6 +124,11 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   useEffect(() => {
     if (!user || preview) return
     return subscribeUserMedia(user.uid, setMedia)
+  }, [user, preview])
+
+  useEffect(() => {
+    if (!user || preview) return
+    return subscribeFoundingMembership(user.uid, setMembership)
   }, [user, preview])
 
   const categories: DisplayCategory[] = preview ? previewCategories : onboarding.categories.map((c) => ({
@@ -248,9 +259,10 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   ) && item.processingStatus !== 'error')
 
   return (
-    <div className="profile-page mx-auto max-w-[980px] px-4 pb-32 pt-5 sm:px-6 md:pt-8">
+    <div className="profile-page-shell profile-page">
       {/* Top bar */}
-      <div className="mb-0 flex min-h-10 items-center justify-between">
+      <div className="profile-topbar">
+        <div className="profile-wordmark"><CelestialHeart className="h-8 w-8" /> <span>Perennia</span></div>
         <AnimatePresence>
           {savedPulse && (
             <motion.span
@@ -268,7 +280,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
             aria-label="Open profile menu"
             aria-haspopup="dialog"
             onClick={() => setProfileMenuOpen(true)}
-            className="mr-1 flex h-11 w-16 items-center justify-center rounded-full border border-white/20 bg-midnight/50 text-white/90 transition hover:border-gold/40"
+            className="profile-menu-button"
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
@@ -280,18 +292,42 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
         </div>
       </div>
 
-      {/* Orbit hero */}
-      <ProfileOrbit
-        photoUrl={photoUrl}
-        name={onboarding.name || (preview ? 'Martallus Alfred' : 'Your Name')}
-        location={draft.location}
-        verificationStatus={preview ? 'verified' : onboarding.verification.status}
-        categories={orbitCategories}
-        onCategorySelect={handleCategorySelect}
-        onPhotoClick={() => photoInputRef.current?.click()}
-        extraBadge={<FoundingMemberBadge />}
-        compact
-      />
+      <div className="profile-hero-desktop">
+        <ProfileOrbit
+          photoUrl={photoUrl}
+          name={(onboarding.name || (preview ? 'Martallus' : 'Your Name')).split(' ')[0]}
+          age={calculateAge(onboarding.birthDate) ?? undefined}
+          location={draft.location}
+          verificationStatus={preview ? 'verified' : onboarding.verification.status}
+          categories={orbitCategories}
+          onCategorySelect={handleCategorySelect}
+          onPhotoClick={() => photoInputRef.current?.click()}
+          extraBadge={<FoundingMemberBadge />}
+          editableHighlights
+          compact
+        />
+        <div>
+          <ProfileExperience
+            astrology={{
+              sunSign: onboarding.sunSign || (preview ? 'Pisces' : ''),
+              moonSign: onboarding.moonSign || (preview ? 'Virgo' : ''),
+              risingSign: onboarding.risingSign || (preview ? 'Taurus' : ''),
+              chineseAnimal: onboarding.chineseAnimal || (preview ? 'Rat' : ''),
+              chineseElement: onboarding.chineseElement || (preview ? 'Wood' : ''),
+              yinYang: onboarding.yinYang || (preview ? 'Yang' : ''),
+            }}
+            isPremium={preview || membership?.tier === 'premium'}
+            isOwnProfile
+            about={draft.about}
+            profession={draft.profession}
+            education={draft.education}
+            languages={draft.languages}
+            interests={draft.interests}
+            relationshipGoal={onboarding.relationshipGoal || (preview ? 'Long-term Relationship' : '')}
+            onEdit={() => setEditMode(true)}
+          />
+        </div>
+      </div>
       <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
       {photoBusy && (
         <p className="mt-2 text-center text-xs text-white/40">
@@ -311,7 +347,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
         </motion.button>
       )}
 
-      <div className="mx-auto mt-4 max-w-3xl text-center">
+      <div className="hidden mx-auto mt-4 max-w-3xl text-center">
         <p className="font-serif-display text-lg tracking-wide text-champagne/90 sm:text-2xl">
           <span className="mr-2 text-gold">☾</span>
           {onboarding.sunSign || (preview ? 'Pisces' : 'Sun')} <span className="mx-2 text-white/35">•</span>
@@ -353,18 +389,22 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       </div>
 
       {/* Reference-style Photos / Videos switch and compact 3-column grid. */}
-      <section id="profile-media" className="mt-4 scroll-mt-20">
-        <div className="mx-auto flex w-full max-w-[420px] rounded-full border border-champagne/60 bg-midnight/55 p-1">
+      <section id="profile-media" className="profile-luxury-card profile-gallery scroll-mt-20">
+        <div className="profile-gallery-header">
+        <div className="profile-gallery-tabs" role="tablist" aria-label="Profile media">
           {(['photos', 'videos'] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => setMediaMode(mode)}
-              className={`flex-1 rounded-full py-2 font-serif-display text-lg capitalize transition ${mediaMode === mode ? 'bg-white/[.07] text-ivory shadow-inner' : 'text-white/60'}`}
+              role="tab"
+              aria-selected={mediaMode === mode}
             >
               {mode}
             </button>
           ))}
+        </div>
+        {visibleMedia.length > 0 && <span className="pb-3 text-xs text-gold">View all ({visibleMedia.length}) →</span>}
         </div>
 
         {editMode && (
@@ -379,8 +419,8 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           </div>
         )}
 
-        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-          {visibleMedia.slice(0, 9).map((item, index) => (
+        <div className="profile-gallery-grid">
+          {visibleMedia.slice(0, 10).map((item, index) => (
             <motion.button
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
@@ -388,7 +428,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
               transition={{ delay: index * 0.035 }}
               type="button"
               onClick={() => item.processingStatus !== 'processing' && setGridViewerIndex(index)}
-              className="group relative aspect-square overflow-hidden rounded-2xl border border-white/12 bg-white/[.05] sm:rounded-[1.35rem]"
+              className="group"
             >
               {item.thumbnailUrl || item.url ? (
                 <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -512,7 +552,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           Interests step, Lifestyle to profession/education/languages from
           About You, Travel to the favourite-places/dream-destinations
           fields also collected there. */}
-      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className={`${editMode ? 'grid' : 'hidden'} mt-10 grid-cols-1 gap-4 sm:grid-cols-2`}>
         <ProfileSection icon={Feather} title="Bio">
           {storyPrompts.length ? (
             <div className="flex flex-col gap-3">

@@ -5,8 +5,30 @@ html:has(.cosmic-profile) {
 }
 
 .cosmic-profile {
+  position: relative;
   width: min(1120px, 100%);
   padding: 0 0 1.5rem;
+}
+
+.cosmic-back-button {
+  position: fixed !important;
+  left: clamp(1rem, 4vw, 3rem);
+  top: clamp(1rem, 3vw, 2.25rem);
+  z-index: 40;
+  gap: .45rem !important;
+  color: #f2d28b !important;
+  font-family: var(--font-serif) !important;
+  font-size: 1.05rem !important;
+  text-decoration: none !important;
+}
+
+.cosmic-back-button:hover {
+  color: #fff0c4 !important;
+}
+
+.cosmic-back-button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .cosmic-app-shell-wrap {
@@ -86,37 +108,30 @@ html:has(.cosmic-profile) {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 340px;
+  height: 360px;
   margin-bottom: .2rem;
 }
 
-.cosmic-wheel-column > div:not(.cosmic-wheel-halo) {
-  filter: sepia(.15) drop-shadow(0 0 22px rgba(229, 192, 123, .24));
-}
-
-.cosmic-wheel-column .relative > div {
-  color: rgba(239, 207, 134, .92) !important;
-  font-family: Georgia, 'Times New Roman', serif;
-  text-shadow: 0 0 8px rgba(229, 192, 123, .26);
-}
-
-.cosmic-wheel-column .glow-gold {
-  border: 1px solid rgba(229, 192, 123, .34);
-  background: radial-gradient(circle, rgba(249, 224, 164, .82) 0 2%, rgba(229, 192, 123, .16) 13%, rgba(12, 20, 51, .28) 44%, transparent 72%);
-  box-shadow: 0 0 35px 2px rgba(229, 192, 123, .25);
-}
-
-.cosmic-wheel-column .glow-gold span {
-  color: #fff4ce;
-}
-
-.cosmic-wheel-halo {
+.cosmic-wheel {
   position: absolute;
-  width: 334px;
-  height: 334px;
-  border: 1px solid rgba(229, 192, 123, .12);
+  width: 350px;
+  height: 350px;
+  filter: drop-shadow(0 0 24px rgba(229, 192, 123, .18));
+}
+
+.cosmic-wheel-aura {
+  position: absolute;
+  inset: 8%;
   border-radius: 50%;
-  box-shadow: 0 0 55px rgba(229, 192, 123, .08), inset 0 0 70px rgba(78, 98, 176, .08);
+  background: radial-gradient(circle, rgba(229, 192, 123, .12), rgba(79, 91, 176, .07) 44%, transparent 72%);
+  box-shadow: 0 0 70px rgba(229, 192, 123, .09);
+}
+
+.cosmic-wheel-svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .cosmic-section-heading {
@@ -128,8 +143,25 @@ html:has(.cosmic-profile) {
 }
 
 .cosmic-section-heading span {
+  position: relative;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(229, 192, 123, .7));
+}
+
+.cosmic-section-heading span i {
+  position: absolute;
+  right: -.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f0cd7e;
+  font-size: .72rem;
+  font-style: normal;
+  text-shadow: 0 0 8px rgba(229, 192, 123, .55);
+}
+
+.cosmic-section-heading span:last-child i {
+  right: auto;
+  left: -.1rem;
 }
 
 .cosmic-section-heading span:last-child {
@@ -169,7 +201,7 @@ html:has(.cosmic-profile) {
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 136px;
+  min-height: 142px;
   padding: .9rem .45rem;
   border-radius: 13px;
   text-align: center;
@@ -191,10 +223,10 @@ html:has(.cosmic-profile) {
 }
 
 .cosmic-planet-symbol {
-  height: 2.15rem;
-  margin-bottom: .25rem;
+  height: 2.3rem;
+  margin-bottom: .32rem;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2rem;
+  font-size: 2.15rem;
   line-height: 1;
 }
 
@@ -222,8 +254,12 @@ html:has(.cosmic-profile) {
   margin: .34rem 0 0;
   color: #f5ead1;
   font-family: var(--font-serif);
-  font-size: 1.12rem;
+  font-size: 1.2rem;
   line-height: 1.05;
+}
+
+.cosmic-card-chevron {
+  display: none;
 }
 
 .cosmic-placement-card p span {
@@ -271,7 +307,7 @@ html:has(.cosmic-profile) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 145px;
+  min-height: 152px;
   padding: .85rem .5rem;
   border-color: rgba(229, 192, 123, .22);
   border-radius: 13px;
@@ -282,7 +318,7 @@ html:has(.cosmic-profile) {
   min-height: 2.2rem;
   margin-bottom: .3rem;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.9rem;
+  font-size: 2.15rem;
   line-height: 1;
 }
 
@@ -394,17 +430,13 @@ html:has(.cosmic-profile) {
 
   .cosmic-wheel-column {
     width: 100%;
-    height: 245px;
+    height: 250px;
     margin-bottom: .25rem;
   }
 
-  .cosmic-wheel-column > div:not(.cosmic-wheel-halo) {
-    transform: scale(.68);
-  }
-
-  .cosmic-wheel-halo {
-    width: 222px;
-    height: 222px;
+  .cosmic-wheel {
+    width: 235px;
+    height: 235px;
   }
 
   .cosmic-section-heading {
@@ -426,7 +458,7 @@ html:has(.cosmic-profile) {
   .cosmic-placement-card,
   .cosmic-chinese-card {
     display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto 1rem;
     align-items: center;
     min-height: 54px;
     padding: .42rem .65rem;
@@ -469,6 +501,16 @@ html:has(.cosmic-profile) {
     text-align: right;
   }
 
+  .cosmic-card-chevron {
+    display: block;
+    grid-column: 4;
+    grid-row: 1;
+    width: .85rem;
+    height: .85rem;
+    margin-left: .15rem;
+    color: rgba(255, 255, 255, .48);
+  }
+
   .cosmic-unavailable {
     font-size: .66rem !important;
   }
@@ -494,7 +536,7 @@ html:has(.cosmic-profile) {
 @media (max-width: 340px) {
   .cosmic-placement-card,
   .cosmic-chinese-card {
-    grid-template-columns: 1.9rem minmax(0, 1fr) auto;
+    grid-template-columns: 1.9rem minmax(0, 1fr) auto .85rem;
     padding-inline: .48rem;
   }
 

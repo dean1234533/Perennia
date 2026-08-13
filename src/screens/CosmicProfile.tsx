@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Heart, Info } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Heart, Info } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
-import { ZodiacWheel } from '@/components/shared/ZodiacWheel'
+import { CosmicZodiacWheel } from './CosmicZodiacWheel'
 import { useApp } from '@/context/AppContext'
 import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
@@ -75,9 +75,9 @@ function valueOrUnavailable(value: string | null | undefined) {
 function CosmicSectionHeading({ children, id }: { children: string; id: string }) {
   return (
     <div className="cosmic-section-heading">
-      <span aria-hidden="true" />
+      <span aria-hidden="true"><i>✦</i></span>
       <h2 id={id}>{children}</h2>
-      <span aria-hidden="true" />
+      <span aria-hidden="true"><i>✦</i></span>
     </div>
   )
 }
@@ -105,6 +105,7 @@ function WesternCard({ placement, value }: { placement: WesternPlacement; value?
           {displayValue}
         </p>
       </div>
+      <ChevronRight className="cosmic-card-chevron" aria-hidden="true" />
     </article>
   )
 }
@@ -116,13 +117,16 @@ function ChineseCard({
   item: (typeof CHINESE_ITEMS)[number]
   value: string | null
 }) {
+  const animalSymbols: Record<string, string> = { Rat: '鼠', Ox: '牛', Tiger: '虎', Rabbit: '兔', Dragon: '龍', Snake: '蛇', Horse: '馬', Sheep: '羊', Monkey: '猴', Rooster: '雞', Dog: '狗', Pig: '豬' }
+  const symbol = item.key === 'animal' && value ? animalSymbols[value] ?? item.symbol : item.symbol
   return (
     <article className={`cosmic-chinese-card cosmic-accent-${item.accent}`}>
-      <span className="cosmic-chinese-symbol" aria-hidden="true">{item.symbol}</span>
+      <span className="cosmic-chinese-symbol" aria-hidden="true">{symbol}</span>
       <div>
         <h3>{item.label}</h3>
         <p className={value ? '' : 'cosmic-unavailable'}>{valueOrUnavailable(value)}</p>
       </div>
+      <ChevronRight className="cosmic-card-chevron" aria-hidden="true" />
     </article>
   )
 }
@@ -226,6 +230,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="cosmic-profile"
     >
+      {isOnboarding && <CosmicProfileBackButton compact={false} />}
       <header className="cosmic-profile-header">
         <p className="cosmic-eyebrow">Your Astrological Foundation</p>
         <h1>Your Cosmic Profile</h1>
@@ -234,8 +239,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
 
       <div className="cosmic-western-layout">
         <div className="cosmic-wheel-column" aria-label="Decorative zodiac wheel">
-          <div className="cosmic-wheel-halo" aria-hidden="true" />
-          <ZodiacWheel size={320} />
+          <CosmicZodiacWheel />
         </div>
 
         <section className="cosmic-western-section" aria-labelledby="western-astrology-heading">
@@ -278,17 +282,18 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
   )
 }
 
-function CosmicProfileBackButton() {
+function CosmicProfileBackButton({ compact = true }: { compact?: boolean }) {
   const navigate = useNavigate()
   return (
     <Button
-      variant="glass"
-      size="icon"
+      variant={compact ? 'glass' : 'link'}
+      size={compact ? 'icon' : 'sm'}
       onClick={() => navigate(-1)}
-      className="fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72"
+      className={compact ? 'fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72' : 'cosmic-back-button'}
       aria-label="Go back"
     >
       <ArrowLeft aria-hidden="true" />
+      {!compact && <span>Back</span>}
     </Button>
   )
 }

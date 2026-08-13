@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, MapPin, Briefcase, GraduationCap, Heart, X, MessageCircle, Sparkles, Loader2, MoreHorizontal } from 'lucide-react'
+import { Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Sparkles, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
+import { ProfileExperience } from '@/components/shared/ProfileExperience'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
@@ -31,6 +33,8 @@ export function ProfileDetail() {
   const [liked, setLiked] = useState(false)
   const [videoViewerCategory, setVideoViewerCategory] = useState<string | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
+  const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
   // A successful read here already means access was allowed (public, or a
   // real match — see firestore.rules) — a denied/missing read is treated
   // identically to "nothing set," never surfaced as an error.
@@ -118,6 +122,7 @@ export function ProfileDetail() {
 
   const displayItems = media.map(toDisplayItem)
   const galleryImages = displayItems.filter((i) => i.type === 'image')
+  const visibleGalleryMedia = displayItems.filter((item) => item.type === (mediaMode === 'photos' ? 'image' : 'video') && item.processingStatus === 'ready')
 
   const categories: DisplayCategory[] = (profile.categories?.length ? profile.categories : DEFAULT_MEDIA_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))).map((c) => ({
     id: c.id,
@@ -161,27 +166,78 @@ export function ProfileDetail() {
   }
 
   return (
-    <div className="pb-32 pt-16 md:pt-8">
-      <Button
-        variant="glass"
-        size="icon"
-        onClick={() => navigate('/discovery')}
-        className="fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72"
-      >
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="glass"
-        size="icon"
-        aria-label="Open profile options"
-        aria-haspopup="dialog"
-        onClick={() => setProfileMenuOpen(true)}
-        className="fixed right-4 top-4 z-30 md:right-8 md:top-8"
-      >
-        <MoreHorizontal className="h-5 w-5" />
-      </Button>
+    <div className="profile-page-shell profile-page">
+      <div className="profile-topbar">
+        <div className="profile-wordmark"><CelestialHeart className="h-8 w-8" /> <span>Perennia</span></div>
+        <button
+          aria-label="Open profile options"
+          aria-haspopup="dialog"
+          onClick={() => setProfileMenuOpen(true)}
+          className="profile-menu-button"
+        ><MoreHorizontal className="h-5 w-5" /></button>
+      </div>
 
-      <div className="mx-auto max-w-4xl px-6 md:px-0">
+      <div className="profile-hero-desktop">
+        <ProfileOrbit
+          photoUrl={profile.profilePhotoUrl || null}
+          name={profile.name.split(' ')[0]}
+          age={calculateAge(profile.birthDate) ?? undefined}
+          location={extras?.location && profile.showDistance ? extras.location : undefined}
+          verificationStatus={profile.verification?.status ?? 'unverified'}
+          categories={orbitCategories}
+          onCategorySelect={handleOrbitSelect}
+          compatibility={result?.compatibility}
+          compact
+        />
+        <ProfileExperience
+          astrology={{
+            sunSign: profile.sunSign,
+            chineseAnimal: profile.chineseAnimal,
+          }}
+          isPremium={false}
+          isOwnProfile={false}
+          about={extras?.about}
+          profession={extras?.profession}
+          education={extras?.education}
+          languages={extras?.languages}
+          interests={extras?.interests}
+          relationshipGoal={profile.relationshipGoal}
+          cosmicProfilePath={null}
+          actions={(
+            <>
+              {isMatched && user && (
+                <button className="profile-action-pill" onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}>
+                  <MessageCircle className="h-4 w-4" /> Message
+                </button>
+              )}
+              <button className="profile-action-pill" onClick={handleLike}>
+                <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} /> Like
+              </button>
+            </>
+          )}
+        />
+      </div>
+
+      {(galleryImages.length > 0 || displayItems.some((item) => item.type === 'video')) && (
+        <section className="profile-luxury-card profile-gallery">
+          <div className="profile-gallery-header">
+            <div className="profile-gallery-tabs" role="tablist" aria-label="Profile media">
+              <button role="tab" aria-selected={mediaMode === 'photos'} onClick={() => setMediaMode('photos')}>Photos</button>
+              <button role="tab" aria-selected={mediaMode === 'videos'} onClick={() => setMediaMode('videos')}>Videos</button>
+            </div>
+            <span className="pb-3 text-xs text-gold">View all ({visibleGalleryMedia.length}) →</span>
+          </div>
+          <div className="profile-gallery-grid">
+            {visibleGalleryMedia.slice(0, 10).map((item, index) => (
+              <button key={item.id} onClick={() => setGridViewerIndex(index)} aria-label={item.caption || `View ${profile.name.split(' ')[0]}'s ${mediaMode === 'photos' ? 'photo' : 'video'}`}>
+                <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} loading="lazy" />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="hidden mx-auto max-w-4xl px-6 md:px-0">
         <ProfileOrbit
           photoUrl={profile.profilePhotoUrl || null}
           name={profile.name}
@@ -323,7 +379,7 @@ export function ProfileDetail() {
       </div>
 
       {/* Floating action buttons */}
-      <div className="fixed bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-4 lg:bottom-8">
+      <div className="hidden fixed bottom-24 left-1/2 z-30 -translate-x-1/2 items-center gap-4 lg:bottom-8">
         <motion.button
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.08 }}
@@ -359,6 +415,10 @@ export function ProfileDetail() {
           initialIndex={0}
           onClose={() => setVideoViewerCategory(null)}
         />
+      )}
+
+      {gridViewerIndex !== null && (
+        <FullscreenMediaViewer items={visibleGalleryMedia} initialIndex={gridViewerIndex} onClose={() => setGridViewerIndex(null)} />
       )}
 
       <OtherProfileActionsMenu
