@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Info } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Heart, Info } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
@@ -78,6 +78,15 @@ function CosmicSectionHeading({ children, id }: { children: string; id: string }
       <span aria-hidden="true" />
       <h2 id={id}>{children}</h2>
       <span aria-hidden="true" />
+    </div>
+  )
+}
+
+function CosmicHeaderMark() {
+  return (
+    <div className="cosmic-header-mark" aria-hidden="true">
+      <Heart />
+      <span>✦</span>
     </div>
   )
 }
@@ -226,8 +235,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       <div className="cosmic-western-layout">
         <div className="cosmic-wheel-column" aria-label="Decorative zodiac wheel">
           <div className="cosmic-wheel-halo" aria-hidden="true" />
-          <ZodiacWheel size={260} />
-          <p>Your celestial signature</p>
+          <ZodiacWheel size={320} />
         </div>
 
         <section className="cosmic-western-section" aria-labelledby="western-astrology-heading">
@@ -300,7 +308,12 @@ export function CosmicProfile() {
   }
 
   return (
-    <OnboardingShell step={12} totalSteps={12}>
+    <OnboardingShell
+      step={12}
+      totalSteps={12}
+      headerMark={<CosmicHeaderMark />}
+      progressVariant="nodes"
+    >
       <CosmicProfileContent isOnboarding />
     </OnboardingShell>
   )

@@ -21,10 +21,14 @@ export function OnboardingShell({
   children,
   step,
   totalSteps,
+  headerMark,
+  progressVariant = 'bars',
 }: {
   children: ReactNode
   step?: number
   totalSteps?: number
+  headerMark?: ReactNode
+  progressVariant?: 'bars' | 'nodes'
 }) {
   const location = useLocation()
   const { onboarding, onboardingComplete, profileLoaded, updateOnboarding } = useApp()
@@ -59,12 +63,30 @@ export function OnboardingShell({
             reads as a consistent marker that you're still inside the
             Perennia setup journey — it's onboarding-only, not part of the
             regular app chrome once a member is through it. */}
-        <CelestialHeart className="mb-5 h-16 w-16 sm:h-20 sm:w-20" />
+        {headerMark ?? <CelestialHeart className="mb-5 h-16 w-16 sm:h-20 sm:w-20" />}
 
         {step !== undefined && totalSteps !== undefined && (
-          <div className="relative mb-8 flex w-full max-w-sm items-center gap-1.5 sm:mb-10">
+          <div className={`relative mb-8 flex w-full max-w-sm items-center sm:mb-10 ${progressVariant === 'nodes' ? 'gap-0' : 'gap-1.5'}`}>
             {Array.from({ length: totalSteps }).map((_, i) => {
               const isCurrent = i === step - 1
+              const isCompleted = i < step - 1
+              if (progressVariant === 'nodes') {
+                return (
+                  <div key={i} className="relative flex flex-1 items-center last:flex-none">
+                    {i > 0 && (
+                      <span className={`absolute right-1/2 top-1/2 h-px w-full -translate-y-1/2 ${i <= step - 1 ? 'bg-gold/80' : 'bg-white/20'}`} />
+                    )}
+                    <span
+                      className={`relative z-10 block rounded-full border ${isCurrent
+                        ? 'h-4 w-4 border-gold bg-midnight shadow-[0_0_12px_2px_rgba(229,192,123,.48)] before:absolute before:inset-[3px] before:rounded-full before:bg-gold'
+                        : isCompleted
+                          ? 'h-2.5 w-2.5 border-gold bg-gold shadow-[0_0_7px_rgba(229,192,123,.5)]'
+                          : 'h-2.5 w-2.5 border-white/25 bg-midnight'}
+                      `}
+                    />
+                  </div>
+                )
+              }
               return (
                 <div key={i} className="relative flex-1">
                   {isCurrent && (
