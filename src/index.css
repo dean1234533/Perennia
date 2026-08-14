@@ -276,9 +276,16 @@ body {
 .profile-interest-list span { border:1px solid rgba(231,169,75,.23); border-radius:999px; padding:.45rem .8rem; color:#ede6dd; font-size:.78rem; }
 .profile-story-grid { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:.75rem; margin-top:.85rem; }
 .profile-bio,.profile-cosmic-preview { min-height:11rem; padding:1rem; }
+.profile-bio { display:flex; flex-direction:column; overflow:hidden; }
 .profile-bio h2,.profile-cosmic-preview h2 { display:flex; align-items:center; gap:.55rem; color:#f7f2ea; font-family:var(--font-serif); font-size:1.08rem; }
 .profile-bio h2 svg,.profile-cosmic-preview h2 svg { width:1.1rem; color:#e5a13e; }
 .profile-bio p,.profile-cosmic-preview p { margin-top:.65rem; color:rgba(255,255,255,.76); font-size:.82rem; line-height:1.65; }
+.profile-bio > p { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+.profile-bio-read-more { display:inline-flex; min-height:2.25rem; align-items:center; gap:.35rem; align-self:flex-start; margin-top:auto; color:#efbd67; font-size:.72rem; font-weight:500; }
+.profile-bio-read-more:hover { color:#ffe0a5; }
+.profile-bio-read-more svg { width:.9rem; transition:transform .2s ease; }
+.profile-bio-read-more:hover svg { transform:translateX(2px); }
+.profile-full-bio { margin:0; padding:1rem; color:rgba(255,255,255,.78); font-size:.88rem; line-height:1.75; white-space:pre-wrap; }
 .profile-cosmic-preview { display:flex; align-items:center; justify-content:space-between; overflow:hidden; }
 .profile-cosmic-preview > div:first-child { position:relative; z-index:1; max-width:24rem; }
 .profile-cosmic-preview > div:last-child { flex:0 0 auto; margin:-2rem -1rem -2rem 0; opacity:.85; }

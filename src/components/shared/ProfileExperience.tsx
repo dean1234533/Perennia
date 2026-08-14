@@ -60,7 +60,7 @@ export function ProfileExperience({
   relationshipGoal, messageAction, likeAction, cosmicProfilePath = '/cosmic-profile',
 }: ProfileExperienceProps) {
   const navigate = useNavigate()
-  const [openPanel, setOpenPanel] = useState<'about' | 'interests' | null>(null)
+  const [openPanel, setOpenPanel] = useState<'about' | 'interests' | 'bio' | null>(null)
 
   const canonicalInterests = [...new Set(interests.map((interest) => LEGACY_INTEREST_MAP[interest] ?? interest))]
 
@@ -103,33 +103,21 @@ export function ProfileExperience({
         <button onClick={() => setOpenPanel(openPanel === 'interests' ? null : 'interests')} aria-expanded={openPanel === 'interests'}><Star /> <span>Interests</span><ArrowRight /></button>
       </div>
 
-      {openPanel && (
-        <section className="profile-luxury-card profile-expanded-panel" aria-live="polite">
-          <div className="profile-card-heading">
-            <h2>{openPanel === 'about' ? 'About Me' : 'Interests'}</h2>
-            {isOwnProfile && onEdit && <button className="profile-premium-link" onClick={onEdit}>Edit</button>}
-          </div>
-          {openPanel === 'about' ? (
-            <div className="profile-facts">
-              {profession && <div><BriefcaseBusiness /><span>Profession</span><strong>{profession}</strong></div>}
-              {education && <div><GraduationCap /><span>Education</span><strong>{education}</strong></div>}
-              {!!languages.length && <div><Languages /><span>Languages</span><strong>{languages.join(', ')}</strong></div>}
-              {!profession && !education && !languages.length && isOwnProfile && <p>Add your profession, education and languages from Edit Profile.</p>}
-            </div>
-          ) : (
-            <div className="profile-interest-list">
-              {canonicalInterests.map((interest) => <span key={interest}>{interest}</span>)}
-              {!canonicalInterests.length && isOwnProfile && <p>Add interests from Edit Profile.</p>}
-            </div>
-          )}
-        </section>
-      )}
-
       <div className="profile-story-grid">
         {about && (
           <section className="profile-luxury-card profile-bio">
             <h2><BookOpen /> Bio</h2>
             <p>{about}</p>
+            {about.length > 180 && (
+              <button
+                type="button"
+                className="profile-bio-read-more"
+                onClick={() => setOpenPanel(openPanel === 'bio' ? null : 'bio')}
+                aria-expanded={openPanel === 'bio'}
+              >
+                {openPanel === 'bio' ? 'Hide full bio' : 'Read full bio'} <ArrowRight />
+              </button>
+            )}
           </section>
         )}
         <section className="profile-luxury-card profile-cosmic-preview">
@@ -140,6 +128,30 @@ export function ProfileExperience({
           <ZodiacWheel size={150} />
         </section>
       </div>
+
+      {openPanel && (
+        <section className="profile-luxury-card profile-expanded-panel" aria-live="polite">
+          <div className="profile-card-heading">
+            <h2>{openPanel === 'about' ? 'About Me' : openPanel === 'interests' ? 'Interests' : 'Full Bio'}</h2>
+            {isOwnProfile && onEdit && openPanel !== 'bio' && <button className="profile-premium-link" onClick={onEdit}>Edit</button>}
+          </div>
+          {openPanel === 'about' ? (
+            <div className="profile-facts">
+              {profession && <div><BriefcaseBusiness /><span>Profession</span><strong>{profession}</strong></div>}
+              {education && <div><GraduationCap /><span>Education</span><strong>{education}</strong></div>}
+              {!!languages.length && <div><Languages /><span>Languages</span><strong>{languages.join(', ')}</strong></div>}
+              {!profession && !education && !languages.length && isOwnProfile && <p>Add your profession, education and languages from Edit Profile.</p>}
+            </div>
+          ) : openPanel === 'interests' ? (
+            <div className="profile-interest-list">
+              {canonicalInterests.map((interest) => <span key={interest}>{interest}</span>)}
+              {!canonicalInterests.length && isOwnProfile && <p>Add interests from Edit Profile.</p>}
+            </div>
+          ) : (
+            <p className="profile-full-bio">{about}</p>
+          )}
+        </section>
+      )}
     </div>
   )
 }
