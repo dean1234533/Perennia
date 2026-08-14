@@ -292,7 +292,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
         </div>
       </div>
 
-      <div className="profile-hero-desktop">
+      <div className="profile-layout">
         <ProfileOrbit
           photoUrl={photoUrl}
           name={(onboarding.name || (preview ? 'Martallus' : 'Your Name')).split(' ')[0]}
@@ -304,29 +304,28 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           onPhotoClick={() => photoInputRef.current?.click()}
           extraBadge={<FoundingMemberBadge />}
           editableHighlights
+          profileLayout
           compact
         />
-        <div>
-          <ProfileExperience
-            astrology={{
-              sunSign: onboarding.sunSign || (preview ? 'Pisces' : ''),
-              moonSign: onboarding.moonSign || (preview ? 'Virgo' : ''),
-              risingSign: onboarding.risingSign || (preview ? 'Taurus' : ''),
-              chineseAnimal: onboarding.chineseAnimal || (preview ? 'Rat' : ''),
-              chineseElement: onboarding.chineseElement || (preview ? 'Wood' : ''),
-              yinYang: onboarding.yinYang || (preview ? 'Yang' : ''),
-            }}
-            isPremium={preview || membership?.tier === 'premium'}
-            isOwnProfile
-            about={draft.about}
-            profession={draft.profession}
-            education={draft.education}
-            languages={draft.languages}
-            interests={draft.interests}
-            relationshipGoal={onboarding.relationshipGoal || (preview ? 'Long-term Relationship' : '')}
-            onEdit={() => setEditMode(true)}
-          />
-        </div>
+        <ProfileExperience
+          astrology={{
+            sunSign: onboarding.sunSign || (preview ? 'Pisces' : ''),
+            moonSign: onboarding.moonSign || (preview ? 'Virgo' : ''),
+            risingSign: onboarding.risingSign || (preview ? 'Taurus' : ''),
+            chineseAnimal: onboarding.chineseAnimal || (preview ? 'Rat' : ''),
+            chineseElement: onboarding.chineseElement || (preview ? 'Wood' : ''),
+            yinYang: onboarding.yinYang || (preview ? 'Yang' : ''),
+          }}
+          isPremium={preview || membership?.tier === 'premium'}
+          isOwnProfile
+          about={draft.about}
+          profession={draft.profession}
+          education={draft.education}
+          languages={draft.languages}
+          interests={draft.interests}
+          relationshipGoal={onboarding.relationshipGoal || (preview ? 'Long-term Relationship' : '')}
+          onEdit={() => setEditMode(true)}
+        />
       </div>
       <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
       {photoBusy && (

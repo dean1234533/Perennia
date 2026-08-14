@@ -396,10 +396,9 @@ export const createBillingPortalSession = onCall({ secrets: [stripeSecretKey] },
 })
 
 // ---------------------------------------------------------------------------
-// likeUser — the ONLY way a like is ever recorded, and the ONLY place a real
-// mutual match (and its conversation) is ever created. A client can never
-// read another user's likedIds, so reciprocity can only be established here,
-// server-side, inside one transaction — see repositories/matching.repository.ts.
+// likeUser — the ONLY way a like is recorded and the ONLY place its shared
+// connection + conversation is created. A client cannot fabricate either
+// record directly; the server writes both atomically in one transaction.
 // ---------------------------------------------------------------------------
 export const likeUser = onCall({ cors: true }, async (request) => {
   if (!request.auth) {

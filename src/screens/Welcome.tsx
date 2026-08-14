@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
 
+const HERO_CTA = 'group h-14 w-full rounded-full border border-champagne/80 bg-gradient-to-r from-gold/20 via-violet-400/20 to-gold/15 uppercase tracking-[0.15em] text-ivory shadow-[0_0_30px_rgba(229,192,123,.24),inset_0_1px_rgba(255,255,255,.16)] backdrop-blur-md transition hover:border-ivory hover:from-gold/30 hover:via-violet-400/28 hover:to-gold/24 hover:text-white hover:shadow-[0_0_38px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne/80 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight sm:text-base'
+
 function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
@@ -118,7 +120,7 @@ export function Welcome() {
             <Button
               size="lg"
               onClick={() => navigate('/signup')}
-              className="group h-14 w-full border border-ivory/80 uppercase tracking-[0.15em] shadow-[0_0_24px_rgba(229,192,123,.22)] sm:text-base"
+              className={HERO_CTA}
             >
               Begin Your Story
               <motion.span
@@ -324,7 +326,7 @@ export function Welcome() {
 
           <Heart className="mt-10 h-9 w-9 text-gold drop-shadow-[0_0_12px_rgba(229,192,123,.35)] sm:mt-12" strokeWidth={1.2} />
 
-          <Button size="lg" onClick={() => navigate('/signup')} className="group mt-8 h-16 w-full max-w-md rounded-full border border-ivory/65 text-sm uppercase tracking-[0.17em] shadow-[0_0_30px_rgba(229,192,123,.25)] sm:mt-10 sm:w-auto sm:min-w-96 sm:text-base">
+          <Button size="lg" onClick={() => navigate('/signup')} className={`${HERO_CTA} mt-8 h-16 max-w-md text-sm sm:mt-10 sm:w-auto sm:min-w-96 sm:text-base`}>
             Begin Your Story
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>

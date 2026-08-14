@@ -44,6 +44,20 @@ function MenuGroup({ title, children }: { title: string; children: ReactNode }) 
 }
 
 function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; onClose: () => void; onBack?: () => void; title: string; children: ReactNode }) {
+  useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, onClose])
+
   // Portaled straight to <body> — this overlay was getting rendered as a
   // descendant of AppShell's <main>, which sets its own `position:relative;
   // z-index:10`. That makes <main> a real stacking context: everything
@@ -59,13 +73,13 @@ function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; 
       {open && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[120] flex items-start justify-end bg-black/55 p-3 pt-16 backdrop-blur-sm sm:p-6 sm:pt-20"
+          className="fixed inset-0 z-[120] flex items-start justify-end bg-black/75 p-3 pt-16 sm:p-6 sm:pt-20"
           onClick={(event) => event.target === event.currentTarget && onClose()}
         >
           <motion.div
             role="dialog" aria-modal="true" aria-label={title}
             initial={{ opacity: 0, y: -12, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: .98 }}
-            className="max-h-[calc(100dvh-5rem)] w-full max-w-sm overflow-y-auto rounded-[1.6rem] border border-blue-200/20 bg-[#07142b]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(73,90,220,.22)] backdrop-blur-2xl"
+            className="max-h-[calc(100dvh-5rem)] w-full max-w-sm overscroll-contain overflow-y-auto rounded-[1.6rem] border border-blue-200/20 bg-[#07142b] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(73,90,220,.22)]"
           >
             <div className="mb-4 flex items-center justify-between px-2">
               <div className="flex min-w-0 items-center gap-2">

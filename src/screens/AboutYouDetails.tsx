@@ -166,7 +166,7 @@ function LanguageMultiSelect({ values, onChange }: { values: string[]; onChange:
       <ChevronDown className="pointer-events-none absolute right-4 top-5 h-4 w-4 text-white/40" />
 
       {open && (
-        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-blue-200/20 bg-[#08132f]/98 shadow-2xl backdrop-blur-xl">
+        <div className="mt-2 w-full overflow-hidden rounded-xl border border-blue-200/20 bg-[#08132f] shadow-2xl">
           <div className="relative border-b border-white/10 p-2">
             <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
             <input
@@ -175,7 +175,7 @@ function LanguageMultiSelect({ values, onChange }: { values: string[]; onChange:
               className="h-10 w-full rounded-lg bg-white/[.04] pl-10 pr-3 text-base text-white outline-none placeholder:text-white/30"
             />
           </div>
-          <div className="max-h-52 overflow-y-auto py-1">
+          <div className="max-h-44 overflow-y-auto overscroll-contain py-1 sm:max-h-52">
             {options.map((language) => (
               <button key={language} type="button" onClick={() => add(language)} className="block w-full px-4 py-2.5 text-left text-sm text-white/75 hover:bg-blue-400/10 hover:text-white">{language}</button>
             ))}

@@ -5,6 +5,7 @@ import {
   Heart, Languages, LockKeyhole, Sparkles, Star, UserRound,
 } from 'lucide-react'
 import { ZodiacWheel } from '@/components/shared/ZodiacWheel'
+import { LEGACY_INTEREST_MAP } from '@/data/interests'
 
 const ZODIAC_GLYPHS: Record<string, string> = {
   Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋', Leo: '♌', Virgo: '♍',
@@ -38,7 +39,8 @@ interface ProfileExperienceProps {
   interests?: string[]
   onEdit?: () => void
   relationshipGoal?: string
-  actions?: ReactNode
+  messageAction?: ReactNode
+  likeAction?: ReactNode
   cosmicProfilePath?: string | null
 }
 
@@ -55,17 +57,20 @@ function AstroFact({ symbol, value, label }: { symbol: string; value?: string; l
 
 export function ProfileExperience({
   astrology, isPremium, isOwnProfile, about, profession, education, languages = [], interests = [], onEdit,
-  relationshipGoal, actions, cosmicProfilePath = '/cosmic-profile',
+  relationshipGoal, messageAction, likeAction, cosmicProfilePath = '/cosmic-profile',
 }: ProfileExperienceProps) {
   const navigate = useNavigate()
   const [openPanel, setOpenPanel] = useState<'about' | 'interests' | null>(null)
 
+  const canonicalInterests = [...new Set(interests.map((interest) => LEGACY_INTEREST_MAP[interest] ?? interest))]
+
   return (
-    <>
+    <div className="profile-experience-contents">
       {relationshipGoal && (
         <div className="profile-intention-row">
-          {actions}
+          {messageAction}
           <span className="profile-intention-pill"><Heart className="h-4 w-4" />{relationshipGoal}</span>
+          {likeAction}
         </div>
       )}
 
@@ -113,8 +118,8 @@ export function ProfileExperience({
             </div>
           ) : (
             <div className="profile-interest-list">
-              {interests.map((interest) => <span key={interest}>{interest}</span>)}
-              {!interests.length && isOwnProfile && <p>Add interests from Edit Profile.</p>}
+              {canonicalInterests.map((interest) => <span key={interest}>{interest}</span>)}
+              {!canonicalInterests.length && isOwnProfile && <p>Add interests from Edit Profile.</p>}
             </div>
           )}
         </section>
@@ -129,13 +134,12 @@ export function ProfileExperience({
         )}
         <section className="profile-luxury-card profile-cosmic-preview">
           <div>
-            <h2><Sparkles /> Cosmic Profile</h2>
-            <p>Discover the deeper Western and Chinese astrology behind this celestial profile.</p>
-            {cosmicProfilePath && <button onClick={() => navigate(cosmicProfilePath)}>View Cosmic Profile <ArrowRight /></button>}
+            <h2><Sparkles /> {isOwnProfile ? 'My Cosmic Profile' : 'Cosmic Profile'}</h2>
+            {cosmicProfilePath && <button onClick={() => navigate(cosmicProfilePath)}>{isOwnProfile ? 'View My Cosmic Profile' : 'View Cosmic Profile'} <ArrowRight /></button>}
           </div>
           <ZodiacWheel size={150} />
         </section>
       </div>
-    </>
+    </div>
   )
 }

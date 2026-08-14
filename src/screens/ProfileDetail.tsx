@@ -177,7 +177,7 @@ export function ProfileDetail() {
         ><MoreHorizontal className="h-5 w-5" /></button>
       </div>
 
-      <div className="profile-hero-desktop">
+      <div className="profile-layout">
         <ProfileOrbit
           photoUrl={profile.profilePhotoUrl || null}
           name={profile.name.split(' ')[0]}
@@ -187,6 +187,7 @@ export function ProfileDetail() {
           categories={orbitCategories}
           onCategorySelect={handleOrbitSelect}
           compatibility={result?.compatibility}
+          profileLayout
           compact
         />
         <ProfileExperience
@@ -203,17 +204,15 @@ export function ProfileDetail() {
           interests={extras?.interests}
           relationshipGoal={profile.relationshipGoal}
           cosmicProfilePath={null}
-          actions={(
-            <>
-              {isMatched && user && (
-                <button className="profile-action-pill" onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}>
-                  <MessageCircle className="h-4 w-4" /> Message
-                </button>
-              )}
-              <button className="profile-action-pill" onClick={handleLike}>
-                <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} /> Like
-              </button>
-            </>
+          messageAction={isMatched && user ? (
+            <button className="profile-action-pill" onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}>
+              <MessageCircle className="h-4 w-4" /> Message
+            </button>
+          ) : null}
+          likeAction={(
+            <button className="profile-action-pill" onClick={handleLike}>
+              <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} /> Like
+            </button>
           )}
         />
       </div>

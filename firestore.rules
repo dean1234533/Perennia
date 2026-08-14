@@ -63,12 +63,10 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Real mutual-like matching. The client can never read another user's
-    // likes (it already knows its own via users/{uid}.likedIds) and can
-    // never write either collection directly — only the likeUser Cloud
-    // Function (Admin SDK) creates a like or a match, after genuinely
-    // checking for reciprocity server-side. This is what makes it
-    // impossible to fake a match from the client.
+    // Real server-created connections. The client can never read another
+    // user's likes and can never write either collection directly — only
+    // the likeUser Cloud Function (Admin SDK) creates a like and its shared
+    // connection. This makes it impossible to fabricate one from a client.
     match /likes/{likeId} {
       allow read, write: if false;
     }
@@ -78,8 +76,8 @@ service cloud.firestore {
     }
 
     // Conversations are keyed by matchId and only ever created by the
-    // likeUser Cloud Function alongside the match itself (so every real
-    // match has exactly one conversation from the start). Both real
+    // likeUser Cloud Function alongside the connection itself (so every
+    // connection has exactly one conversation from the start). Both real
     // participants — not just one — can read the conversation and their
     // shared messages, and only ever as themselves as sender.
     match /conversations/{conversationId} {

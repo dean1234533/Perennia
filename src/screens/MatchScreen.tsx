@@ -103,7 +103,7 @@ export function MatchScreen() {
         transition={{ delay: 0.4 }}
         className="relative z-10 mb-2 text-xs uppercase tracking-[0.3em] text-gold"
       >
-        A Rare Alignment
+        Connection Open
       </motion.p>
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
@@ -111,7 +111,7 @@ export function MatchScreen() {
         transition={{ delay: 0.5, duration: 0.7 }}
         className="font-serif-display relative z-10 mb-4 text-4xl md:text-6xl"
       >
-        It's a <span className="text-gradient-gold italic">Match</span>
+        You <span className="text-gradient-gold italic">Connected</span>
       </motion.h1>
       <motion.p
         initial={{ opacity: 0 }}
@@ -120,8 +120,8 @@ export function MatchScreen() {
         className="relative z-10 mb-10 max-w-md text-white/60"
       >
         {compatibility !== null
-          ? `You and ${profile.name.split(' ')[0]} share a ${compatibility}% compatibility score. The stars — and the science — agree.`
-          : `You and ${profile.name.split(' ')[0]} just matched.`}
+          ? `You and ${profile.name.split(' ')[0]} share a ${compatibility}% compatibility score. You can message now, and they'll see your profile in their connections.`
+          : `You can message ${profile.name.split(' ')[0]} now, and they'll see your profile in their connections.`}
       </motion.p>
 
       <motion.div

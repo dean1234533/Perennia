@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { firebaseConfigured } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
@@ -72,8 +72,8 @@ interface AppContextValue {
   passedIds: string[]
   matchedIds: string[]
   blockedIds: string[]
-  /** Real like via the likeUser Cloud Function. Returns the real matchId
-   *  when a genuine mutual match was just created, otherwise null. */
+  /** Real like via the likeUser Cloud Function. Returns the shared
+   *  connection id so the sender can start messaging immediately. */
   likeProfile: (targetUid: string) => Promise<string | null>
   passProfile: (targetUid: string) => Promise<void>
   blockProfile: (targetUid: string) => Promise<void>
@@ -162,6 +162,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
   const [hideBottomNav, setHideBottomNav] = useState(false)
   const [profileLoadedUid, setProfileLoadedUid] = useState<string | null>(null)
+  const reconciledLikes = useRef(new Set<string>())
   const profileLoaded = !firebaseConfigured || (!!user && profileLoadedUid === user.uid)
   const userUid = user?.uid
 
@@ -246,6 +247,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
     return unsub
   }, [userUid])
+
+  // Likes made before one-way connections were introduced have no match or
+  // conversation record. Re-submit each of those likes once per app session;
+  // likeUser is idempotent and now fills in the missing shared records.
+  useEffect(() => {
+    if (!firebaseConfigured || !user || !profileLoaded) return
+
+    for (const targetUid of likedIds) {
+      if (matchedIds.includes(targetUid) || blockedIds.includes(targetUid)) continue
+      const reconciliationKey = `${user.uid}:${targetUid}`
+      if (reconciledLikes.current.has(reconciliationKey)) continue
+      reconciledLikes.current.add(reconciliationKey)
+      likeUser(targetUid).catch((err) => {
+        console.warn('[Perennia] Failed to activate an existing like:', err)
+      })
+    }
+  }, [user, profileLoaded, likedIds, matchedIds, blockedIds])
 
   const updateProfileExtras = useCallback(
     async (extras: SelfProfile) => {

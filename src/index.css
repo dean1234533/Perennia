@@ -235,7 +235,10 @@ body {
 .profile-wordmark svg { width:2rem; height:2rem; }
 .profile-wordmark img { width:2rem!important; height:2rem!important; }
 .profile-menu-button { display:flex; width:3rem; height:3rem; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.17); border-radius:999px; background:rgba(3,8,24,.52); color:#f7f4ef; }
-.profile-luxury-card { border:1px solid rgba(214,221,255,.15); border-radius:1.1rem; background:linear-gradient(145deg,rgba(4,10,28,.78),rgba(4,9,23,.55)); box-shadow:inset 0 1px rgba(255,255,255,.025); backdrop-filter:blur(12px); }
+.profile-menu-button:focus-visible,.profile-action-pill:focus-visible,.profile-shortcuts button:focus-visible,.profile-gallery button:focus-visible,.profile-premium-link:focus-visible { outline:2px solid #e8b15a; outline-offset:3px; }
+.profile-layout { display:flex; flex-direction:column; }
+.profile-experience-contents { display:contents; }
+.profile-luxury-card { border:1px solid rgba(214,225,255,.24); border-radius:1.1rem; background:linear-gradient(145deg,rgba(45,75,134,.3),rgba(49,35,101,.24)); box-shadow:inset 0 1px rgba(255,255,255,.085),0 14px 34px rgba(2,7,24,.11); backdrop-filter:blur(12px) saturate(125%); }
 .profile-card-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.75rem 1rem 0; }
 .profile-card-heading h2 { font-family:var(--font-serif); color:#f7f3eb; font-size:1rem; }
 .profile-premium-link,.profile-premium-label { display:inline-flex; align-items:center; gap:.35rem; color:#e8a646; font-size:.72rem; white-space:nowrap; }
@@ -259,7 +262,8 @@ body {
 .profile-feature-strip button + button { border-left:1px solid rgba(255,255,255,.11); }
 .profile-feature-strip svg { width:1.1rem; color:#e9a23b; }
 .profile-shortcuts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin-top:.85rem; }
-.profile-shortcuts button { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:.7rem; min-height:4.2rem; padding:0 1rem; border:1px solid rgba(214,221,255,.15); border-radius:1rem; background:rgba(3,9,25,.62); color:#f4efe8; text-align:left; }
+.profile-shortcuts button { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:.7rem; min-height:4.2rem; padding:0 1rem; border:1px solid rgba(221,226,255,.26); border-radius:1rem; background:linear-gradient(135deg,rgba(59,84,151,.28),rgba(59,40,111,.22)); color:#f8f3eb; box-shadow:inset 0 1px rgba(255,255,255,.08); text-align:left; transition:border-color .2s ease,background .2s ease,transform .2s ease; }
+.profile-shortcuts button:hover { border-color:rgba(238,202,134,.55); background:linear-gradient(135deg,rgba(75,104,177,.36),rgba(77,51,132,.3)); transform:translateY(-1px); }
 .profile-shortcuts button > svg:first-child,.profile-shortcuts button > svg:last-child { color:#e6a13a; width:1.25rem; }
 .profile-shortcuts span { font-family:var(--font-serif); font-size:1.1rem; }
 .profile-expanded-panel { margin-top:.75rem; padding-bottom:1rem; }
@@ -278,7 +282,8 @@ body {
 .profile-cosmic-preview { display:flex; align-items:center; justify-content:space-between; overflow:hidden; }
 .profile-cosmic-preview > div:first-child { position:relative; z-index:1; max-width:24rem; }
 .profile-cosmic-preview > div:last-child { flex:0 0 auto; margin:-2rem -1rem -2rem 0; opacity:.85; }
-.profile-cosmic-preview button { display:inline-flex; align-items:center; gap:.5rem; min-height:2.45rem; margin-top:.75rem; padding:.35rem 1rem; border:1px solid rgba(229,158,59,.55); border-radius:999px; color:#e8ac52; font-size:.74rem; }
+.profile-cosmic-preview button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; margin-top:.9rem; padding:.45rem .85rem; border:1px solid rgba(241,194,112,.72); border-radius:999px; background:linear-gradient(110deg,rgba(230,174,80,.16),rgba(109,78,169,.25)); color:#f4cb82; box-shadow:0 0 20px rgba(229,158,59,.12),inset 0 1px rgba(255,255,255,.1); font-size:.72rem; white-space:nowrap!important; transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease; }
+.profile-cosmic-preview button:hover { transform:translateY(-1px); border-color:rgba(255,220,158,.95); box-shadow:0 0 26px rgba(229,158,59,.22),inset 0 1px rgba(255,255,255,.14); }
 .profile-cosmic-preview button svg { width:1rem; }
 .profile-gallery { margin-top:1rem; padding:.75rem; }
 .profile-gallery-header { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:.6rem; border-bottom:1px solid rgba(255,255,255,.08); }
@@ -292,14 +297,46 @@ body {
 @media (min-width:1280px) {
   .profile-page-shell { padding-top:1.25rem; }
   .profile-topbar .profile-wordmark { visibility:hidden; }
-  .profile-hero-desktop { display:grid; grid-template-columns:minmax(390px,.9fr) minmax(420px,1.1fr); align-items:center; }
+}
+
+@media (min-width:900px) {
+  .profile-layout {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-template-areas:
+      "portrait portrait identity identity"
+      "portrait portrait intention intention"
+      "portrait portrait features features"
+      "astrology astrology astrology astrology"
+      "shortcuts shortcuts bio cosmic"
+      "expanded expanded expanded expanded";
+    align-items:center;
+    gap:.8rem;
+  }
+  .profile-orbit-root { display:contents; }
+  .profile-orbit-root > .profile-orbit { grid-area:portrait; }
+  .profile-orbit-identity { grid-area:identity; align-self:end; margin:0!important; }
+  .profile-intention-row { grid-area:intention; margin:.3rem auto; }
+  .profile-feature-strip { grid-area:features; width:100%; margin:0; }
+  .profile-astrology { grid-area:astrology; margin-top:.2rem; }
+  .profile-shortcuts { grid-area:shortcuts; align-self:stretch; margin:0; }
+  .profile-shortcuts button { min-height:100%; }
+  .profile-expanded-panel { grid-area:expanded; width:100%; margin:0; }
+  .profile-story-grid { display:contents; }
+  .profile-bio { grid-area:bio; height:100%; }
+  .profile-cosmic-preview { grid-area:cosmic; height:100%; }
+  .profile-layout:not(:has(.profile-bio)) .profile-cosmic-preview { grid-column:3 / 5; }
+  .profile-cosmic-preview > div:last-child { width:112px!important; height:112px!important; margin-right:-2.75rem; }
 }
 
 @media (max-width:700px) {
   .profile-page-shell { padding-inline:.75rem; padding-top:.5rem; }
   .profile-wordmark { font-size:1.1rem; }
-  .profile-astro-grid.is-premium { grid-template-columns:repeat(3,minmax(0,1fr)); }
-  .profile-astro-grid.is-premium .profile-astro-fact:nth-child(4)::before { display:none; }
+  .profile-astro-grid.is-premium { grid-template-columns:repeat(6,minmax(0,1fr)); padding-inline:.2rem; }
+  .profile-astro-symbol { font-size:1.55rem; }
+  .profile-astro-fact { padding:.45rem .12rem; }
+  .profile-astro-fact strong { font-size:.72rem; }
+  .profile-astro-fact > span:last-child { font-size:.55rem; }
   .profile-feature-strip button { flex-direction:column; gap:.2rem; font-size:.68rem; }
   .profile-shortcuts { gap:.55rem; }
   .profile-shortcuts button { min-height:3.8rem; padding:0 .75rem; }

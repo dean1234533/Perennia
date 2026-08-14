@@ -240,15 +240,15 @@ export async function savePushTokenRemote(uid: string, token: string) {
 }
 
 // --- Real discovery, matches, messaging -------------------------------------
-// Liking (and the reciprocal-match check that goes with it) is NOT done here
-// — it goes through the real `likeUser` Cloud Function (see matchingApi.ts),
-// since a client can never safely read another user's likes to detect
-// mutual interest. Everything below is read-only from the client's side,
-// or writes that are already scoped to data the client is allowed to touch.
+// Liking and connection creation are NOT done here — they go through the
+// real `likeUser` Cloud Function (see matchingApi.ts), since clients cannot
+// safely create shared connections or conversations directly.
+// Everything below is read-only from the client's side, or writes that are
+// already scoped to data the client is allowed to touch.
 
 /** A candidate pool for Discovery: real, onboarded members with a profile
- *  photo. Excludes nobody by like/pass state — the caller filters that
- *  client-side against its own likedIds/passedIds, since Firestore can't
+ *  photo. Excludes nobody by connection/like/pass state — the caller filters
+ *  that client-side against its own state, since Firestore can't
  *  express "not in this array" as a query. */
 export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCandidate[]> {
   const q = query(
@@ -266,6 +266,7 @@ export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCa
 export interface MatchDoc {
   id: string
   users: [string, string]
+  initiatedBy?: string
   createdAt: Timestamp | null
 }
 

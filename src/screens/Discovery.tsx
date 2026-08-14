@@ -74,7 +74,7 @@ function PolarityIcon() {
 export function Discovery() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { passedIds, likedIds, blockedIds, onboarding, likeProfile, passProfile } = useApp()
+  const { passedIds, likedIds, matchedIds, blockedIds, onboarding, likeProfile, passProfile } = useApp()
   const [filter, setFilter] = useState<'all' | 'nearby'>('all')
   const [filterOpen, setFilterOpen] = useState(false)
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
@@ -120,7 +120,7 @@ export function Discovery() {
   }
 
   const eligible = candidates.filter((c) => {
-    if (passedIds.includes(c.uid) || likedIds.includes(c.uid) || blockedIds.includes(c.uid)) return false
+    if (passedIds.includes(c.uid) || likedIds.includes(c.uid) || matchedIds.includes(c.uid) || blockedIds.includes(c.uid)) return false
     if (c.incognito) return false
     if (interestedIn && c.gender !== interestedIn) return false
     const age = calculateAge(c.birthDate)

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { Check, X, ZoomIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,14 @@ export function CircularCropper({ file, onConfirm, onCancel, variant = 'default'
     setImgUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [file])
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const w = e.currentTarget.naturalWidth
@@ -91,7 +100,7 @@ export function CircularCropper({ file, onConfirm, onCancel, variant = 'default'
     }
   }
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -99,8 +108,8 @@ export function CircularCropper({ file, onConfirm, onCancel, variant = 'default'
       role="dialog"
       aria-modal="true"
       aria-labelledby="cropper-title"
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-[safe_center] gap-5 overflow-y-auto p-5 sm:gap-6 sm:p-6 ${
-        isProfilePhoto ? 'bg-midnight/35 backdrop-blur-md' : 'bg-black/90 backdrop-blur-xl'
+      className={`fixed inset-0 z-[140] flex flex-col items-center justify-center gap-5 overflow-y-auto bg-[#050b1d] p-5 sm:gap-6 sm:p-6 ${
+        isProfilePhoto ? '' : 'bg-black'
       }`}
     >
       <p id="cropper-title" className={`font-serif-display text-champagne ${isProfilePhoto ? 'text-2xl tracking-wide sm:text-3xl' : 'text-xl'}`}>
@@ -187,6 +196,7 @@ export function CircularCropper({ file, onConfirm, onCancel, variant = 'default'
           </Button>
         </div>
       )}
-    </motion.div>
+    </motion.div>,
+    document.body
   )
 }

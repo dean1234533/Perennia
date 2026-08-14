@@ -11,6 +11,7 @@ import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
 import { firebaseConfigured } from '@/lib/firebase'
 import { computeNatalChart, type NatalChartResult } from '@/lib/natalChart'
+import { computeChineseYearProfile } from '@/lib/chineseAstrology'
 import './CosmicProfile.css'
 
 type WesternPlacementKey =
@@ -35,9 +36,12 @@ interface WesternPlacement {
 
 interface ChineseProfileDisplay {
   animal: string | null
+  animalCharacter: string | null
   heavenlyStem: string | null
+  heavenlyStemCharacter: string | null
   stemElement: string | null
   earthlyBranch: string | null
+  earthlyBranchCharacter: string | null
   polarity: string | null
 }
 
@@ -113,12 +117,14 @@ function WesternCard({ placement, value }: { placement: WesternPlacement; value?
 function ChineseCard({
   item,
   value,
+  character,
 }: {
   item: (typeof CHINESE_ITEMS)[number]
   value: string | null
+  character?: string | null
 }) {
   const animalSymbols: Record<string, string> = { Rat: '鼠', Ox: '牛', Tiger: '虎', Rabbit: '兔', Dragon: '龍', Snake: '蛇', Horse: '馬', Sheep: '羊', Monkey: '猴', Rooster: '雞', Dog: '狗', Pig: '豬' }
-  const symbol = item.key === 'animal' && value ? animalSymbols[value] ?? item.symbol : item.symbol
+  const symbol = character ?? (item.key === 'animal' && value ? animalSymbols[value] ?? item.symbol : item.symbol)
   return (
     <article className={`cosmic-chinese-card cosmic-accent-${item.accent}`}>
       <span className="cosmic-chinese-symbol" aria-hidden="true">{symbol}</span>
@@ -176,19 +182,23 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
     plutoSign: extendedChart?.plutoSign,
   }), [extendedChart, onboarding.moonSign, onboarding.risingSign, onboarding.sunSign])
 
-  // This adapter intentionally contains no calendar math. Stem and branch
-  // remain null until a validated full-date Chinese astrology source exists.
+  const chineseYear = useMemo(
+    () => computeChineseYearProfile(onboarding.birthDate),
+    [onboarding.birthDate],
+  )
+
   const chineseProfile: ChineseProfileDisplay = {
-    animal: onboarding.chineseAnimal || null,
-    heavenlyStem: null,
-    stemElement: onboarding.chineseElement || null,
-    earthlyBranch: null,
-    polarity: onboarding.yinYang || null,
+    animal: onboarding.chineseAnimal || chineseYear?.animal || null,
+    animalCharacter: chineseYear?.animalCharacter || null,
+    heavenlyStem: chineseYear?.heavenlyStem || null,
+    heavenlyStemCharacter: chineseYear?.heavenlyStemCharacter || null,
+    stemElement: onboarding.chineseElement || chineseYear?.element || null,
+    earthlyBranch: chineseYear?.earthlyBranch || null,
+    earthlyBranchCharacter: chineseYear?.earthlyBranchCharacter || null,
+    polarity: onboarding.yinYang || chineseYear?.polarity || null,
   }
 
-  const visibleWesternPlacements = isOnboarding
-    ? WESTERN_PLACEMENTS
-    : WESTERN_PLACEMENTS.filter(({ key }) => ['sunSign', 'moonSign', 'risingSign'].includes(key))
+  const visibleWesternPlacements = WESTERN_PLACEMENTS
 
   const finish = async () => {
     if (!hasDevelopmentVerificationBypass() && (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt)) {
@@ -255,22 +265,29 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
         </section>
       </div>
 
-      {isOnboarding && (
-        <section className="cosmic-chinese-section" aria-labelledby="chinese-astrology-heading">
-          <CosmicSectionHeading id="chinese-astrology-heading">Chinese Astrology</CosmicSectionHeading>
-          <div className="cosmic-chinese-grid">
-            {CHINESE_ITEMS.map((item) => (
-              <ChineseCard key={item.key} item={item} value={chineseProfile[item.key]} />
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="cosmic-chinese-section" aria-labelledby="chinese-astrology-heading">
+        <CosmicSectionHeading id="chinese-astrology-heading">Chinese Astrology</CosmicSectionHeading>
+        <div className="cosmic-chinese-grid">
+          {CHINESE_ITEMS.map((item) => (
+            <ChineseCard
+              key={item.key}
+              item={item}
+              value={chineseProfile[item.key]}
+              character={item.key === 'animal'
+                ? chineseProfile.animalCharacter
+                : item.key === 'heavenlyStem'
+                  ? chineseProfile.heavenlyStemCharacter
+                  : item.key === 'earthlyBranch'
+                    ? chineseProfile.earthlyBranchCharacter
+                    : null}
+            />
+          ))}
+        </div>
+      </section>
 
       <p className="cosmic-profile-note">
         <Info aria-hidden="true" />
-        {isOnboarding
-          ? 'These are the core astrological influences connected with your birth.'
-          : 'Your core astrological profile. Full profile access is reserved for the onboarding reveal and future Premium access.'}
+        These are the core astrological influences connected with your birth.
       </p>
 
       {isOnboarding && (

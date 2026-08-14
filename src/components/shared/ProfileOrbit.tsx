@@ -56,6 +56,7 @@ interface ProfileOrbitProps {
   extraBadge?: ReactNode
   compact?: boolean
   editableHighlights?: boolean
+  profileLayout?: boolean
 }
 
 function VerificationBadge({ status }: { status: ProfileOrbitProps['verificationStatus'] }) {
@@ -93,6 +94,7 @@ export function ProfileOrbit({
   extraBadge,
   compact = false,
   editableHighlights = false,
+  profileLayout = false,
 }: ProfileOrbitProps) {
   const positions = compact
     ? [
@@ -104,7 +106,7 @@ export function ProfileOrbit({
     : ORBIT_POSITIONS
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={cn('flex flex-col items-center', profileLayout && 'profile-orbit-root')}>
       <div className={cn(
         'profile-orbit relative mx-auto w-full',
         compact
@@ -204,7 +206,7 @@ export function ProfileOrbit({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className={cn('flex flex-col items-center gap-2 text-center', compact ? '-mt-2 sm:-mt-4' : '-mt-1 sm:-mt-3')}
+        className={cn('profile-orbit-identity flex flex-col items-center gap-2 text-center', compact ? '-mt-2 sm:-mt-4' : '-mt-1 sm:-mt-3')}
       >
         <h1 className={cn('font-serif-display font-medium tracking-wide text-ivory', compact ? 'text-4xl sm:text-5xl' : 'text-4xl sm:text-6xl')}>
           {name}
