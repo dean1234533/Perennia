@@ -286,10 +286,11 @@ body {
 .profile-bio-read-more svg { width:.9rem; transition:transform .2s ease; }
 .profile-bio-read-more:hover svg { transform:translateX(2px); }
 .profile-full-bio { margin:0; padding:1rem; color:rgba(255,255,255,.78); font-size:.88rem; line-height:1.75; white-space:pre-wrap; }
-.profile-cosmic-preview { display:flex; align-items:center; justify-content:space-between; overflow:hidden; }
-.profile-cosmic-preview > div:first-child { position:relative; z-index:1; max-width:24rem; }
-.profile-cosmic-preview > div:last-child { flex:0 0 auto; margin:-2rem -1rem -2rem 0; opacity:.85; }
-.profile-cosmic-preview button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; margin-top:.9rem; padding:.45rem .85rem; border:1px solid rgba(241,194,112,.72); border-radius:999px; background:linear-gradient(110deg,rgba(230,174,80,.16),rgba(109,78,169,.25)); color:#f4cb82; box-shadow:0 0 20px rgba(229,158,59,.12),inset 0 1px rgba(255,255,255,.1); font-size:.72rem; white-space:nowrap!important; transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease; }
+.profile-cosmic-preview { position:relative; display:block; overflow:hidden; }
+.profile-cosmic-preview > div:first-child { position:relative; z-index:2; display:flex; height:100%; min-width:0; flex-direction:column; align-items:flex-start; }
+.profile-cosmic-preview h2 { position:relative; z-index:2; width:100%; max-width:100%; white-space:nowrap; }
+.profile-cosmic-preview > div:last-child { position:absolute!important; right:.75rem; top:50%; z-index:1; flex:0 0 auto; width:96px!important; height:96px!important; margin:0!important; opacity:.72; transform:translateY(-50%); }
+.profile-cosmic-preview button { display:inline-flex; align-items:center; gap:.4rem; min-height:2.75rem; margin-top:auto; padding:.45rem .85rem; border:1px solid rgba(241,194,112,.72); border-radius:999px; background:linear-gradient(110deg,rgba(230,174,80,.16),rgba(109,78,169,.25)); color:#f4cb82; box-shadow:0 0 20px rgba(229,158,59,.12),inset 0 1px rgba(255,255,255,.1); font-size:.72rem; white-space:nowrap!important; transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease; }
 .profile-cosmic-preview button:hover { transform:translateY(-1px); border-color:rgba(255,220,158,.95); box-shadow:0 0 26px rgba(229,158,59,.22),inset 0 1px rgba(255,255,255,.14); }
 .profile-cosmic-preview button svg { width:1rem; }
 .profile-gallery { margin-top:1rem; padding:.75rem; }
@@ -333,7 +334,7 @@ body {
   .profile-bio { grid-area:bio; height:100%; }
   .profile-cosmic-preview { grid-area:cosmic; height:100%; }
   .profile-layout:not(:has(.profile-bio)) .profile-cosmic-preview { grid-column:3 / 5; }
-  .profile-cosmic-preview > div:last-child { width:112px!important; height:112px!important; margin-right:-2.75rem; }
+  .profile-cosmic-preview > div:last-child { width:96px!important; height:96px!important; }
 }
 
 @media (max-width:700px) {
@@ -348,7 +349,7 @@ body {
   .profile-shortcuts { gap:.55rem; }
   .profile-shortcuts button { min-height:3.8rem; padding:0 .75rem; }
   .profile-story-grid { grid-template-columns:1fr; }
-  .profile-cosmic-preview > div:last-child { width:118px!important; height:118px!important; margin-right:-2.5rem; }
+  .profile-cosmic-preview > div:last-child { right:.5rem; width:92px!important; height:92px!important; }
   .profile-facts { grid-template-columns:1fr; }
   .profile-gallery-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .profile-gallery-grid button:nth-child(n+7) { display:none; }
@@ -431,6 +432,32 @@ input, textarea, select {
 
 button {
   font-family: inherit;
+}
+
+/* Desktop pointer affordance: Tailwind's reset removes the browser's hand
+ * cursor from plain buttons, which made interactive cards and controls feel
+ * inert. Apply it consistently on devices that actually have a fine hover
+ * pointer, while preserving clear disabled-state feedback. */
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled),
+  a[href],
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  select:not(:disabled),
+  label[for],
+  label:has(input[type='checkbox'], input[type='radio'], input[type='file']),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  input[type='file']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [role='button'][aria-disabled='true'],
+  input:disabled {
+    cursor: not-allowed;
+  }
 }
 
 .profile-page::before {

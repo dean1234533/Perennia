@@ -60,6 +60,14 @@ export function ProfileDetail() {
     return subscribeUserMedia(id, setMedia)
   }, [id])
 
+  // The profile replaces a centered loading state after its member data
+  // arrives. Reset at that point as well as on the route change so browser
+  // scroll anchoring cannot leave the portrait above the visible viewport.
+  useEffect(() => {
+    if (!profile?.uid) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [profile?.uid])
+
   useEffect(() => {
     if (!user) return
     getPrivateLifestyle(user.uid).then(setSelfLifestyle)
