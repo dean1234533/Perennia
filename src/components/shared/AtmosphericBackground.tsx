@@ -77,7 +77,7 @@ export function LandingCelestialBackground() {
       <div className="celestial-artwork absolute -inset-[1.5%] bg-cover bg-center" />
 
       {/* A near-static duplicate haze creates depth without altering artwork. */}
-      <div className="celestial-drift absolute -inset-[3%] opacity-[.07] mix-blend-screen bg-[url('/perennia-celestial-background.jpg')] bg-cover bg-center" />
+      <div className="celestial-drift absolute -inset-[3%] opacity-[.055] mix-blend-screen bg-[url('/perennia-landing-landscape-v2.webp')] bg-cover bg-center" />
 
       <div className="absolute inset-0">
         {stars.map((star, index) => (
@@ -115,9 +115,9 @@ export function LandingCelestialBackground() {
 
       <i className="celestial-shooting-star absolute left-[12%] top-[18%] h-px w-28 -rotate-[18deg]" />
 
-      {/* Dark calm centre and edge vignette keep text legible on every page. */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_54%_62%_at_50%_43%,rgba(3,10,28,.28)_0%,rgba(3,10,28,.12)_48%,transparent_76%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_46%,rgba(2,7,20,.18)_76%,rgba(2,6,18,.5)_100%)]" />
+      {/* A restrained reading veil preserves the landscape's luminous colour. */}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,12,40,.04)_0%,rgba(4,10,31,.2)_58%,rgba(2,7,22,.34)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(2,7,20,.13)_78%,rgba(2,6,18,.34)_100%)]" />
     </div>
   )
 }

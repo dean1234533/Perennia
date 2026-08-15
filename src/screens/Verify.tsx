@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  ShieldCheck, IdCard, CheckCircle2, Loader2, AlertTriangle, UploadCloud,
+  ShieldCheck, CheckCircle2, Loader2, AlertTriangle, UploadCloud,
   Camera, ScanFace, CalendarDays, UserRound, ArrowRight,
 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
@@ -31,17 +31,17 @@ function formatBirthDate(value: string) {
 
 function VerificationProgress({ active }: { active: number }) {
   return (
-    <div className="mx-auto mb-6 w-full max-w-sm">
-      <div className="flex items-center">
+    <div className="verification-progress mx-auto mb-6 w-full max-w-sm">
+      <div className="verification-progress-track flex items-center">
         {['ID', 'Validate', 'Face', 'Confirm', 'Verified'].map((label, index) => (
           <div key={label} className="contents">
-            {index > 0 && <div className={`h-px flex-1 ${index <= active ? 'bg-blue-400' : 'bg-white/20'}`} />}
+            {index > 0 && <div className={`verification-progress-line h-px flex-1 ${index <= active ? 'is-complete' : ''}`} />}
             <div
               aria-label={label}
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[10px] transition-all ${
-                index < active ? 'border-blue-300 bg-blue-600 text-white' :
-                index === active ? 'border-blue-200 bg-blue-500/30 text-white shadow-[0_0_18px_rgba(73,118,255,.8)]' :
-                'border-white/25 bg-midnight text-white/30'
+              className={`verification-progress-node flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs transition-all ${
+                index < active ? 'is-complete' :
+                index === active ? 'is-active' :
+                'is-upcoming'
               }`}
             >
               {index < active ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
@@ -49,7 +49,7 @@ function VerificationProgress({ active }: { active: number }) {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-center text-xs text-white/45">Step {active + 1} of 5</p>
+      <p className="mt-4 text-center text-sm text-white/95">Step {active + 1} of 5</p>
     </div>
   )
 }
@@ -174,8 +174,8 @@ export function Verify() {
   const activeStep = detailsConfirmed ? 4 : isVerified ? 3 : stage === 'pending' ? 2 : stage === 'launching' ? 1 : 0
 
   return (
-    <OnboardingShell>
-      <div className="mb-5 text-center">
+    <OnboardingShell className="verification-onboarding-shell">
+      <div className="verification-heading mb-5 text-center">
         <h1 className="font-serif-display text-4xl sm:text-5xl">Verify Your Identity</h1>
         <p className="mt-2 text-sm text-white/55">Keep our community safe with verified profiles</p>
       </div>
@@ -183,7 +183,7 @@ export function Verify() {
 
       <motion.div
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-        className="verification-card glass-strong w-full max-w-2xl rounded-[2rem] border-white/20 p-7 text-center shadow-[0_0_50px_rgba(54,93,211,.16)] sm:p-10"
+        className={`verification-card w-full max-w-2xl text-center ${!isVerified && !detailsConfirmed && stage !== 'pending' && configured ? 'is-intro' : 'glass-strong rounded-[2rem] border-white/20 p-7 shadow-[0_0_50px_rgba(54,93,211,.16)] sm:p-10'}`}
       >
         <AnimatePresence mode="wait">
           {isVerified && !detailsConfirmed ? (
@@ -273,24 +273,19 @@ export function Verify() {
             </motion.div>
           ) : (
             <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="mx-auto mb-4 flex h-20 w-24 items-center justify-center rounded-2xl border border-gold/45 bg-gold/[.06] shadow-[0_0_26px_rgba(229,192,123,.18)]">
-                <IdCard className="h-11 w-11 text-champagne" strokeWidth={1.25} />
-              </div>
-              <h2 className="font-serif-display text-3xl">Upload Government ID</h2>
-              <p className="mb-6 mt-2 text-sm text-white/55">Stripe automatically recognises supported government-issued photo IDs.</p>
               {verification.status === 'failed' && <p className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">Your previous attempt could not be verified. Please try again with a clear, valid document.</p>}
               {errorMessage && <p className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">{errorMessage}</p>}
-              <div className="space-y-3">
-                <button type="button" onClick={launch} disabled={stage === 'launching' || !user} className="flex w-full items-center justify-center gap-4 rounded-2xl border border-dashed border-blue-200/40 px-5 py-5 hover:bg-blue-500/[.06] disabled:opacity-50">
-                  <UploadCloud className="h-7 w-7 text-blue-200" />
-                  <span className="text-left"><span className="block text-lg text-white">Upload ID Photo</span><span className="block text-xs text-white/45">Passport, driving licence or provisional driving licence</span></span>
+              <div className="verification-actions space-y-4">
+                <button type="button" onClick={launch} disabled={stage === 'launching' || !user} className="verification-action-card flex w-full items-center gap-6 px-8 text-left disabled:opacity-50">
+                  <UploadCloud className="h-9 w-9 shrink-0 text-white" />
+                  <span><span className="block text-xl font-medium text-white">Upload ID Photo</span><span className="mt-1 block text-sm text-white/85">Passport, driving licence or provisional driving licence</span></span>
                 </button>
-                <button type="button" onClick={launch} disabled={stage === 'launching' || !user} className="flex w-full items-center justify-center gap-4 rounded-2xl border border-blue-300/60 bg-gradient-to-r from-blue-700/20 to-violet-700/20 px-5 py-4 shadow-[0_0_24px_rgba(63,99,255,.2)] hover:border-blue-200 disabled:opacity-50">
-                  {stage === 'launching' ? <Loader2 className="h-7 w-7 animate-spin" /> : <Camera className="h-7 w-7 text-blue-100" />}
-                  <span className="text-left"><span className="block text-lg text-white">Scan with Camera</span><span className="block text-xs text-white/45">Use your device camera</span></span>
+                <button type="button" onClick={launch} disabled={stage === 'launching' || !user} className="verification-action-card flex w-full items-center gap-6 px-8 text-left disabled:opacity-50">
+                  {stage === 'launching' ? <Loader2 className="h-9 w-9 shrink-0 animate-spin" /> : <Camera className="h-9 w-9 shrink-0 text-white" />}
+                  <span><span className="block text-xl font-medium text-white">Scan with Camera</span><span className="mt-1 block text-sm text-white/85">Use your device camera</span></span>
                 </button>
               </div>
-              <p className="mt-5 flex items-center justify-center gap-2 text-xs text-white/40"><ShieldCheck className="h-4 w-4" /> Secure document, liveness and face-match verification by Stripe</p>
+              <p className="verification-security-line mt-7 flex items-center justify-center gap-2 text-sm text-white/90"><ShieldCheck className="h-4 w-4" /> Secure document, liveness and face-match verification by Stripe</p>
               {import.meta.env.DEV && (
                 <div className="mt-6 border-t border-white/10 pt-5">
                   <Button type="button" variant="outline" className="w-full" onClick={skipForTesting}>

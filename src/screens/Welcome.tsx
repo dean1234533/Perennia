@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Heart, Shield, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
-import { CelestialHeart } from '@/components/shared/CelestialHeart'
 
-const HERO_CTA = 'group h-14 w-full rounded-full border border-champagne/80 bg-gradient-to-r from-gold/20 via-violet-400/20 to-gold/15 uppercase tracking-[0.15em] text-ivory shadow-[0_0_30px_rgba(229,192,123,.24),inset_0_1px_rgba(255,255,255,.16)] backdrop-blur-md transition hover:border-ivory hover:from-gold/30 hover:via-violet-400/28 hover:to-gold/24 hover:text-white hover:shadow-[0_0_38px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne/80 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight sm:text-base'
+const HERO_CTA = 'perennia-glass-button perennia-glass-button--primary group h-14 w-full rounded-full text-ivory sm:text-base'
+const SECONDARY_CTA = 'perennia-glass-button perennia-glass-button--secondary h-14 w-full rounded-full text-white/95 sm:text-base'
 
 function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
@@ -66,7 +66,7 @@ export function Welcome() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative isolate overflow-x-clip bg-midnight text-white">
+    <div className="perennia-landing-page relative isolate overflow-x-clip bg-midnight text-white">
       {/* Genuinely pinned (position: fixed) and sized with `dvh`'s
           opposite: `svh` (STATIC small-viewport height — the one value
           that never recalculates while the address bar animates). `dvh`
@@ -89,29 +89,21 @@ export function Welcome() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-3xl flex-col items-center justify-start px-6 pb-6 pt-16 text-center sm:justify-center sm:px-10 sm:py-6"
+          className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-4xl flex-col items-center justify-center px-5 py-8 text-center sm:px-10 sm:py-10"
         >
-          <CelestialHeart className="h-40 w-40 sm:h-32 sm:w-32" />
-          <span aria-hidden="true" className="-mt-2 font-serif-display text-3xl leading-none text-ivory [text-shadow:0_0_16px_rgba(173,194,255,.75)]">☾</span>
+          <img
+            src="/perennia-wordmark-approved.webp"
+            alt="Perennia"
+            width="900"
+            height="470"
+            fetchPriority="high"
+            className="perennia-approved-wordmark w-[min(92vw,46rem)]"
+          />
 
-          <h1 className="mt-1 font-serif-display text-[4.1rem] font-medium uppercase leading-none tracking-[0.025em] text-ivory [text-shadow:0_3px_28px_rgba(157,175,255,.35)] sm:text-[6rem] lg:text-[6.5rem]">
-            Perennia
-          </h1>
-
-          <div aria-hidden="true" className="my-3 flex w-full max-w-md items-center justify-center gap-3 text-lavender">
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/75 to-white/25" />
-            <span className="h-1 w-1 rounded-full bg-white/80" />
-            <span className="h-2.5 w-2.5 rotate-45 border border-lavender/80" />
-            <span className="h-4 w-4 rotate-45 border border-lavender bg-nebula-purple/35 shadow-[0_0_14px_rgba(142,108,246,.8)]" />
-            <span className="h-2.5 w-2.5 rotate-45 border border-lavender/80" />
-            <span className="h-1 w-1 rounded-full bg-white/80" />
-            <span className="h-px flex-1 bg-gradient-to-l from-transparent via-white/75 to-white/25" />
-          </div>
-
-          <p className="text-xs font-medium uppercase tracking-[0.34em] text-champagne sm:text-sm">
+          <p className="-mt-2 font-serif-display text-xl font-medium italic tracking-[0.025em] text-[#10277a] [text-shadow:0_1px_12px_rgba(255,255,255,.55)] sm:text-2xl">
             For Love That Fits, Naturally.
           </p>
-          <p className="mx-auto mb-5 mt-3 max-w-xl text-sm leading-6 text-white/68 sm:text-base sm:leading-7">
+          <p className="mx-auto mb-5 mt-3 max-w-xl text-sm leading-6 text-[#091431]/85 [text-shadow:0_1px_10px_rgba(255,255,255,.65)] sm:text-base sm:leading-7">
             Perennia combines a structured compatibility system with astrological insight to
             introduce you to people with genuine long-term potential.
           </p>
@@ -122,7 +114,7 @@ export function Welcome() {
               onClick={() => navigate('/signup')}
               className={HERO_CTA}
             >
-              Begin Your Story
+              Begin Your Journey
               <motion.span
                 className="inline-block"
                 animate={{ x: [0, 4, 0] }}
@@ -135,7 +127,7 @@ export function Welcome() {
               size="lg"
               variant="ghost"
               onClick={() => navigate('/login')}
-              className="h-14 w-full border border-lavender/35 bg-navy/45 uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm hover:border-lavender/55 hover:bg-navy/65 hover:text-white sm:text-base"
+              className={SECONDARY_CTA}
             >
               Log In
             </Button>
@@ -327,7 +319,7 @@ export function Welcome() {
           <Heart className="mt-10 h-9 w-9 text-gold drop-shadow-[0_0_12px_rgba(229,192,123,.35)] sm:mt-12" strokeWidth={1.2} />
 
           <Button size="lg" onClick={() => navigate('/signup')} className={`${HERO_CTA} mt-8 h-16 max-w-md text-sm sm:mt-10 sm:w-auto sm:min-w-96 sm:text-base`}>
-            Begin Your Story
+            Begin Your Journey
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </FadeUp>

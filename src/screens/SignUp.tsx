@@ -67,28 +67,28 @@ export function SignUp() {
   const isValid = email.includes('@') && password.length >= MIN_PASSWORD_LENGTH
 
   return (
-    <OnboardingShell step={1} totalSteps={12}>
+    <OnboardingShell step={1} totalSteps={12} className="signup-onboarding-shell">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-sm text-center"
+        className="signup-story-card w-full max-w-[27rem] text-center"
       >
-        <h1 className="font-serif-display text-4xl md:text-5xl">Begin Your Story</h1>
-        <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-white/55">
+        <h1 className="signup-story-title font-serif-display text-4xl md:text-5xl">Begin Your Story</h1>
+        <p className="signup-story-copy mx-auto mt-3 max-w-sm text-sm leading-relaxed text-white/90">
           Create your account. Your journey toward a compatibility-first connection starts here.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-5 text-left">
+        <form onSubmit={handleSubmit} className="signup-story-form mt-8 flex flex-col gap-5 text-left">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.2em] text-white/45">Email</Label>
+            <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.16em] text-white/95">Email</Label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold/50" strokeWidth={1.75} />
+              <Mail className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/90" strokeWidth={1.65} />
               <Input
                 id="email"
                 type="email"
                 placeholder="Email"
-                className="border-white/15 bg-navy/40 pl-11 backdrop-blur-sm"
+                className="signup-glass-field h-[4.4rem] rounded-[1.35rem] pl-14 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -99,23 +99,23 @@ export function SignUp() {
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-[11px] uppercase tracking-[0.2em] text-white/45">Password</Label>
+              <Label htmlFor="password" className="text-[11px] uppercase tracking-[0.16em] text-white/95">Password</Label>
               <button
                 type="button"
                 onClick={handleSuggestPassword}
-                className="flex items-center gap-1 text-[11px] text-gold/70 transition-colors hover:text-gold cursor-pointer"
+                className="flex items-center gap-1 text-[11px] text-white/90 transition-colors hover:text-white cursor-pointer"
               >
                 <Wand2 className="h-3 w-3" strokeWidth={1.75} />
                 Suggest a strong password
               </button>
             </div>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold/50" strokeWidth={1.75} />
+              <Lock className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/90" strokeWidth={1.65} />
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
-                className="border-white/15 bg-navy/40 pl-11 pr-11 backdrop-blur-sm"
+                className="signup-glass-field h-[4.4rem] rounded-[1.35rem] pl-14 pr-14 text-base"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -127,14 +127,14 @@ export function SignUp() {
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/35 transition-colors hover:text-white/70 cursor-pointer"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white/85 transition-colors hover:text-white cursor-pointer"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" strokeWidth={1.75} /> : <Eye className="h-4 w-4" strokeWidth={1.75} />}
               </button>
             </div>
 
             <div className="mt-1 flex flex-col gap-2">
-              <p className="text-[11px] text-white/35">Minimum {MIN_PASSWORD_LENGTH} characters</p>
+              <p className="text-[11px] text-white/90">Minimum {MIN_PASSWORD_LENGTH} characters</p>
               {password.length > 0 && (
                 <div>
                   <div className="flex items-center gap-1.5" role="meter" aria-valuemin={0} aria-valuemax={4} aria-valuenow={strength.score} aria-label="Password strength">
@@ -163,7 +163,7 @@ export function SignUp() {
             </motion.p>
           )}
 
-          <Button type="submit" size="lg" className="mt-2 w-full" disabled={!isValid || loading}>
+          <Button type="submit" size="lg" className="signup-continue-button mt-1 h-[4rem] w-full rounded-full" disabled={!isValid || loading}>
             {loading ? 'Creating Your Account…' : (
               <>
                 Continue <ArrowRight className="h-4 w-4" />
@@ -172,7 +172,7 @@ export function SignUp() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-white/40">
+        <p className="mt-5 text-center text-xs text-white/90">
           Already have an account?{' '}
           <button
             onClick={() => navigate(next ? `/login?next=${encodeURIComponent(next)}` : '/login')}

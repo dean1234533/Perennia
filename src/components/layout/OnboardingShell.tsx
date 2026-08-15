@@ -23,12 +23,14 @@ export function OnboardingShell({
   totalSteps,
   headerMark,
   progressVariant = 'bars',
+  className = '',
 }: {
   children: ReactNode
   step?: number
   totalSteps?: number
   headerMark?: ReactNode
   progressVariant?: 'bars' | 'nodes'
+  className?: string
 }) {
   const location = useLocation()
   const { onboarding, onboardingComplete, profileLoaded, updateOnboarding } = useApp()
@@ -49,7 +51,7 @@ export function OnboardingShell({
   }, [location.pathname, onboarding.onboardingResumePath, onboardingComplete, profileLoaded, updateOnboarding])
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center bg-midnight text-white">
+    <div className={`relative flex min-h-screen flex-col items-center bg-midnight text-white ${className}`}>
       {/* Absolutely (not fixed-)positioned so it stretches to cover the
           whole scrollable page rather than just one viewport height — a
           `fixed` full-bleed background gets visibly resized/jumped by

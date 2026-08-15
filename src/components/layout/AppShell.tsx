@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="glass-strong fixed left-0 top-0 z-40 hidden h-full w-72 flex-col items-stretch gap-5 border-r border-white/5 px-6 py-8 xl:flex">
+      <aside className="glass-strong fixed left-0 top-0 z-40 hidden h-full w-[11.5rem] flex-col items-stretch gap-5 border-r border-white/5 px-5 py-7 xl:flex">
         <button
           onClick={() => setBrandOpen((value) => !value)}
           aria-expanded={brandOpen}
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="relative z-10 min-h-screen pb-24 xl:pb-8 xl:pl-72">
+      <main className="relative z-10 min-h-screen pb-24 xl:pb-8 xl:pl-[11.5rem]">
         {!isProfilePage && (
           <div className="px-4 pt-4 xl:px-8">
             <InstallAppBanner />

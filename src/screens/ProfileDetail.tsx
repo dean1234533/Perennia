@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, ChevronUp, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Play, Sparkles, UserPlus, UserCheck, X } from 'lucide-react'
+import { ArrowRight, ChevronUp, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Play, Sparkles, UserPlus, UserCheck, X, Crown, ShieldCheck, Shield } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
@@ -223,7 +223,14 @@ export function ProfileDetail() {
             />
           </div>
           <div className="profile-hero-identity" onClick={(event) => event.stopPropagation()}>
-            <h1>{profile.name.split(' ')[0]}{calculateAge(profile.birthDate) !== null ? ` · ${calculateAge(profile.birthDate)}` : ''}{isFoundingMember && <Sparkles className="profile-founding-mark" aria-label="Founding Member" />}</h1>
+            <h1>{profile.name.split(' ')[0]}{calculateAge(profile.birthDate) !== null ? ` · ${calculateAge(profile.birthDate)}` : ''}</h1>
+            <div className="profile-status-badges" aria-label="Profile status">
+              {isFoundingMember && <span className="profile-founding-member-badge"><Crown /> Founding Member</span>}
+              <span className={`profile-verification-badge ${profile.verification?.status === 'verified' ? 'is-verified' : 'is-pending'}`}>
+                {profile.verification?.status === 'verified' ? <ShieldCheck /> : <Shield />}
+                {profile.verification?.status === 'verified' ? 'Verified' : 'Pending verification'}
+              </span>
+            </div>
             <div className="profile-identity-facts">
               {extras?.profession && <p><Briefcase /> {extras.profession}</p>}
               {extras?.location && profile.showDistance && <p><MapPin /> {extras.location}</p>}

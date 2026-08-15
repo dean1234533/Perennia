@@ -6,7 +6,8 @@ import {
   GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
   Heart, Sparkles, BriefcaseBusiness, MapPinned, Pencil, Eye, Gift,
   LockKeyhole, ArrowRight, ChevronUp, Ruler, GraduationCap, Languages,
-  type LucideIcon,
+  Crown, UtensilsCrossed, Dumbbell, Music2, Plane, Palette, Leaf,
+  Film, Sprout, type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
@@ -35,11 +36,11 @@ import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
 
 const previewProfile: SelfProfile = {
-  about: 'Family-minded, ambitious, and always up for deep talks and meaningful adventures.',
-  interests: ['Travel', 'Photography', 'Hiking'],
-  lifestyleVibe: 'Active & Adventurous',
+  about: "I value honesty, loyalty and deep connection. I’m ambitious, grounded and always growing. Looking for a partner to build something meaningful and timeless with.",
+  interests: ['Food & Cooking', 'Fitness', 'Music', 'Travel', 'Art & Creativity', 'Nature', 'Movies', 'Personal Growth', 'Wellness'],
+  lifestyleVibe: 'Active',
   openToNewThings: true,
-  values: ['Family', 'Ambition', 'Honesty'],
+  values: ['Outdoors', 'Social', 'Family-oriented', 'Wellness'],
   music: ['Soul', 'Jazz'],
   languages: ['English'],
   favoritePlaces: ['London', 'Santorini'],
@@ -49,7 +50,7 @@ const previewProfile: SelfProfile = {
   movies: 'Character-driven dramas',
   goals: 'A lasting relationship built on trust and shared adventure.',
   profession: 'Creative Director',
-  education: 'Postgraduate Degree',
+  education: 'Doctorate / PhD',
   location: 'London, United Kingdom',
 }
 
@@ -65,17 +66,24 @@ const previewCategories: DisplayCategory[] = [
   { id: 'places', label: 'Places', emoji: '🌙' },
 ]
 
-const previewMedia: MediaDoc[] = [
+const previewMediaUrls = [
   editorial.portraitMale,
   editorial.cinematicSunset,
   editorial.portraitMoody,
   editorial.citySkyline,
   editorial.coupleGoldenLight,
   editorial.handsTouching,
-].map((url, index) => ({
+  editorial.portraitMale,
+  editorial.portraitMoody,
+  editorial.cinematicSunset,
+  editorial.citySkyline,
+  editorial.coupleGoldenLight,
+]
+
+const previewMedia: MediaDoc[] = previewMediaUrls.map((url, index) => ({
   id: `preview-${index}`,
   userId: 'preview',
-  type: index < 4 ? 'image' : 'video',
+  type: index < 6 ? 'image' : 'video',
   url,
   thumbnailUrl: url,
   category: previewCategories[index % previewCategories.length].id,
@@ -271,7 +279,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const videos = displayItems.filter((item) => item.type === 'video' && item.processingStatus !== 'error')
   const firstName = (onboarding.name || (preview ? 'Martallus' : 'Your Name')).split(' ')[0]
   const age = preview ? 42 : calculateAge(onboarding.birthDate)
-  const isPremium = preview || membership?.tier === 'premium'
+  const isPremium = membership?.tier === 'premium'
   const location = draft.location || [onboarding.city, onboarding.country].filter(Boolean).join(', ')
   const relationshipGoal = onboarding.relationshipGoal || (preview ? 'Long-term relationship' : '')
   const sunSign = onboarding.sunSign || (preview ? 'Cancer' : '')
@@ -362,8 +370,11 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           <div className="profile-hero-identity" onClick={(event) => event.stopPropagation()}>
             <h1>
               {firstName}{age !== null ? ` · ${age}` : ''}
-              {(preview || membership) && <Sparkles className="profile-founding-mark" aria-label="Founding Member" />}
             </h1>
+            <div className="profile-status-badges" aria-label="Profile status">
+              {(preview || membership) && <FoundingMemberBadge />}
+              <VerificationBadge status={preview ? 'verified' : onboarding.verification.status} />
+            </div>
             <div className="profile-identity-facts">
               {draft.profession && <p><BriefcaseBusiness /> {draft.profession}</p>}
               {location && <p><MapPinned /> {location}</p>}
@@ -394,7 +405,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
 
           <section className={`profile-premium-strip ${isPremium ? 'is-member' : ''}`} aria-label="Premium features">
-            <div className="profile-premium-title"><Sparkles /><span>Premium<br />Features</span></div>
+            <div className="profile-premium-title"><Crown /><span>Premium<br />Features</span></div>
             <button type="button" onClick={() => navigate('/settings')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
             <button type="button"><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
             <button type="button"><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
@@ -404,7 +415,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           <div className="profile-content-grid">
             <button type="button" className="profile-cosmic-card" onClick={() => navigate('/cosmic-profile')}>
               <span><strong>My Cosmic Profile</strong><small>Explore your full astrological blueprint</small><em>View Cosmic Profile <ArrowRight /></em></span>
-              <span className="profile-cosmic-wheel" aria-hidden="true">✦</span>
+              <CosmicWheelGraphic />
             </button>
 
             <section id="profile-media" className="profile-media-card scroll-mt-20">
@@ -433,7 +444,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
               {aboutOpen && (
                 <div className="profile-about-content">
                   <div className="profile-about-facts">
-                    {(onboarding.heightCm || preview) && <ProfileFact icon={Ruler} label="Height" value={`${onboarding.heightCm || 185} cm`} />}
+                    {(onboarding.heightCm || preview) && <ProfileFact icon={Ruler} label="Height" value={formatHeight(onboarding.heightCm || 185)} />}
                     {draft.education && <ProfileFact icon={GraduationCap} label="Education" value={draft.education} />}
                     {draft.languages[0] && <ProfileFact icon={Languages} label="First language" value={draft.languages[0]} />}
                     {draft.languages.length > 0 && <ProfileFact icon={Languages} label="Languages" value={draft.languages.join(', ')} />}
@@ -452,7 +463,10 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
                 <div className="profile-interests-content">
                   <strong>Interests</strong>
                   <div className="profile-neutral-chips">
-                    {draft.interests.map((interest) => <span key={interest}>{interest}</span>)}
+                    {draft.interests.map((interest) => {
+                      const InterestIcon = interestIcon(interest)
+                      return <span key={interest}>{InterestIcon && <InterestIcon />} {interest}</span>
+                    })}
                     {!draft.interests.length && <small>Add interests from Edit Profile.</small>}
                   </div>
                   <strong>Lifestyle</strong>
@@ -791,6 +805,63 @@ function AstrologyIdentity({ symbol, value, label }: { symbol: string; value: st
     <span className="profile-astrology-identity">
       <b aria-hidden="true">{symbol}</b>
       <span><strong>{value}</strong><small>{label}</small></span>
+    </span>
+  )
+}
+
+function FoundingMemberBadge() {
+  return <span className="profile-founding-member-badge"><Crown /> Founding Member</span>
+}
+
+function VerificationBadge({ status }: { status: 'unverified' | 'pending' | 'verified' | 'failed' }) {
+  const verified = status === 'verified'
+  return (
+    <span className={`profile-verification-badge ${verified ? 'is-verified' : 'is-pending'}`}>
+      {verified ? <ShieldCheck /> : <Shield />} {verified ? 'Verified' : 'Pending verification'}
+    </span>
+  )
+}
+
+function formatHeight(heightCm: number) {
+  const totalInches = Math.round(heightCm / 2.54)
+  return `${Math.floor(totalInches / 12)}'${totalInches % 12}" (${heightCm} cm)`
+}
+
+function interestIcon(interest: string): LucideIcon | null {
+  const value = interest.toLowerCase()
+  if (value.includes('food') || value.includes('cook')) return UtensilsCrossed
+  if (value.includes('fitness')) return Dumbbell
+  if (value.includes('music')) return Music2
+  if (value.includes('travel')) return Plane
+  if (value.includes('art') || value.includes('creativ')) return Palette
+  if (value.includes('nature')) return Leaf
+  if (value.includes('movie') || value.includes('film')) return Film
+  if (value.includes('growth') || value.includes('wellness')) return Sprout
+  return Sparkles
+}
+
+function CosmicWheelGraphic() {
+  const glyphs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']
+  return (
+    <span className="profile-cosmic-wheel" aria-hidden="true">
+      <svg viewBox="0 0 160 160" role="presentation">
+        <circle cx="80" cy="80" r="72" />
+        <circle cx="80" cy="80" r="54" />
+        <circle cx="80" cy="80" r="27" />
+        {Array.from({ length: 12 }, (_, index) => {
+          const angle = index * Math.PI / 6
+          const x1 = 80 + Math.cos(angle) * 27
+          const y1 = 80 + Math.sin(angle) * 27
+          const x2 = 80 + Math.cos(angle) * 72
+          const y2 = 80 + Math.sin(angle) * 72
+          return <line key={`line-${index}`} x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        {glyphs.map((glyph, index) => {
+          const angle = index * Math.PI / 6 - Math.PI / 2
+          return <text key={glyph} x={80 + Math.cos(angle) * 63} y={83 + Math.sin(angle) * 63}>{glyph}</text>
+        })}
+        <path d="M80 61 86 74 100 80 86 86 80 100 74 86 60 80 74 74Z" />
+      </svg>
     </span>
   )
 }
