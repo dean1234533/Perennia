@@ -41,10 +41,10 @@ export function Matches() {
   return (
     <div className="px-6 pt-8 pb-10 md:px-10 md:pt-12 lg:px-14">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Open Connections</p>
-        <h1 className="font-serif-display text-4xl md:text-5xl">Your Connections</h1>
+        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Mutual Interest</p>
+        <h1 className="font-serif-display text-4xl md:text-5xl">Your Matches</h1>
         <p className="mt-3 max-w-lg text-white/50">
-          {matched.length} people you've connected with. Reach out and start a story.
+          {matched.length} mutual matches. Reach out and start a story.
         </p>
       </motion.div>
 
@@ -54,7 +54,7 @@ export function Matches() {
         </div>
       ) : matched.length === 0 ? (
         <div className="glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center">
-          <p className="font-serif-display text-2xl text-champagne">No connections yet</p>
+          <p className="font-serif-display text-2xl text-champagne">No matches yet</p>
           <p className="max-w-sm text-sm text-white/50">
             Keep exploring your curated discovery collection — your next connection is waiting.
           </p>

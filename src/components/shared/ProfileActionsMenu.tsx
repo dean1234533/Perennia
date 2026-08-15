@@ -122,24 +122,26 @@ function MenuToggle({ icon: Icon, title, description, checked, onCheckedChange }
   )
 }
 
-type ProfileMenuPanel = 'root' | 'privacy' | 'blocked-users' | 'safety' | 'notifications' | 'membership' | 'delete-account'
+type ProfileMenuPanel = 'root' | 'privacy' | 'blocked-users' | 'muted-users' | 'safety' | 'notifications' | 'membership' | 'delete-account'
 
 export function MyProfileActionsMenu({
   open,
   onClose,
+  initialPanel = 'root',
   onEditProfile,
   onManageMedia,
   onManageHighlights,
 }: {
   open: boolean
   onClose: () => void
+  initialPanel?: 'root' | 'safety'
   onEditProfile: () => void
   onManageMedia: () => void
   onManageHighlights: () => void
 }) {
   const navigate = useNavigate()
   const { logOut, deleteAccount } = useAuth()
-  const { setAuthenticated, onboarding, updateOnboarding, blockedIds, unblockProfile } = useApp()
+  const { setAuthenticated, onboarding, updateOnboarding, blockedIds, unblockProfile, mutedIds, unmuteProfile, safeMode, updateSafeMode } = useApp()
   const [panel, setPanel] = useState<ProfileMenuPanel>('root')
   const [confirming, setConfirming] = useState<'cancel-subscription' | null>(null)
   const [cancelStatus, setCancelStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
@@ -151,13 +153,15 @@ export function MyProfileActionsMenu({
   const [deletingAccount, setDeletingAccount] = useState(false)
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setPanel(initialPanel)
+    } else {
       setPanel('root')
       setConfirming(null)
       setDeletePassword('')
       setDeleteError('')
     }
-  }, [open])
+  }, [open, initialPanel])
 
   const go = (to: string) => { onClose(); navigate(to) }
   const logout = async () => {
@@ -265,8 +269,30 @@ export function MyProfileActionsMenu({
     return (
       <MenuFrame open={open} onClose={onClose} onBack={() => setPanel('root')} title="Privacy Settings">
         <div className="space-y-3 px-1 pb-2">
-          <MenuToggle icon={Eye} title="Incognito mode" description="Only people you have liked can see your profile." checked={onboarding.incognito} onCheckedChange={(incognito) => updateOnboarding({ incognito })} />
+          <MenuToggle icon={Eye} title="Show me in Explore / Discovery" description="Turn this off to stop appearing to new people. Existing conversations and profiles remain accessible to established connections." checked={!onboarding.incognito} onCheckedChange={(visible) => updateOnboarding({ incognito: !visible })} />
           <MenuToggle icon={Shield} title="Show distance" description="Allow approximate distance to appear on your profile." checked={onboarding.showDistance} onCheckedChange={(showDistance) => updateOnboarding({ showDistance })} />
+        </div>
+      </MenuFrame>
+    )
+  }
+
+  if (panel === 'muted-users') {
+    return (
+      <MenuFrame open={open} onClose={onClose} onBack={() => setPanel('safety')} title="Muted Users">
+        <div className="px-1 pb-2">
+          {mutedIds.length === 0 ? (
+            <div className="rounded-2xl border border-white/8 bg-white/[.025] px-5 py-8 text-center">
+              <VolumeX className="mx-auto h-7 w-7 text-blue-200/45" strokeWidth={1.4} />
+              <p className="mt-3 text-sm text-white/75">No muted profiles</p>
+              <p className="mt-1 text-xs text-white/40">Muting is private and never notifies the other member.</p>
+            </div>
+          ) : mutedIds.map((id, index) => (
+            <div key={id} className="mb-2 flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[.025] p-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/45"><CircleUserRound className="h-4 w-4" /></div>
+              <div className="min-w-0 flex-1"><p className="text-sm text-white/75">Muted profile {index + 1}</p></div>
+              <Button variant="glass" className="h-9 px-3 text-xs" onClick={() => void unmuteProfile(id)}>Unmute</Button>
+            </div>
+          ))}
         </div>
       </MenuFrame>
     )
@@ -296,15 +322,22 @@ export function MyProfileActionsMenu({
 
   if (panel === 'safety') {
     return (
-      <MenuFrame open={open} onClose={onClose} onBack={() => setPanel('root')} title="Safety Settings">
+      <MenuFrame open={open} onClose={onClose} onBack={() => setPanel('root')} title="Safety Centre">
         <div className="space-y-3 px-1 pb-2">
+          <MenuToggle icon={Shield} title="Safe Mode" description="Apply your private interaction preferences. This status is never shown on your public profile." checked={safeMode} onCheckedChange={(enabled) => void updateSafeMode(enabled)} />
           <div className="rounded-2xl border border-blue-200/12 bg-blue-400/[.045] p-4">
             <Shield className="h-5 w-5 text-blue-200/70" />
             <p className="mt-3 text-sm text-white/80">Your safety controls are always available.</p>
             <p className="mt-1 text-xs leading-relaxed text-white/45">Block or report another member from the three-dot menu on their profile.</p>
           </div>
           <MenuAction icon={UserRoundX} label="Manage Blocked Users" onClick={() => setPanel('blocked-users')} />
+          <MenuAction icon={VolumeX} label="Manage Muted Users" onClick={() => setPanel('muted-users')} />
+          <MenuAction icon={Shield} label="Dating Safety" onClick={() => go('/settings')} />
           <MenuAction icon={BadgeHelp} label="Contact Safety Support" onClick={() => { window.location.href = 'mailto:safety@perennia.com'; onClose() }} />
+          <div className="rounded-2xl border border-rose-300/15 bg-rose-400/[.04] p-4">
+            <p className="text-sm text-white/80">Emergency information</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/45">If you or someone else is in immediate danger, contact your local emergency services. Perennia is not an emergency service.</p>
+          </div>
         </div>
       </MenuFrame>
     )
@@ -396,18 +429,19 @@ export function OtherProfileActionsMenu({
   open,
   onClose,
   profileName,
-  profileId,
   onBlock,
   onMute,
+  onReport,
 }: {
   open: boolean
   onClose: () => void
   profileName: string
-  profileId: string
   onBlock: () => void
   onMute: () => void
+  onReport: () => Promise<void>
 }) {
   const [confirmBlock, setConfirmBlock] = useState(false)
+  const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done'>('idle')
 
   if (confirmBlock) {
     return (
@@ -427,7 +461,11 @@ export function OtherProfileActionsMenu({
     <MenuFrame open={open} onClose={onClose} title="Profile Options">
       <MenuGroup title="Safety">
         <MenuAction icon={Ban} label="Block User" danger onClick={() => setConfirmBlock(true)} />
-        <MenuAction icon={Flag} label="Report User" danger onClick={() => { window.location.href = `mailto:safety@perennia.com?subject=Report%20profile%20${encodeURIComponent(profileId)}`; onClose() }} />
+        <MenuAction icon={Flag} label={reportStatus === 'done' ? 'Report Submitted' : reportStatus === 'sending' ? 'Submitting Report…' : 'Report User'} danger onClick={() => {
+          if (reportStatus !== 'idle') return
+          setReportStatus('sending')
+          onReport().then(() => setReportStatus('done')).catch(() => setReportStatus('idle'))
+        }} />
         <MenuAction icon={VolumeX} label="Mute / Hide Profile" onClick={() => { onMute(); onClose() }} />
       </MenuGroup>
       <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[.025] px-3 py-3 text-xs text-white/35">

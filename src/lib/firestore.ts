@@ -227,12 +227,38 @@ export async function passProfileRemote(uid: string, targetUid: string) {
   await updateDoc(doc(db, 'users', uid), { passedIds: arrayUnion(targetUid) })
 }
 
+export interface SafetySettings {
+  safeMode: boolean
+  blockedIds: string[]
+  mutedIds: string[]
+}
+
+const defaultSafetySettings: SafetySettings = { safeMode: false, blockedIds: [], mutedIds: [] }
+
+export function subscribeSafetySettings(uid: string, cb: (settings: SafetySettings) => void) {
+  return onSnapshot(doc(db, 'users', uid, 'private', 'safety'), (snap) => {
+    cb(snap.exists() ? { ...defaultSafetySettings, ...(snap.data() as Partial<SafetySettings>) } : defaultSafetySettings)
+  })
+}
+
+export async function updateSafetySettingsRemote(uid: string, data: Partial<SafetySettings>) {
+  await setDoc(doc(db, 'users', uid, 'private', 'safety'), data, { merge: true })
+}
+
 export async function blockProfileRemote(uid: string, targetUid: string) {
-  await updateDoc(doc(db, 'users', uid), { blockedIds: arrayUnion(targetUid) })
+  await setDoc(doc(db, 'users', uid, 'private', 'safety'), { blockedIds: arrayUnion(targetUid) }, { merge: true })
 }
 
 export async function unblockProfileRemote(uid: string, targetUid: string) {
-  await updateDoc(doc(db, 'users', uid), { blockedIds: arrayRemove(targetUid) })
+  await setDoc(doc(db, 'users', uid, 'private', 'safety'), { blockedIds: arrayRemove(targetUid) }, { merge: true })
+}
+
+export async function muteProfileRemote(uid: string, targetUid: string) {
+  await setDoc(doc(db, 'users', uid, 'private', 'safety'), { mutedIds: arrayUnion(targetUid) }, { merge: true })
+}
+
+export async function unmuteProfileRemote(uid: string, targetUid: string) {
+  await setDoc(doc(db, 'users', uid, 'private', 'safety'), { mutedIds: arrayRemove(targetUid) }, { merge: true })
 }
 
 export async function savePushTokenRemote(uid: string, token: string) {
@@ -280,6 +306,18 @@ export function subscribeMyMatches(uid: string, cb: (matches: MatchDoc[]) => voi
 export async function getMatch(matchId: string): Promise<MatchDoc | null> {
   const snap = await getDoc(doc(db, 'matches', matchId))
   return snap.exists() ? (snap.data() as MatchDoc) : null
+}
+
+export interface ConnectionDoc extends MatchDoc {}
+
+export function subscribeMyConnections(uid: string, cb: (connections: ConnectionDoc[]) => void) {
+  const q = query(collection(db, 'connections'), where('users', 'array-contains', uid))
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => d.data() as ConnectionDoc)))
+}
+
+export async function getConnection(connectionId: string): Promise<ConnectionDoc | null> {
+  const snap = await getDoc(doc(db, 'connections', connectionId))
+  return snap.exists() ? (snap.data() as ConnectionDoc) : null
 }
 
 export interface ConversationDoc {

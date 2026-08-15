@@ -2,18 +2,18 @@ import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import {
-  Check, Upload, Trash2, Star, X, Plus, ShieldCheck,
+  Check, Upload, Trash2, Star, X, Plus, Shield, ShieldCheck,
   GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
-  Heart, Sparkles, BriefcaseBusiness, MapPinned, type LucideIcon,
+  Heart, Sparkles, BriefcaseBusiness, MapPinned, Pencil, Eye, Gift,
+  LockKeyhole, ArrowRight, ChevronUp, Ruler, GraduationCap, Languages,
+  type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
-import { ProfileExperience } from '@/components/shared/ProfileExperience'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
-import { FoundingMemberBadge } from '@/components/founding500/FoundingMemberBadge'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { MyProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { CircularCropper } from '@/components/shared/CircularCropper'
@@ -75,7 +75,7 @@ const previewMedia: MediaDoc[] = [
 ].map((url, index) => ({
   id: `preview-${index}`,
   userId: 'preview',
-  type: 'image',
+  type: index < 4 ? 'image' : 'video',
   url,
   thumbnailUrl: url,
   category: previewCategories[index % previewCategories.length].id,
@@ -88,7 +88,7 @@ const previewMedia: MediaDoc[] = [
 export function MyProfile({ preview = false }: { preview?: boolean }) {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { onboarding, profileExtras, updateProfileExtras } = useApp()
+  const { onboarding, profileExtras, updateProfileExtras, profileLoaded } = useApp()
 
   const [media, setMedia] = useState<MediaDoc[]>(preview ? previewMedia : [])
   const [editMode, setEditMode] = useState(false)
@@ -112,10 +112,20 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [profileMenuPanel, setProfileMenuPanel] = useState<'root' | 'safety'>('root')
   const [membership, setMembership] = useState<FoundingMemberRecord | null>(null)
+  const [heroExpanded, setHeroExpanded] = useState(false)
+  const [brandPanelOpen, setBrandPanelOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(true)
+  const [interestsOpen, setInterestsOpen] = useState(true)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!preview && !profileLoaded) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [preview, profileLoaded])
 
   useEffect(() => {
     if (!editMode && !preview) setDraft(profileExtras)
@@ -257,210 +267,204 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const visibleMedia = displayItems.filter((item) => (
     mediaMode === 'photos' ? item.type === 'image' : item.type === 'video'
   ) && item.processingStatus !== 'error')
+  const photos = displayItems.filter((item) => item.type === 'image' && item.processingStatus !== 'error')
+  const videos = displayItems.filter((item) => item.type === 'video' && item.processingStatus !== 'error')
+  const firstName = (onboarding.name || (preview ? 'Martallus' : 'Your Name')).split(' ')[0]
+  const age = preview ? 42 : calculateAge(onboarding.birthDate)
+  const isPremium = preview || membership?.tier === 'premium'
+  const location = draft.location || [onboarding.city, onboarding.country].filter(Boolean).join(', ')
+  const relationshipGoal = onboarding.relationshipGoal || (preview ? 'Long-term relationship' : '')
+  const sunSign = onboarding.sunSign || (preview ? 'Cancer' : '')
+  const chineseAnimal = onboarding.chineseAnimal || (preview ? 'Dragon' : '')
 
   return (
-    <div className="profile-page-shell profile-page">
-      {/* Top bar */}
-      <div className="profile-topbar">
-        <div className="profile-wordmark"><CelestialHeart className="h-8 w-8" /> <span>Perennia</span></div>
-        <AnimatePresence>
-          {savedPulse && (
-            <motion.span
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-300"
-            >
-              Profile saved
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            aria-label="Open profile menu"
-            aria-haspopup="dialog"
-            onClick={() => setProfileMenuOpen(true)}
-            className="profile-menu-button"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
-          {editMode && (
-            <Button size="sm" onClick={saveExtras}>
-              <Check className="h-3.5 w-3.5" /> Save
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="profile-layout">
-        <ProfileOrbit
-          photoUrl={photoUrl}
-          name={(onboarding.name || (preview ? 'Martallus' : 'Your Name')).split(' ')[0]}
-          age={calculateAge(onboarding.birthDate) ?? undefined}
-          location={draft.location}
-          verificationStatus={preview ? 'verified' : onboarding.verification.status}
-          categories={orbitCategories}
-          onCategorySelect={handleCategorySelect}
-          onPhotoClick={() => photoInputRef.current?.click()}
-          extraBadge={<FoundingMemberBadge />}
-          editableHighlights
-          profileLayout
-          compact
-        />
-        <ProfileExperience
-          astrology={{
-            sunSign: onboarding.sunSign || (preview ? 'Pisces' : ''),
-            moonSign: onboarding.moonSign || (preview ? 'Virgo' : ''),
-            risingSign: onboarding.risingSign || (preview ? 'Taurus' : ''),
-            chineseAnimal: onboarding.chineseAnimal || (preview ? 'Rat' : ''),
-            chineseElement: onboarding.chineseElement || (preview ? 'Wood' : ''),
-            yinYang: onboarding.yinYang || (preview ? 'Yang' : ''),
-          }}
-          isPremium={preview || membership?.tier === 'premium'}
-          isOwnProfile
-          about={draft.about}
-          profession={draft.profession}
-          education={draft.education}
-          languages={draft.languages}
-          interests={draft.interests}
-          relationshipGoal={onboarding.relationshipGoal || (preview ? 'Long-term Relationship' : '')}
-          onEdit={() => setEditMode(true)}
-        />
-      </div>
-      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
-      {photoBusy && (
-        <p className="mt-2 text-center text-xs text-white/40">
-          <Loader2 className="mr-1 inline h-3 w-3 animate-spin" /> Uploading photo…
-        </p>
-      )}
-
-      {!preview && onboarding.verification.status !== 'verified' && (
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={() => navigate('/verify')}
-          className="glass mx-auto mt-4 flex items-center gap-2 rounded-full border border-gold/25 px-4 py-2 text-xs text-champagne cursor-pointer hover:border-gold/50"
+    <div className="profile-page-shell profile-page profile-owner-page">
+      <section
+        className={`profile-cosmic-hero ${heroExpanded ? 'is-expanded' : ''}`}
+        onClick={() => setHeroExpanded((value) => !value)}
+      >
+        <button
+          type="button"
+          className="sr-only"
+          onClick={(event) => { event.stopPropagation(); setHeroExpanded((value) => !value) }}
+          aria-expanded={heroExpanded}
         >
-          <ShieldCheck className="h-3.5 w-3.5" />
-          {onboarding.verification.status === 'pending' ? 'Verification in review' : 'Verify your identity'}
-        </motion.button>
-      )}
-
-      <div className="hidden mx-auto mt-4 max-w-3xl text-center">
-        <p className="font-serif-display text-lg tracking-wide text-champagne/90 sm:text-2xl">
-          <span className="mr-2 text-gold">☾</span>
-          {onboarding.sunSign || (preview ? 'Pisces' : 'Sun')} <span className="mx-2 text-white/35">•</span>
-          {onboarding.moonSign ? `${onboarding.moonSign} Moon` : preview ? 'Virgo Moon' : 'Moon'} <span className="mx-2 text-white/35">•</span>
-          {onboarding.risingSign ? `${onboarding.risingSign} Rising` : preview ? 'Taurus Rising' : 'Rising'}
-        </p>
-
-        {/* Looking For — the real relationship intention chosen during
-            onboarding (RelationshipGoalsStep), not a separate free-text
-            field, so this profile always reflects the real answer. */}
-        <div className="mt-3 flex items-center justify-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/[0.06] px-3.5 py-1 text-xs text-champagne">
-            <Heart className="h-3 w-3 text-gold" strokeWidth={1.75} />
-            Looking for {onboarding.relationshipGoal || (preview ? 'Long-term Relationship / Marriage' : 'Not set yet')}
-          </span>
-          {editMode && !preview && (
+          {heroExpanded ? 'Collapse cosmic profile theme' : 'Expand cosmic profile theme'}
+        </button>
+        <div className="profile-topbar" onClick={(event) => event.stopPropagation()}>
+          <div className="profile-brand-control">
             <button
-              onClick={() => navigate('/relationship-goals')}
-              className="text-[10px] uppercase tracking-widest text-white/40 hover:text-gold cursor-pointer"
+              type="button"
+              className="profile-wordmark"
+              onClick={() => setBrandPanelOpen((value) => !value)}
+              aria-expanded={brandPanelOpen}
             >
-              Change
+              <CelestialHeart className="h-8 w-8" /> <span>Perennia</span>
+            </button>
+            <AnimatePresence>
+              {brandPanelOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="profile-brand-panel"
+                >
+                  <strong>Perennia</strong>
+                  <span>For Love That Fits, Naturally.</span>
+                  <p>Perennia combines Western and Chinese astrology with compatibility insights designed around meaningful, lasting relationships.</p>
+                  <button type="button" onClick={() => navigate('/')}>About Perennia <ArrowRight /></button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <AnimatePresence>
+            {savedPulse && (
+              <motion.span initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="profile-saved-pulse">
+                Profile saved
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              aria-label="Open private Safety Centre"
+              aria-haspopup="dialog"
+              onClick={() => { setProfileMenuPanel('safety'); setProfileMenuOpen(true) }}
+              className="profile-safety-button"
+            >
+              <Shield className="h-5 w-5" />
+            </button>
+            <button aria-label="Open profile menu" aria-haspopup="dialog" onClick={() => { setProfileMenuPanel('root'); setProfileMenuOpen(true) }} className="profile-menu-button">
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+            {editMode && (
+              <Button size="sm" onClick={saveExtras}><Check className="h-3.5 w-3.5" /> Save</Button>
+            )}
+          </div>
+        </div>
+
+        <div className="profile-hero-layout">
+          <div className="profile-hero-orbit" onClick={(event) => event.stopPropagation()}>
+            <ProfileOrbit
+              photoUrl={photoUrl}
+              name={firstName}
+              age={age ?? undefined}
+              location={location}
+              verificationStatus={preview ? 'verified' : onboarding.verification.status}
+              categories={orbitCategories}
+              onCategorySelect={handleCategorySelect}
+              onPhotoClick={() => photoInputRef.current?.click()}
+              editableHighlights
+              compact
+              showIdentity={false}
+            />
+          </div>
+
+          <div className="profile-hero-identity" onClick={(event) => event.stopPropagation()}>
+            <h1>
+              {firstName}{age !== null ? ` · ${age}` : ''}
+              {(preview || membership) && <Sparkles className="profile-founding-mark" aria-label="Founding Member" />}
+            </h1>
+            <div className="profile-identity-facts">
+              {draft.profession && <p><BriefcaseBusiness /> {draft.profession}</p>}
+              {location && <p><MapPinned /> {location}</p>}
+              {relationshipGoal && <p><Heart /> {relationshipGoal}</p>}
+            </div>
+            <div className="profile-identity-footer">
+              <div className="profile-public-astrology" aria-label="Public astrology">
+                {sunSign && <AstrologyIdentity symbol={zodiacGlyph(sunSign)} value={sunSign} label="Western Sign" />}
+                {chineseAnimal && <AstrologyIdentity symbol={chineseGlyph(chineseAnimal)} value={chineseAnimal} label="Chinese Animal" />}
+              </div>
+              <button type="button" className="profile-edit-link" onClick={() => setEditMode(true)}>
+                <Pencil /> Edit Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleReplacePhoto(e.target.files)} />
+      <div className="profile-neutral-surface">
+        <div className="profile-neutral-content">
+          {photoBusy && <p className="profile-upload-status"><Loader2 /> Uploading photo…</p>}
+
+          {!preview && onboarding.verification.status !== 'verified' && (
+            <button type="button" onClick={() => navigate('/verify')} className="profile-verification-action">
+              <ShieldCheck /> {onboarding.verification.status === 'pending' ? 'Verification in review' : 'Complete identity verification'}
             </button>
           )}
-        </div>
 
-        {editMode ? (
-          <textarea
-            value={draft.about}
-            onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
-            placeholder="Tell people who you are…"
-            rows={3}
-            className="mx-auto mt-4 w-full max-w-2xl rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-lg text-white/90 outline-none focus:border-gold/40"
-          />
-        ) : (
-          <p className="mx-auto mt-3 max-w-2xl font-serif-display text-xl leading-snug text-white/75 sm:text-2xl">
-            {draft.about || 'Add a few words that capture your spirit, your story, and the kind of connection you hope to find.'}
-          </p>
-        )}
-      </div>
+          <section className={`profile-premium-strip ${isPremium ? 'is-member' : ''}`} aria-label="Premium features">
+            <div className="profile-premium-title"><Sparkles /><span>Premium<br />Features</span></div>
+            <button type="button" onClick={() => navigate('/settings')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
+            <button type="button"><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
+            <button type="button"><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
+            {!isPremium && <button type="button" className="profile-premium-cta" onClick={() => navigate('/founding-500')}><span>Discover<br />Premium</span><ArrowRight /></button>}
+          </section>
 
-      {/* Reference-style Photos / Videos switch and compact 3-column grid. */}
-      <section id="profile-media" className="profile-luxury-card profile-gallery scroll-mt-20">
-        <div className="profile-gallery-header">
-        <div className="profile-gallery-tabs" role="tablist" aria-label="Profile media">
-          {(['photos', 'videos'] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setMediaMode(mode)}
-              role="tab"
-              aria-selected={mediaMode === mode}
-            >
-              {mode}
+          <div className="profile-content-grid">
+            <button type="button" className="profile-cosmic-card" onClick={() => navigate('/cosmic-profile')}>
+              <span><strong>My Cosmic Profile</strong><small>Explore your full astrological blueprint</small><em>View Cosmic Profile <ArrowRight /></em></span>
+              <span className="profile-cosmic-wheel" aria-hidden="true">✦</span>
             </button>
-          ))}
-        </div>
-        {visibleMedia.length > 0 && <span className="pb-3 text-xs text-gold">View all ({visibleMedia.length}) →</span>}
-        </div>
 
-        {editMode && (
-          <div className="mt-3 flex justify-end">
-            <Button size="sm" onClick={() => {
-              setUploadCategory(activeCategory)
-              setUploadMode(mediaMode === 'photos' ? 'photo' : 'video')
-              setUploadOpen(true)
-            }}>
-              <Upload className="h-3.5 w-3.5" /> Upload {mediaMode === 'photos' ? 'Photos' : 'Videos'}
-            </Button>
+            <section id="profile-media" className="profile-media-card scroll-mt-20">
+              <ProfileMediaRow
+                title="Photos"
+                items={photos}
+                type="photos"
+                onAdd={() => { setUploadMode('photo'); setUploadCategory(activeCategory); setUploadOpen(true) }}
+                onOpen={(index) => { setMediaMode('photos'); setGridViewerIndex(index) }}
+              />
+              <ProfileMediaRow
+                title="Videos"
+                items={videos}
+                type="videos"
+                onAdd={() => { setUploadMode('video'); setUploadCategory(activeCategory); setUploadOpen(true) }}
+                onOpen={(index) => { setMediaMode('videos'); setGridViewerIndex(index) }}
+              />
+            </section>
           </div>
-        )}
 
-        <div className="profile-gallery-grid">
-          {visibleMedia.slice(0, 10).map((item, index) => (
-            <motion.button
-              key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.035 }}
-              type="button"
-              onClick={() => item.processingStatus !== 'processing' && setGridViewerIndex(index)}
-              className="group"
-            >
-              {item.thumbnailUrl || item.url ? (
-                <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-white/25">
-                  {item.type === 'video' ? <VideoIcon className="h-6 w-6" /> : <ImageIcon className="h-6 w-6" />}
-                </span>
+          <div className="profile-detail-grid">
+            <section className="profile-neutral-card">
+              <button type="button" className="profile-neutral-heading" onClick={() => setAboutOpen((value) => !value)} aria-expanded={aboutOpen}>
+                <span>About Me</span><ChevronUp className={aboutOpen ? '' : 'is-collapsed'} />
+              </button>
+              {aboutOpen && (
+                <div className="profile-about-content">
+                  <div className="profile-about-facts">
+                    {(onboarding.heightCm || preview) && <ProfileFact icon={Ruler} label="Height" value={`${onboarding.heightCm || 185} cm`} />}
+                    {draft.education && <ProfileFact icon={GraduationCap} label="Education" value={draft.education} />}
+                    {draft.languages[0] && <ProfileFact icon={Languages} label="First language" value={draft.languages[0]} />}
+                    {draft.languages.length > 0 && <ProfileFact icon={Languages} label="Languages" value={draft.languages.join(', ')} />}
+                    {draft.profession && <ProfileFact icon={BriefcaseBusiness} label="Job title" value={draft.profession} />}
+                  </div>
+                  {draft.about && <p className="profile-about-story">{draft.about}</p>}
+                </div>
               )}
-              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full border border-white/25 bg-black/45 px-2 py-1 text-[10px] text-white backdrop-blur-sm">
-                {item.type === 'video' ? <Play className="h-3 w-3 fill-current" /> : <ImageIcon className="h-3 w-3" />}
-              </span>
-              {item.processingStatus === 'processing' && (
-                <span className="absolute inset-0 flex items-center justify-center bg-black/55"><Loader2 className="h-5 w-5 animate-spin text-gold" /></span>
-              )}
-            </motion.button>
-          ))}
-        </div>
+            </section>
 
-        {visibleMedia.length === 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              setUploadCategory(activeCategory)
-              setUploadMode(mediaMode === 'photos' ? 'photo' : 'video')
-              setUploadOpen(true)
-            }}
-            className="mt-4 flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-white/15 bg-white/[.025] text-white/35 transition hover:border-gold/35 hover:text-white/60"
-          >
-            {mediaMode === 'photos' ? <ImageIcon className="h-6 w-6" /> : <VideoIcon className="h-6 w-6" />}
-            <span className="text-sm">Add {mediaMode}</span>
-          </button>
-        )}
-      </section>
+            <section className="profile-neutral-card">
+              <button type="button" className="profile-neutral-heading" onClick={() => setInterestsOpen((value) => !value)} aria-expanded={interestsOpen}>
+                <span>Interests &amp; Lifestyle</span><ChevronUp className={interestsOpen ? '' : 'is-collapsed'} />
+              </button>
+              {interestsOpen && (
+                <div className="profile-interests-content">
+                  <strong>Interests</strong>
+                  <div className="profile-neutral-chips">
+                    {draft.interests.map((interest) => <span key={interest}>{interest}</span>)}
+                    {!draft.interests.length && <small>Add interests from Edit Profile.</small>}
+                  </div>
+                  <strong>Lifestyle</strong>
+                  <div className="profile-neutral-chips is-lifestyle">
+                    {draft.lifestyleVibe && <span>{draft.lifestyleVibe}</span>}
+                    {draft.values.slice(0, 5).map((value) => <span key={value}>{value}</span>)}
+                    {draft.openToNewThings && <span>Open to new things</span>}
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
 
       {/* Manage media (edit mode) */}
       <AnimatePresence>
@@ -671,6 +675,8 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
       </div>
+        </div>
+      </div>
 
       {/* Upload modal */}
       <AnimatePresence>
@@ -746,6 +752,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       <MyProfileActionsMenu
         open={profileMenuOpen}
         onClose={() => setProfileMenuOpen(false)}
+        initialPanel={profileMenuPanel}
         onEditProfile={() => setEditMode(true)}
         onManageMedia={() => {
           setEditMode(true)
@@ -759,6 +766,80 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       />
     </div>
   )
+}
+
+const WESTERN_GLYPHS: Record<string, string> = {
+  aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋', leo: '♌', virgo: '♍',
+  libra: '♎', scorpio: '♏', sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓',
+}
+
+const CHINESE_GLYPHS: Record<string, string> = {
+  rat: '鼠', ox: '牛', tiger: '虎', rabbit: '兔', dragon: '龍', snake: '蛇',
+  horse: '馬', goat: '羊', sheep: '羊', monkey: '猴', rooster: '雞', dog: '狗', pig: '豬',
+}
+
+function zodiacGlyph(value: string) {
+  return WESTERN_GLYPHS[value.trim().toLowerCase()] ?? '✦'
+}
+
+function chineseGlyph(value: string) {
+  return CHINESE_GLYPHS[value.trim().toLowerCase()] ?? '✦'
+}
+
+function AstrologyIdentity({ symbol, value, label }: { symbol: string; value: string; label: string }) {
+  return (
+    <span className="profile-astrology-identity">
+      <b aria-hidden="true">{symbol}</b>
+      <span><strong>{value}</strong><small>{label}</small></span>
+    </span>
+  )
+}
+
+function ProfileMediaRow({
+  title,
+  items,
+  type,
+  onAdd,
+  onOpen,
+}: {
+  title: string
+  items: DisplayMediaItem[]
+  type: 'photos' | 'videos'
+  onAdd: () => void
+  onOpen: (index: number) => void
+}) {
+  return (
+    <div className="profile-media-row">
+      <div className="profile-media-heading">
+        <h2>{title}</h2>
+        <button type="button" onClick={onAdd}><Plus /> Add</button>
+      </div>
+      <div className="profile-media-scroller">
+        {items.map((item, index) => (
+          <button
+            key={item.id}
+            type="button"
+            className="profile-media-thumbnail"
+            onClick={() => item.processingStatus !== 'processing' && onOpen(index)}
+            aria-label={item.caption || `Open ${type === 'photos' ? 'photo' : 'video'}`}
+          >
+            {item.thumbnailUrl || item.url ? <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} /> : <ImageIcon />}
+            {type === 'videos' && <span className="profile-video-play"><Play /></span>}
+            {item.processingStatus === 'processing' && <span className="profile-media-processing"><Loader2 /></span>}
+          </button>
+        ))}
+        {!items.length && (
+          <button type="button" className="profile-media-empty" onClick={onAdd}>
+            {type === 'photos' ? <ImageIcon /> : <VideoIcon />} Add your first {type === 'photos' ? 'photo' : 'video'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProfileFact({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
+  return <p><Icon /><span>{label}</span><strong>{value}</strong></p>
 }
 
 function ProfileSection({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: ReactNode }) {

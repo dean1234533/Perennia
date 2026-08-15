@@ -20,6 +20,12 @@ export function subscribeFoundingMembership(uid: string, cb: (record: FoundingMe
   })
 }
 
+const publicFoundingStatusCallable = httpsCallable<{ targetUid: string }, { isFoundingMember: boolean }>(functions, 'getPublicFoundingStatus')
+
+export async function getPublicFoundingStatus(targetUid: string) {
+  return (await publicFoundingStatusCallable({ targetUid })).data.isFoundingMember
+}
+
 const ensureConfigCallable = httpsCallable<unknown, Founding500Config>(functions, 'ensureFounding500Config')
 
 /** Idempotent bootstrap — seeds default config only if it doesn't exist yet. */

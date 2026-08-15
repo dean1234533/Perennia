@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Sparkles, X } from 'lucide-react'
+import { ArrowRight, ChevronUp, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Play, Sparkles, UserPlus, UserCheck, X } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
-import { ProfileExperience } from '@/components/shared/ProfileExperience'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
@@ -20,12 +19,15 @@ import { emptySelfProfile } from '@/data/selfProfile'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { calculateAge } from '@/lib/age'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
-import type { DisplayCategory } from '@/types/media'
+import type { DisplayCategory, DisplayMediaItem } from '@/types/media'
+import { subscribeFriendState, sendFriendRequest, respondToFriendRequest, unfriend, type FriendState } from '@/lib/friendsApi'
+import { reportProfileRemote } from '@/lib/privacyApi'
+import { getPublicFoundingStatus } from '@/lib/founding500'
 
 export function ProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { likeProfile, passProfile, blockProfile, matchedIds, profileExtras, onboarding } = useApp()
+  const { likeProfile, passProfile, blockProfile, muteProfile, matchedIds, profileExtras, onboarding } = useApp()
   const { user } = useAuth()
   const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
   const [media, setMedia] = useState<MediaDoc[]>([])
@@ -35,6 +37,11 @@ export function ProfileDetail() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
+  const [friendState, setFriendState] = useState<FriendState>('none')
+  const [heroExpanded, setHeroExpanded] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(true)
+  const [interestsOpen, setInterestsOpen] = useState(true)
+  const [isFoundingMember, setIsFoundingMember] = useState(false)
   // A successful read here already means access was allowed (public, or a
   // real match — see firestore.rules) — a denied/missing read is treated
   // identically to "nothing set," never surfaced as an error.
@@ -72,6 +79,16 @@ export function ProfileDetail() {
     if (!user) return
     getPrivateLifestyle(user.uid).then(setSelfLifestyle)
   }, [user])
+
+  useEffect(() => {
+    if (!user || !id) return
+    return subscribeFriendState(user.uid, id, setFriendState)
+  }, [user, id])
+
+  useEffect(() => {
+    if (!id || !user) return
+    getPublicFoundingStatus(id).then(setIsFoundingMember).catch(() => setIsFoundingMember(false))
+  }, [id, user])
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
@@ -131,6 +148,8 @@ export function ProfileDetail() {
   const displayItems = media.map(toDisplayItem)
   const galleryImages = displayItems.filter((i) => i.type === 'image')
   const visibleGalleryMedia = displayItems.filter((item) => item.type === (mediaMode === 'photos' ? 'image' : 'video') && item.processingStatus === 'ready')
+  const profilePhotos = displayItems.filter((item) => item.type === 'image' && item.processingStatus === 'ready')
+  const profileVideos = displayItems.filter((item) => item.type === 'video' && item.processingStatus === 'ready')
 
   const categories: DisplayCategory[] = (profile.categories?.length ? profile.categories : DEFAULT_MEDIA_CATEGORIES.map((c) => ({ id: c.id, label: c.label }))).map((c) => ({
     id: c.id,
@@ -160,9 +179,10 @@ export function ProfileDetail() {
 
   const handleLike = () => {
     setLiked(true)
-    likeProfile(profile.uid).then((matchId) => {
+    likeProfile(profile.uid).then(({ matchId, conversationId }) => {
       setTimeout(() => {
         if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: profile.uid, compatibility: result?.compatibility ?? null } })
+        else if (conversationId) navigate(`/messages/${conversationId}`, { state: { otherUid: profile.uid } })
         else navigate('/discovery')
       }, matchId ? 600 : 900)
     })
@@ -173,76 +193,82 @@ export function ProfileDetail() {
     navigate('/discovery')
   }
 
+  const handleFriendAction = async () => {
+    if (friendState === 'none') await sendFriendRequest(profile.uid)
+    else if (friendState === 'incoming') await respondToFriendRequest(profile.uid, true)
+    else if (friendState === 'friends') await unfriend(profile.uid)
+  }
+
+  const friendLabel = friendState === 'incoming' ? 'Accept Friend' : friendState === 'outgoing' ? 'Request Sent' : friendState === 'friends' ? 'Friends' : 'Add Friend'
+
   return (
-    <div className="profile-page-shell profile-page">
-      <div className="profile-topbar">
-        <div className="profile-wordmark"><CelestialHeart className="h-8 w-8" /> <span>Perennia</span></div>
-        <button
-          aria-label="Open profile options"
-          aria-haspopup="dialog"
-          onClick={() => setProfileMenuOpen(true)}
-          className="profile-menu-button"
-        ><MoreHorizontal className="h-5 w-5" /></button>
-      </div>
-
-      <div className="profile-layout">
-        <ProfileOrbit
-          photoUrl={profile.profilePhotoUrl || null}
-          name={profile.name.split(' ')[0]}
-          age={calculateAge(profile.birthDate) ?? undefined}
-          location={extras?.location && profile.showDistance ? extras.location : undefined}
-          verificationStatus={profile.verification?.status ?? 'unverified'}
-          categories={orbitCategories}
-          onCategorySelect={handleOrbitSelect}
-          compatibility={result?.compatibility}
-          profileLayout
-          compact
-        />
-        <ProfileExperience
-          astrology={{
-            sunSign: profile.sunSign,
-            chineseAnimal: profile.chineseAnimal,
-          }}
-          isPremium={false}
-          isOwnProfile={false}
-          about={extras?.about}
-          profession={extras?.profession}
-          education={extras?.education}
-          languages={extras?.languages}
-          interests={extras?.interests}
-          relationshipGoal={profile.relationshipGoal}
-          cosmicProfilePath={null}
-          messageAction={isMatched && user ? (
-            <button className="profile-action-pill" onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}>
-              <MessageCircle className="h-4 w-4" /> Message
-            </button>
-          ) : null}
-          likeAction={(
-            <button className="profile-action-pill" onClick={handleLike}>
-              <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} /> Like
-            </button>
-          )}
-        />
-      </div>
-
-      {(galleryImages.length > 0 || displayItems.some((item) => item.type === 'video')) && (
-        <section className="profile-luxury-card profile-gallery">
-          <div className="profile-gallery-header">
-            <div className="profile-gallery-tabs" role="tablist" aria-label="Profile media">
-              <button role="tab" aria-selected={mediaMode === 'photos'} onClick={() => setMediaMode('photos')}>Photos</button>
-              <button role="tab" aria-selected={mediaMode === 'videos'} onClick={() => setMediaMode('videos')}>Videos</button>
+    <div className="profile-page-shell profile-page profile-owner-page profile-visitor-page">
+      <section className={`profile-cosmic-hero ${heroExpanded ? 'is-expanded' : ''}`} onClick={() => setHeroExpanded((value) => !value)}>
+        <div className="profile-topbar" onClick={(event) => event.stopPropagation()}>
+          <button type="button" className="profile-wordmark" onClick={() => navigate('/')}><CelestialHeart className="h-8 w-8" /> <span>Perennia</span></button>
+          <button aria-label="Open profile options" aria-haspopup="dialog" onClick={() => setProfileMenuOpen(true)} className="profile-menu-button"><MoreHorizontal className="h-5 w-5" /></button>
+        </div>
+        <div className="profile-hero-layout">
+          <div className="profile-hero-orbit" onClick={(event) => event.stopPropagation()}>
+            <ProfileOrbit
+              photoUrl={profile.profilePhotoUrl || null}
+              name={profile.name.split(' ')[0]}
+              age={calculateAge(profile.birthDate) ?? undefined}
+              verificationStatus={profile.verification?.status ?? 'unverified'}
+              categories={orbitCategories}
+              onCategorySelect={handleOrbitSelect}
+              compatibility={result?.compatibility}
+              compact
+              showIdentity={false}
+            />
+          </div>
+          <div className="profile-hero-identity" onClick={(event) => event.stopPropagation()}>
+            <h1>{profile.name.split(' ')[0]}{calculateAge(profile.birthDate) !== null ? ` · ${calculateAge(profile.birthDate)}` : ''}{isFoundingMember && <Sparkles className="profile-founding-mark" aria-label="Founding Member" />}</h1>
+            <div className="profile-identity-facts">
+              {extras?.profession && <p><Briefcase /> {extras.profession}</p>}
+              {extras?.location && profile.showDistance && <p><MapPin /> {extras.location}</p>}
+              {profile.relationshipGoal && <p><Heart /> {profile.relationshipGoal}</p>}
             </div>
-            <span className="pb-3 text-xs text-gold">View all ({visibleGalleryMedia.length}) →</span>
+            <div className="profile-identity-footer">
+              <div className="profile-public-astrology">
+                {profile.sunSign && <VisitorAstrology symbol={westernGlyph(profile.sunSign)} value={profile.sunSign} label="Western Sign" />}
+                {profile.chineseAnimal && <VisitorAstrology symbol={animalGlyph(profile.chineseAnimal)} value={profile.chineseAnimal} label="Chinese Animal" />}
+              </div>
+              <div className="profile-visitor-actions">
+                {isMatched && user && <button onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}><MessageCircle /> Message</button>}
+                <button onClick={() => void handleFriendAction()} disabled={friendState === 'outgoing'}>{friendState === 'friends' ? <UserCheck /> : <UserPlus />} {friendLabel}</button>
+                {friendState === 'incoming' && <button onClick={() => void respondToFriendRequest(profile.uid, false)}><X /> Decline</button>}
+                <button onClick={handleLike}><Heart className={liked ? 'fill-current' : ''} /> Like</button>
+              </div>
+            </div>
           </div>
-          <div className="profile-gallery-grid">
-            {visibleGalleryMedia.slice(0, 10).map((item, index) => (
-              <button key={item.id} onClick={() => setGridViewerIndex(index)} aria-label={item.caption || `View ${profile.name.split(' ')[0]}'s ${mediaMode === 'photos' ? 'photo' : 'video'}`}>
-                <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} loading="lazy" />
-              </button>
-            ))}
+        </div>
+      </section>
+
+      <div className="profile-neutral-surface">
+        <div className="profile-neutral-content">
+          <div className="profile-content-grid">
+            <button type="button" className="profile-cosmic-card" onClick={() => navigate(`/compatibility/${profile.uid}`)}>
+              <span><strong>Cosmic Profile</strong><small>Explore your compatibility and their astrological blueprint</small><em>View Cosmic Profile <ArrowRight /></em></span>
+              <span className="profile-cosmic-wheel" aria-hidden="true">✦</span>
+            </button>
+            <section className="profile-media-card">
+              <VisitorMediaRow title="Photos" items={profilePhotos} onOpen={(index) => { setMediaMode('photos'); setGridViewerIndex(index) }} />
+              <VisitorMediaRow title="Videos" items={profileVideos} video onOpen={(index) => { setMediaMode('videos'); setGridViewerIndex(index) }} />
+            </section>
           </div>
-        </section>
-      )}
+          <div className="profile-detail-grid">
+            <section className="profile-neutral-card">
+              <button className="profile-neutral-heading" onClick={() => setAboutOpen((value) => !value)} aria-expanded={aboutOpen}><span>About Me</span><ChevronUp className={aboutOpen ? '' : 'is-collapsed'} /></button>
+              {aboutOpen && <div className="profile-about-content"><div className="profile-about-facts">{extras?.education && <p><GraduationCap /><span>Education</span><strong>{extras.education}</strong></p>}{extras?.languages?.length ? <p><MessageCircle /><span>Languages</span><strong>{extras.languages.join(', ')}</strong></p> : null}{extras?.profession && <p><Briefcase /><span>Job title</span><strong>{extras.profession}</strong></p>}</div>{extras?.about && <p className="profile-about-story">{extras.about}</p>}</div>}
+            </section>
+            <section className="profile-neutral-card">
+              <button className="profile-neutral-heading" onClick={() => setInterestsOpen((value) => !value)} aria-expanded={interestsOpen}><span>Interests &amp; Lifestyle</span><ChevronUp className={interestsOpen ? '' : 'is-collapsed'} /></button>
+              {interestsOpen && <div className="profile-interests-content"><strong>Interests</strong><div className="profile-neutral-chips">{extras?.interests?.map((interest) => <span key={interest}>{interest}</span>)}</div><strong>Lifestyle</strong><div className="profile-neutral-chips is-lifestyle">{extras?.lifestyleVibe && <span>{extras.lifestyleVibe}</span>}{extras?.values?.slice(0, 5).map((value) => <span key={value}>{value}</span>)}</div></div>}
+            </section>
+          </div>
+        </div>
+      </div>
 
       <div className="hidden mx-auto max-w-4xl px-6 md:px-0">
         <ProfileOrbit
@@ -432,16 +458,45 @@ export function ProfileDetail() {
         open={profileMenuOpen}
         onClose={() => setProfileMenuOpen(false)}
         profileName={profile.name}
-        profileId={profile.uid}
+        onReport={() => reportProfileRemote(profile.uid)}
         onBlock={() => {
           blockProfile(profile.uid)
           navigate('/discovery')
         }}
         onMute={() => {
-          passProfile(profile.uid)
-          navigate('/discovery')
+          void muteProfile(profile.uid)
         }}
       />
+    </div>
+  )
+}
+
+const VISITOR_WESTERN_GLYPHS: Record<string, string> = {
+  aries:'♈', taurus:'♉', gemini:'♊', cancer:'♋', leo:'♌', virgo:'♍', libra:'♎', scorpio:'♏', sagittarius:'♐', capricorn:'♑', aquarius:'♒', pisces:'♓',
+}
+const VISITOR_ANIMAL_GLYPHS: Record<string, string> = {
+  rat:'鼠', ox:'牛', tiger:'虎', rabbit:'兔', dragon:'龍', snake:'蛇', horse:'馬', goat:'羊', sheep:'羊', monkey:'猴', rooster:'雞', dog:'狗', pig:'豬',
+}
+function westernGlyph(value: string) { return VISITOR_WESTERN_GLYPHS[value.toLowerCase()] ?? '✦' }
+function animalGlyph(value: string) { return VISITOR_ANIMAL_GLYPHS[value.toLowerCase()] ?? '✦' }
+
+function VisitorAstrology({ symbol, value, label }: { symbol: string; value: string; label: string }) {
+  return <span className="profile-astrology-identity"><b aria-hidden="true">{symbol}</b><span><strong>{value}</strong><small>{label}</small></span></span>
+}
+
+function VisitorMediaRow({ title, items, video = false, onOpen }: { title: string; items: DisplayMediaItem[]; video?: boolean; onOpen: (index: number) => void }) {
+  return (
+    <div className="profile-media-row">
+      <div className="profile-media-heading"><h2>{title}</h2></div>
+      <div className="profile-media-scroller">
+        {items.map((item, index) => (
+          <button key={item.id} className="profile-media-thumbnail" onClick={() => onOpen(index)} aria-label={item.caption || `Open ${video ? 'video' : 'photo'}`}>
+            <img src={item.thumbnailUrl || item.url} alt={item.caption || ''} />
+            {video && <span className="profile-video-play"><Play /></span>}
+          </button>
+        ))}
+        {!items.length && <p className="profile-media-empty">No {title.toLowerCase()} shared yet.</p>}
+      </div>
     </div>
   )
 }

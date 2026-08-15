@@ -46,9 +46,11 @@ import { assertWithinRateLimit } from './services/rateLimit.service'
 import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent, refreshVerificationStatus } from './services/identity.service'
 import { sendOtp as sendBirthDetailsOtpService, verifyOtp as verifyBirthDetailsOtpService, updateBirthDetails as updateBirthDetailsService } from './services/birthDetailsReverification.service'
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
-import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc } from './repositories/founding500.repository'
+import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc, getMemberRecord } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { deleteAccount as deleteAccountService } from './services/account.service'
+import { blockUser as blockUserService, unblockUser as unblockUserService, migratePrivateSafety as migratePrivateSafetyService, reportUser as reportUserService } from './services/privacy.service'
+import { sendFriendRequest as sendFriendRequestService, respondToFriendRequest as respondToFriendRequestService, unfriend as unfriendService } from './services/friends.service'
 import { computeFullNatalChart, geocodePlace, searchCityMatches, AstrologyError } from './services/astrology.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
 import { log } from './utils/logger'
@@ -57,6 +59,13 @@ import type { FusionTable } from './types/compatibility'
 initializeApp()
 
 const SHEET_SECRETS = [googleServiceAccountEmail, googleServiceAccountKey, googleSheetId]
+
+export const getPublicFoundingStatus = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const targetUid = request.data?.targetUid
+  if (typeof targetUid !== 'string' || !targetUid) throw invalidArgument('Choose a member.')
+  return { isFoundingMember: Boolean(await getMemberRecord(targetUid)) }
+})
 
 function buildSyncParams() {
   const auth = {
@@ -430,6 +439,60 @@ export const likeUser = onCall({ cors: true }, async (request) => {
     if (err instanceof HttpsError) throw err
     throw internal('likeUser failed', err)
   }
+})
+
+export const migratePrivateSafety = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  return migratePrivateSafetyService(request.auth.uid)
+})
+
+export const blockUser = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await blockUserService(request.auth.uid, parsed.data.targetUid)
+  return { blocked: true as const }
+})
+
+export const unblockUser = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await unblockUserService(request.auth.uid, parsed.data.targetUid)
+  return { unblocked: true as const }
+})
+
+export const reportUser = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await reportUserService(request.auth.uid, parsed.data.targetUid)
+  return { reported: true as const }
+})
+
+export const sendFriendRequest = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await sendFriendRequestService(request.auth.uid, parsed.data.targetUid)
+  return { sent: true as const }
+})
+
+export const respondToFriendRequest = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const targetUid = request.data?.targetUid
+  const accept = request.data?.accept
+  if (typeof targetUid !== 'string' || targetUid === request.auth.uid || typeof accept !== 'boolean') throw invalidArgument('Invalid friend request response.')
+  await respondToFriendRequestService(request.auth.uid, targetUid, accept)
+  return { updated: true as const }
+})
+
+export const unfriend = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await unfriendService(request.auth.uid, parsed.data.targetUid)
+  return { removed: true as const }
 })
 
 // ---------------------------------------------------------------------------

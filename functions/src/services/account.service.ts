@@ -43,12 +43,16 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
 
   // 2. Referential cleanup — every real place this uid appears in another
   // real record.
-  const [likesAsLiker, likesAsLiked, myMatches, likedByOthers, passedByOthers] = await Promise.all([
+  const [likesAsLiker, likesAsLiked, myMatches, myConnections, likedByOthers, passedByOthers, friendRequests, friendships, reports] = await Promise.all([
     db.collection('likes').where('likerUid', '==', uid).get(),
     db.collection('likes').where('likedUid', '==', uid).get(),
     db.collection('matches').where('users', 'array-contains', uid).get(),
+    db.collection('connections').where('users', 'array-contains', uid).get(),
     db.collection('users').where('likedIds', 'array-contains', uid).get(),
     db.collection('users').where('passedIds', 'array-contains', uid).get(),
+    db.collection('friendRequests').where('participants', 'array-contains', uid).get(),
+    db.collection('friendships').where('users', 'array-contains', uid).get(),
+    db.collection('reports').where('reporterUid', '==', uid).get(),
   ])
 
   const cleanupBatch = db.batch()
@@ -70,6 +74,9 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
     cleanupBatch.update(doc.ref, { passedIds: FieldValue.arrayRemove(uid) })
     ops++
   }
+  for (const doc of friendRequests.docs) { cleanupBatch.delete(doc.ref); ops++ }
+  for (const doc of friendships.docs) { cleanupBatch.delete(doc.ref); ops++ }
+  for (const doc of reports.docs) { cleanupBatch.delete(doc.ref); ops++ }
 
   for (const matchDoc of myMatches.docs) {
     const matchData = matchDoc.data() as { users: string[] }
@@ -82,8 +89,12 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
       ops++
     }
 
-    // Delete the conversation doc and every message in it.
-    const conversationRef = db.collection('conversations').doc(matchDoc.id)
+  }
+
+  for (const connectionDoc of myConnections.docs) {
+    cleanupBatch.delete(connectionDoc.ref)
+    ops++
+    const conversationRef = db.collection('conversations').doc(connectionDoc.id)
     const messagesSnap = await conversationRef.collection('messages').get()
     for (const messageDoc of messagesSnap.docs) {
       cleanupBatch.delete(messageDoc.ref)

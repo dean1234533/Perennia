@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { BadgeCheck, ShieldQuestion, Clock, ImagePlus, Plus, Play } from 'lucide-react'
+import { ImagePlus, Plus, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface OrbitCategory {
@@ -57,28 +57,7 @@ interface ProfileOrbitProps {
   compact?: boolean
   editableHighlights?: boolean
   profileLayout?: boolean
-}
-
-function VerificationBadge({ status }: { status: ProfileOrbitProps['verificationStatus'] }) {
-  if (status === 'verified') {
-    return (
-      <span className="flex items-center gap-1 rounded-full border border-blue-300/45 bg-blue-600/80 px-3 py-1 text-[10px] uppercase tracking-wide text-white shadow-[0_0_18px_rgba(59,130,246,.28)]">
-        <BadgeCheck className="h-3 w-3" /> Verified
-      </span>
-    )
-  }
-  if (status === 'pending') {
-    return (
-      <span className="flex items-center gap-1 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-wide text-gold">
-        <Clock className="h-3 w-3" /> Verification pending
-      </span>
-    )
-  }
-  return (
-    <span className="flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[10px] uppercase tracking-wide text-white/50">
-      <ShieldQuestion className="h-3 w-3" /> Verification required
-    </span>
-  )
+  showIdentity?: boolean
 }
 
 export function ProfileOrbit({
@@ -86,7 +65,6 @@ export function ProfileOrbit({
   name,
   age,
   location,
-  verificationStatus,
   categories,
   onCategorySelect,
   compatibility,
@@ -95,6 +73,7 @@ export function ProfileOrbit({
   compact = false,
   editableHighlights = false,
   profileLayout = false,
+  showIdentity = true,
 }: ProfileOrbitProps) {
   const positions = compact
     ? [
@@ -202,22 +181,21 @@ export function ProfileOrbit({
         </motion.button>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className={cn('profile-orbit-identity flex flex-col items-center gap-2 text-center', compact ? '-mt-2 sm:-mt-4' : '-mt-1 sm:-mt-3')}
-      >
-        <h1 className={cn('font-serif-display font-medium tracking-wide text-ivory', compact ? 'text-4xl sm:text-5xl' : 'text-4xl sm:text-6xl')}>
-          {name}
-          {age ? `, ${age}` : ''}
-        </h1>
-        {location && <p className="text-sm text-white/55">{location}</p>}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <VerificationBadge status={verificationStatus} />
-          {extraBadge}
-        </div>
-      </motion.div>
+      {showIdentity && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className={cn('profile-orbit-identity flex flex-col items-center gap-2 text-center', compact ? '-mt-2 sm:-mt-4' : '-mt-1 sm:-mt-3')}
+        >
+          <h1 className={cn('font-serif-display font-medium tracking-wide text-ivory', compact ? 'text-4xl sm:text-5xl' : 'text-4xl sm:text-6xl')}>
+            {name}
+            {age ? `, ${age}` : ''}
+          </h1>
+          {location && <p className="text-sm text-white/55">{location}</p>}
+          {extraBadge && <div className="flex flex-wrap items-center justify-center gap-2">{extraBadge}</div>}
+        </motion.div>
+      )}
     </div>
   )
 }

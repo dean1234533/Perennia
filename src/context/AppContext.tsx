@@ -8,8 +8,10 @@ import {
   subscribeUserDoc,
   updateUserDoc,
   passProfileRemote,
-  blockProfileRemote,
-  unblockProfileRemote,
+  muteProfileRemote,
+  unmuteProfileRemote,
+  subscribeSafetySettings,
+  updateSafetySettingsRemote,
   completeOnboardingRemote,
   updateProfileExtrasRemote,
   updatePreferencesRemote,
@@ -19,6 +21,7 @@ import {
   type MatchingPreferences,
   type StoryPrompt,
 } from '@/lib/firestore'
+import { blockProfileRemote, unblockProfileRemote, migratePrivateSafetyRemote } from '@/lib/privacyApi'
 
 export interface OnboardingData {
   name: string
@@ -72,12 +75,16 @@ interface AppContextValue {
   passedIds: string[]
   matchedIds: string[]
   blockedIds: string[]
-  /** Real like via the likeUser Cloud Function. Returns the shared
-   *  connection id so the sender can start messaging immediately. */
-  likeProfile: (targetUid: string) => Promise<string | null>
+  mutedIds: string[]
+  safeMode: boolean
+  /** Opens an introduction immediately; matchId is set only when mutual. */
+  likeProfile: (targetUid: string) => Promise<{ conversationId: string | null; matchId: string | null }>
   passProfile: (targetUid: string) => Promise<void>
   blockProfile: (targetUid: string) => Promise<void>
   unblockProfile: (targetUid: string) => Promise<void>
+  muteProfile: (targetUid: string) => Promise<void>
+  unmuteProfile: (targetUid: string) => Promise<void>
+  updateSafeMode: (enabled: boolean) => Promise<void>
   isAuthenticated: boolean
   setAuthenticated: (v: boolean) => void
   onboardingComplete: boolean
@@ -155,6 +162,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [likedIds, setLikedIds] = useState<string[]>([])
   const [passedIds, setPassedIds] = useState<string[]>([])
   const [blockedIds, setBlockedIds] = useState<string[]>([])
+  const [mutedIds, setMutedIds] = useState<string[]>([])
+  const [safeMode, setSafeMode] = useState(false)
   const [matchedIds, setMatchedIds] = useState<string[]>([])
   const [localAuthenticated, setLocalAuthenticated] = useState(false)
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
@@ -180,6 +189,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLikedIds([])
     setPassedIds([])
     setBlockedIds([])
+    setMutedIds([])
+    setSafeMode(false)
     setMatchedIds([])
     if (!userUid) return
 
@@ -233,7 +244,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }))
       setLikedIds(data.likedIds ?? [])
       setPassedIds(data.passedIds ?? [])
-      setBlockedIds(data.blockedIds ?? [])
       setMatchedIds(data.matchedIds ?? [])
       setRemoteOnboardingComplete(!!data.onboardingComplete)
       // Merged field-by-field against emptySelfProfile, not set wholesale —
@@ -246,6 +256,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (data.profileExtras) setProfileExtras({ ...emptySelfProfile, ...data.profileExtras })
     })
     return unsub
+  }, [userUid])
+
+  useEffect(() => {
+    if (!firebaseConfigured || !userUid) return
+    migratePrivateSafetyRemote().catch((err) => console.warn('[Perennia] Failed to migrate private safety settings:', err))
+    return subscribeSafetySettings(userUid, (settings) => {
+      setBlockedIds(settings.blockedIds)
+      setMutedIds(settings.mutedIds)
+      setSafeMode(settings.safeMode)
+    })
   }, [userUid])
 
   // Likes made before one-way connections were introduced have no match or
@@ -304,16 +324,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (targetUid: string) => {
       if (!firebaseConfigured || !user) {
         setLikedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
-        return null
+        return { conversationId: null, matchId: null }
       }
       const result = await likeUser(targetUid)
       setLikedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
       if (result.matched && result.matchId) {
         setMatchedIds((prev) => (prev.includes(targetUid) ? prev : [...prev, targetUid]))
         setLastMatchId(result.matchId)
-        return result.matchId
+        return { conversationId: result.conversationId, matchId: result.matchId }
       }
-      return null
+      return { conversationId: result.conversationId, matchId: null }
     },
     [user]
   )
@@ -351,6 +371,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [user]
   )
 
+  const muteProfile = useCallback(async (targetUid: string) => {
+    if (firebaseConfigured && user) await muteProfileRemote(user.uid, targetUid)
+    else setMutedIds((prev) => prev.includes(targetUid) ? prev : [...prev, targetUid])
+  }, [user])
+
+  const unmuteProfile = useCallback(async (targetUid: string) => {
+    if (firebaseConfigured && user) await unmuteProfileRemote(user.uid, targetUid)
+    else setMutedIds((prev) => prev.filter((id) => id !== targetUid))
+  }, [user])
+
+  const updateSafeMode = useCallback(async (enabled: boolean) => {
+    setSafeMode(enabled)
+    if (firebaseConfigured && user) await updateSafetySettingsRemote(user.uid, { safeMode: enabled })
+  }, [user])
+
   const clearLastMatch = useCallback(() => setLastMatchId(null), [])
 
   const isAuthenticated = firebaseConfigured ? !!user : localAuthenticated
@@ -373,10 +408,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         passedIds,
         matchedIds,
         blockedIds,
+        mutedIds,
+        safeMode,
         likeProfile,
         passProfile,
         blockProfile,
         unblockProfile,
+        muteProfile,
+        unmuteProfile,
+        updateSafeMode,
         isAuthenticated,
         setAuthenticated: setLocalAuthenticated,
         onboardingComplete,

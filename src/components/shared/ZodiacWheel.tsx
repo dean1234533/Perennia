@@ -3,7 +3,12 @@ import { motion } from 'framer-motion'
 const symbols = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
 
 export function ZodiacWheel({ size = 220 }: { size?: number }) {
-  const radius = size / 2 - 26
+  const compact = size < 140
+  const symbolSize = compact ? Math.max(12, Math.round(size * 0.15)) : 24
+  const symbolFontSize = compact ? Math.max(10, Math.round(size * 0.12)) : 16
+  const coreSize = compact ? Math.max(28, Math.round(size * 0.34)) : 64
+  const coreFontSize = compact ? Math.max(14, Math.round(size * 0.18)) : 24
+  const radius = size / 2 - (compact ? symbolSize / 2 + 4 : 26)
   const center = size / 2
 
   return (
@@ -33,16 +38,19 @@ export function ZodiacWheel({ size = 220 }: { size?: number }) {
         return (
           <div
             key={sym}
-            className="absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center text-champagne/70"
-            style={{ left: x, top: y }}
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center text-champagne/70"
+            style={{ left: x, top: y, width: symbolSize, height: symbolSize, fontSize: symbolFontSize }}
           >
             {sym}
           </div>
         )
       })}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="glow-gold flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-nebula-purple/40 to-nebula-blue/30">
-          <span className="text-2xl">✦</span>
+        <div
+          className="glow-gold flex items-center justify-center rounded-full bg-gradient-to-br from-nebula-purple/40 to-nebula-blue/30"
+          style={{ width: coreSize, height: coreSize }}
+        >
+          <span style={{ fontSize: coreFontSize }}>✦</span>
         </div>
       </div>
     </div>

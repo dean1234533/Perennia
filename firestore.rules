@@ -36,7 +36,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == uid;
       allow update: if request.auth != null && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds', 'blockedIds', 'mutedIds', 'safeMode'])
         && (
           !request.resource.data.diff(resource.data).affectedKeys().hasAny([
             'birthDate', 'birthTime', 'birthTimeUnknown', 'birthPlace',
@@ -56,8 +56,8 @@ service cloud.firestore {
     match /users/{uid}/private/{docId} {
       allow read: if request.auth != null && (
         request.auth.uid == uid ||
-        resource.data.visibility == 'public' ||
-        (resource.data.visibility == 'matching-only' &&
+        (docId != 'safety' && resource.data.visibility == 'public') ||
+        (docId != 'safety' && resource.data.visibility == 'matching-only' &&
           exists(/databases/$(database)/documents/matches/$(matchId(uid, request.auth.uid))))
       );
       allow write: if request.auth != null && request.auth.uid == uid;
@@ -73,6 +73,24 @@ service cloud.firestore {
     match /matches/{matchId} {
       allow read: if request.auth != null && request.auth.uid in resource.data.users;
       allow write: if false;
+    }
+    match /connections/{connectionId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.users;
+      allow write: if false;
+    }
+
+    // Friendship is mutual and private. Only the two participants can read
+    // their request/friendship; all writes are validated by Cloud Functions.
+    match /friendRequests/{requestId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow write: if false;
+    }
+    match /friendships/{friendshipId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.users;
+      allow write: if false;
+    }
+    match /reports/{reportId} {
+      allow read, write: if false;
     }
 
     // Conversations are keyed by matchId and only ever created by the

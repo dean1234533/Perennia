@@ -273,8 +273,9 @@ export function Discovery() {
     setActionPending(true)
     setDirection(1)
     try {
-      const matchId = await likeProfile(active.uid)
+      const { matchId, conversationId } = await likeProfile(active.uid)
       if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: active.uid, compatibility: active.compatibility } })
+      else if (conversationId) navigate(`/messages/${conversationId}`, { state: { otherUid: active.uid } })
     } catch (err) {
       console.warn('[Perennia] Failed to like profile:', err)
     } finally {

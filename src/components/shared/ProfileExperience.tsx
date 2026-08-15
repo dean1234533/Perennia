@@ -123,9 +123,16 @@ export function ProfileExperience({
         <section className="profile-luxury-card profile-cosmic-preview">
           <div>
             <h2><Sparkles /> {isOwnProfile ? 'My Cosmic Profile' : 'Cosmic Profile'}</h2>
-            {cosmicProfilePath && <button onClick={() => navigate(cosmicProfilePath)}>{isOwnProfile ? 'View My Cosmic Profile' : 'View Cosmic Profile'} <ArrowRight /></button>}
+            {cosmicProfilePath && (
+              <button onClick={() => navigate(cosmicProfilePath)}>
+                <span>{isOwnProfile ? 'View My Cosmic Profile' : 'View Cosmic Profile'}</span>
+                <ArrowRight />
+              </button>
+            )}
           </div>
-          <ZodiacWheel size={150} />
+          <div className="profile-cosmic-art" aria-hidden="true">
+            <ZodiacWheel size={72} />
+          </div>
         </section>
       </div>
 

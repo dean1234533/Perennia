@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Mic, Send, Check, CheckCheck, Smile, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
-import { getMatch, getUserDoc, subscribeMessages, sendMessageRemote, markConversationRead, type Message, type DiscoveryCandidate } from '@/lib/firestore'
+import { getConnection, getUserDoc, subscribeMessages, sendMessageRemote, markConversationRead, type Message, type DiscoveryCandidate } from '@/lib/firestore'
 
 interface ThreadLocationState {
   otherUid?: string
@@ -25,7 +25,7 @@ export function MessageThread() {
     if (!matchId || !user) return
     let cancelled = false
     async function resolve() {
-      const otherUid = state?.otherUid ?? (await getMatch(matchId!))?.users.find((u) => u !== user!.uid)
+      const otherUid = state?.otherUid ?? (await getConnection(matchId!))?.users.find((u) => u !== user!.uid)
       if (!otherUid) {
         if (!cancelled) setProfile(null)
         return

@@ -4,10 +4,10 @@ import { motion } from 'framer-motion'
 import { BadgeCheck, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import {
-  subscribeMyMatches,
+  subscribeMyConnections,
   subscribeConversation,
   getUserDoc,
-  type MatchDoc,
+  type ConnectionDoc,
   type ConversationDoc,
   type DiscoveryCandidate,
 } from '@/lib/firestore'
@@ -15,13 +15,13 @@ import {
 export function MessagesList() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [matches, setMatches] = useState<MatchDoc[] | null>(null)
+  const [matches, setMatches] = useState<ConnectionDoc[] | null>(null)
   const [profiles, setProfiles] = useState<Record<string, DiscoveryCandidate>>({})
   const [conversations, setConversations] = useState<Record<string, ConversationDoc | null>>({})
 
   useEffect(() => {
     if (!user) return
-    return subscribeMyMatches(user.uid, setMatches)
+    return subscribeMyConnections(user.uid, setMatches)
   }, [user])
 
   useEffect(() => {
