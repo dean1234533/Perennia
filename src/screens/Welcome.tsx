@@ -91,14 +91,23 @@ export function Welcome() {
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-4xl flex-col items-center justify-center px-5 py-8 text-center sm:px-10 sm:py-10"
         >
-          <img
-            src="/perennia-wordmark-transparent-v4.png"
-            alt="Perennia"
-            width="1536"
-            height="810"
-            fetchPriority="high"
-            className="perennia-approved-wordmark w-[min(92vw,46rem)]"
-          />
+          <div className="perennia-approved-wordmark w-[min(92vw,46rem)]" aria-label="Perennia">
+            <img
+              src="/perennia-logo-transparent-v2.png"
+              alt=""
+              width="1254"
+              height="1254"
+              fetchPriority="high"
+              className="perennia-approved-wordmark__heart"
+            />
+            <span className="perennia-approved-wordmark__crescent" aria-hidden="true">☾</span>
+            <span className="perennia-approved-wordmark__name">Perennia</span>
+            <span className="perennia-approved-wordmark__ornament" aria-hidden="true">
+              <i />
+              <b>✦</b>
+              <i />
+            </span>
+          </div>
 
           <p className="-mt-2 font-serif-display text-xl font-medium italic tracking-[0.025em] text-[#10277a] [text-shadow:0_1px_12px_rgba(255,255,255,.55)] sm:text-2xl">
             For Love That Fits, Naturally.

@@ -115,9 +115,63 @@ input:autofill {
 }
 
 .perennia-approved-wordmark {
-  display: block;
-  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
   filter: drop-shadow(0 8px 22px rgba(17, 49, 155, .18));
+}
+
+.perennia-approved-wordmark__heart {
+  width: clamp(5rem, 15vw, 8rem);
+  height: clamp(5rem, 15vw, 8rem);
+  object-fit: contain;
+  margin-bottom: -1.1rem;
+}
+
+.perennia-approved-wordmark__crescent {
+  color: #f8fbff;
+  font-family: Georgia, serif;
+  font-size: clamp(1.8rem, 4.5vw, 2.65rem);
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(86, 153, 255, .85);
+}
+
+.perennia-approved-wordmark__name {
+  margin-top: .1rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(4rem, 13vw, 8.7rem);
+  font-weight: 400;
+  line-height: .92;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(180deg, #fff 0%, #b8c9ff 25%, #486de2 58%, #8a50db 80%, #fff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: 1px rgba(247, 248, 255, .82);
+  text-shadow: 0 0 9px rgba(255, 255, 255, .65), 0 5px 4px rgba(15, 39, 123, .42);
+}
+
+.perennia-approved-wordmark__ornament {
+  display: flex;
+  width: 88%;
+  align-items: center;
+  gap: .7rem;
+  color: #183ea9;
+}
+
+.perennia-approved-wordmark__ornament i {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, #244fc2 18%, #244fc2 82%, transparent);
+  box-shadow: 0 0 4px rgba(255, 255, 255, .72);
+}
+
+.perennia-approved-wordmark__ornament b {
+  font-size: clamp(1.1rem, 3vw, 1.65rem);
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(255, 255, 255, .92);
 }
 
 .perennia-glass-button {
