@@ -123,6 +123,10 @@ input:autofill {
   filter: drop-shadow(0 8px 22px rgba(17, 49, 155, .2));
 }
 
+.perennia-landing-hero {
+  background:#16398b url('/perennia-landing-landscape-v2.webp') center center / cover no-repeat;
+}
+
 .perennia-glass-button {
   position: relative;
   border: 2px solid transparent;

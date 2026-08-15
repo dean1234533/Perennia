@@ -84,7 +84,7 @@ export function Welcome() {
       </div>
 
       {/* ============ HERO ============ */}
-      <section className="relative z-10 min-h-[100svh] overflow-hidden">
+      <section className="perennia-landing-hero relative z-10 min-h-[100svh] overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
