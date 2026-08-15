@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ShieldCheck, CheckCircle2, Loader2, AlertTriangle, UploadCloud,
-  Camera, ScanFace, CalendarDays, UserRound, ArrowRight,
+  Camera, ScanFace, CalendarDays, UserRound, ArrowRight, Contact,
 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
@@ -188,7 +188,7 @@ export function Verify() {
         <AnimatePresence mode="wait">
           {isVerified && !detailsConfirmed ? (
             <motion.div key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-300/40 bg-blue-500/10 shadow-[0_0_22px_rgba(79,118,255,.25)]">
+              <div className="verification-confirm-icon mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-blue-300/40 bg-blue-500/10 shadow-[0_0_22px_rgba(79,118,255,.25)]">
                 <CheckCircle2 className="h-8 w-8 text-blue-200" />
               </div>
               <h2 className="font-serif-display text-3xl">Confirm Your Details</h2>
@@ -201,13 +201,13 @@ export function Verify() {
               {(onboarding.legalName || onboarding.birthDate) && (
                 <div className="mx-auto my-7 max-w-md space-y-3 text-left">
                   {onboarding.legalName && (
-                    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+                    <div className="verification-detail-field flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
                       <UserRound className="h-5 w-5 text-champagne" />
                       <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Legal name</p><p className="mt-1 text-white/90">{onboarding.legalName}</p></div>
                     </div>
                   )}
                   {onboarding.birthDate && (
-                    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+                    <div className="verification-detail-field flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
                       <CalendarDays className="h-5 w-5 text-champagne" />
                       <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Date of birth</p><p className="mt-1 text-white/90">{formatBirthDate(onboarding.birthDate)}</p></div>
                     </div>
@@ -215,7 +215,7 @@ export function Verify() {
                 </div>
               )}
               {errorMessage && <p className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
-              <Button size="lg" className="w-full max-w-md" onClick={confirmAndContinue} disabled={stage === 'confirming'}>
+              <Button size="lg" className="verification-confirm-button w-full max-w-md rounded-full" onClick={confirmAndContinue} disabled={stage === 'confirming'}>
                 {stage === 'confirming' ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Confirm &amp; Continue <ArrowRight className="h-4 w-4" /></>}
               </Button>
               <p className="mt-4 text-xs text-white/35">If these details are incorrect, do not continue. Contact Perennia Support.</p>
@@ -275,6 +275,13 @@ export function Verify() {
             <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {verification.status === 'failed' && <p className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">Your previous attempt could not be verified. Please try again with a clear, valid document.</p>}
               {errorMessage && <p className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">{errorMessage}</p>}
+              <div className="verification-id-icon mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-[#f7df8a]/70 text-[#fff0a8]">
+                <Contact className="h-9 w-9" strokeWidth={1.45} />
+              </div>
+              <h2 className="mt-4 font-serif-display text-3xl">Upload Government ID</h2>
+              <p className="mx-auto mb-6 mt-2 max-w-lg text-sm text-white/90">
+                Stripe automatically recognises supported government-issued photo IDs.
+              </p>
               <div className="verification-actions space-y-4">
                 <button type="button" onClick={launch} disabled={stage === 'launching' || !user} className="verification-action-card flex w-full items-center gap-6 px-8 text-left disabled:opacity-50">
                   <UploadCloud className="h-9 w-9 shrink-0 text-white" />

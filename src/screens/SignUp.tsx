@@ -6,6 +6,7 @@ import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
@@ -67,7 +68,18 @@ export function SignUp() {
   const isValid = email.includes('@') && password.length >= MIN_PASSWORD_LENGTH
 
   return (
-    <OnboardingShell step={1} totalSteps={12} className="signup-onboarding-shell">
+    <OnboardingShell
+      step={1}
+      totalSteps={12}
+      className="signup-onboarding-shell"
+      headerMark={(
+        <div className="signup-brand-lockup" aria-hidden="true">
+          <CelestialHeart className="signup-brand-heart" />
+          <span className="signup-brand-crescent">☾</span>
+          <span className="signup-brand-divider"><i /><b>✦</b><i /></span>
+        </div>
+      )}
+    >
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
