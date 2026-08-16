@@ -4,19 +4,6 @@ html:has(.cosmic-profile) {
   overflow-x: clip;
 }
 
-/* Cosmic Profile alone uses the approved volcano-free celestial plate.
-   The shared shell remains untouched for every other onboarding/app page. */
-body:has(.cosmic-profile) .celestial-artwork,
-body:has(.cosmic-profile) .celestial-drift {
-  background-image: url('/cosmic-profile-background-v2.png');
-  background-position: center center;
-}
-
-.cosmic-profile-onboarding > .relative.z-10 {
-  padding-top: .8rem;
-  padding-bottom: 1.2rem;
-}
-
 .cosmic-profile {
   position: relative;
   width: min(1120px, 100%);
@@ -52,29 +39,26 @@ body:has(.cosmic-profile) .celestial-drift {
 
 .cosmic-header-mark {
   position: relative;
-  width: 78px;
-  height: 84px;
-  margin-bottom: .55rem;
-  filter: drop-shadow(0 0 13px rgba(93, 159, 255, .55));
+  width: 48px;
+  height: 42px;
+  margin-bottom: 1.1rem;
+  color: #efcf86;
+  filter: drop-shadow(0 0 8px rgba(229, 192, 123, .4));
 }
 
-.cosmic-header-mark img {
-  display: block;
+.cosmic-header-mark svg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  stroke-width: 1.15;
 }
 
 .cosmic-header-mark span {
   position: absolute;
   left: 50%;
-  bottom: -4px;
+  top: 8px;
   transform: translateX(-50%);
-  color: #fff8dc;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.35rem;
-  line-height: 1;
-  text-shadow: 0 0 10px rgba(104, 166, 255, .9);
+  color: #fff4cc;
+  font-size: .72rem;
 }
 
 .cosmic-profile-header {
@@ -373,41 +357,22 @@ body:has(.cosmic-profile) .celestial-drift {
   width: min(390px, 100%) !important;
   min-height: 55px !important;
   margin: 1rem auto 0 !important;
-  isolation: isolate;
-  border: 0 !important;
+  border: 1px solid rgba(221, 232, 255, .42) !important;
   border-radius: 999px !important;
-  background: transparent !important;
-  color: #fff !important;
+  background: linear-gradient(110deg, rgba(179, 211, 255, .2), rgba(93, 79, 174, .27), rgba(229, 178, 220, .17)) !important;
+  color: #fff1c9 !important;
   font-family: var(--font-serif) !important;
   font-size: 1.35rem !important;
   font-weight: 500 !important;
-  box-shadow: 0 0 18px rgba(83, 181, 255, .18), 0 0 20px rgba(196, 91, 224, .12) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-.cosmic-enter-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  padding: 2px;
-  background: linear-gradient(100deg, #55c8ff 0%, #738dff 42%, #a06cff 68%, #e174dc 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+  box-shadow: 0 0 28px rgba(123, 158, 255, .18), inset 0 1px rgba(255, 255, 255, .2) !important;
+  backdrop-filter: blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
 }
 
 .cosmic-enter-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: transparent !important;
-  box-shadow: 0 0 24px rgba(83, 181, 255, .24), 0 0 25px rgba(196, 91, 224, .18) !important;
-}
-
-.cosmic-enter-button:hover:not(:disabled)::before {
-  background: linear-gradient(100deg, #72d4ff 0%, #8ba2ff 42%, #b284ff 68%, #ee8be5 100%);
+  background: linear-gradient(110deg, rgba(190, 220, 255, .26), rgba(105, 88, 190, .33), rgba(238, 190, 229, .22)) !important;
+  box-shadow: 0 0 34px rgba(139, 166, 255, .24), inset 0 1px rgba(255, 255, 255, .24) !important;
 }
 
 .cosmic-enter-button:focus-visible {
@@ -438,88 +403,6 @@ body:has(.cosmic-profile) .celestial-drift {
   }
 }
 
-@media (min-width: 1051px) {
-  .cosmic-profile {
-    width: min(1240px, 100%);
-    padding-bottom: .75rem;
-  }
-
-  .cosmic-profile-header {
-    margin-bottom: .65rem;
-  }
-
-  .cosmic-profile-header h1 {
-    font-size: clamp(3rem, 4.2vw, 3.55rem);
-  }
-
-  .cosmic-profile-header > p:last-child {
-    margin-top: .55rem;
-  }
-
-  .cosmic-wheel-column {
-    height: 200px;
-    margin-bottom: 0;
-  }
-
-  .cosmic-wheel {
-    width: 195px;
-    height: 195px;
-  }
-
-  .cosmic-section-heading {
-    margin-bottom: .55rem;
-  }
-
-  .cosmic-section-heading h2 {
-    font-size: 1.5rem;
-  }
-
-  .cosmic-placement-card {
-    min-height: 82px;
-    padding: .45rem .4rem;
-  }
-
-  .cosmic-planet-symbol {
-    height: 1.8rem;
-    margin-bottom: .18rem;
-    font-size: 1.72rem;
-  }
-
-  .cosmic-placement-card p,
-  .cosmic-chinese-card p {
-    margin-top: .22rem;
-    font-size: 1.02rem;
-  }
-
-  .cosmic-placement-card p span {
-    font-size: .9rem;
-  }
-
-  .cosmic-chinese-section {
-    margin-top: .7rem;
-  }
-
-  .cosmic-chinese-card {
-    min-height: 84px;
-    padding: .45rem .4rem;
-  }
-
-  .cosmic-chinese-symbol {
-    min-height: 1.75rem;
-    margin-bottom: .15rem;
-    font-size: 1.72rem;
-  }
-
-  .cosmic-profile-note {
-    margin-top: .55rem;
-  }
-
-  .cosmic-enter-button {
-    min-height: 51px !important;
-    margin-top: .4rem !important;
-  }
-}
-
 @media (max-width: 720px) {
   .cosmic-profile {
     padding-bottom: .75rem;
@@ -530,14 +413,9 @@ body:has(.cosmic-profile) .celestial-drift {
   }
 
   .cosmic-header-mark {
-    width: 66px;
-    height: 72px;
-    margin-bottom: .45rem;
-  }
-
-  body:has(.cosmic-profile) .celestial-artwork,
-  body:has(.cosmic-profile) .celestial-drift {
-    background-position: 50% center;
+    width: 39px;
+    height: 35px;
+    margin-bottom: .8rem;
   }
 
   .cosmic-profile-header {
