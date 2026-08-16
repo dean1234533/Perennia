@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import {
-  BadgeCheck, MapPin, Sun, Moon, ArrowUpCircle, Check, CheckCheck,
+  BadgeCheck, MapPin, Sun, Moon, ArrowUpCircle, CheckCheck,
   ShieldCheck, ScanFace, Sparkles,
 } from 'lucide-react'
 import { ProgressRing } from '@/components/ui/progress-ring'

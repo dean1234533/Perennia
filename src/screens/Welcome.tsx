@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, MotionConfig } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Heart, Shield, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -47,12 +47,12 @@ function IntentionFeature({
 
 function AlignmentCard({ icon, heading, children, divided = false }: { icon: React.ReactNode; heading: React.ReactNode; children: React.ReactNode; divided?: boolean }) {
   return (
-    <div className={`flex min-w-0 flex-col items-center px-2 py-7 text-center sm:px-6 sm:py-10 lg:px-10 ${divided ? 'border-l border-white/15' : ''}`}>
+    <div className={`flex min-w-0 flex-col items-center px-6 py-8 text-center sm:px-6 sm:py-10 lg:px-10 ${divided ? 'border-t border-white/15 sm:border-l sm:border-t-0' : ''}`}>
       <div className="relative mb-5 flex h-12 w-12 items-center justify-center text-champagne drop-shadow-[0_0_11px_rgba(229,192,123,.42)] sm:h-14 sm:w-14">
         {icon}
       </div>
-      <h3 className="font-serif-display text-[1rem] leading-[1.05] text-ivory sm:text-xl lg:text-2xl">{heading}</h3>
-      <p className="mt-3 text-[0.68rem] leading-[1.55] text-white/65 sm:text-sm sm:leading-6">{children}</p>
+      <h3 className="font-serif-display text-xl leading-[1.05] text-ivory lg:text-2xl">{heading}</h3>
+      <p className="mt-3 max-w-xs text-sm leading-6 text-white/65">{children}</p>
     </div>
   )
 }
@@ -66,6 +66,7 @@ export function Welcome() {
   const navigate = useNavigate()
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="perennia-landing-page relative isolate overflow-x-clip bg-midnight text-white">
       {/* Genuinely pinned (position: fixed) and sized with `dvh`'s
           opposite: `svh` (STATIC small-viewport height — the one value
@@ -101,7 +102,7 @@ export function Welcome() {
               className="perennia-approved-wordmark__heart"
             />
             <span className="perennia-approved-wordmark__crescent" aria-hidden="true">☾</span>
-            <span className="perennia-approved-wordmark__name">Perennia</span>
+            <h1 className="perennia-approved-wordmark__name">Perennia</h1>
             <span className="perennia-approved-wordmark__ornament" aria-hidden="true">
               <i />
               <b>✦</b>
@@ -126,6 +127,7 @@ export function Welcome() {
               Begin Your Journey
               <motion.span
                 className="inline-block"
+                aria-hidden="true"
                 animate={{ x: [0, 4, 0] }}
                 transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
               >
@@ -221,7 +223,7 @@ export function Welcome() {
             </div>
           </FadeUp>
 
-          <FadeUp delay={0.12} className="mx-auto mt-12 grid w-full max-w-6xl grid-cols-3 overflow-hidden rounded-[1.75rem] border border-champagne/25 bg-white/[.025] shadow-[0_18px_70px_rgba(2,7,25,.2),inset_0_1px_rgba(255,255,255,.05)] backdrop-blur-[3px] sm:mt-16 sm:rounded-[2rem]">
+          <FadeUp delay={0.12} className="mx-auto mt-12 grid w-full max-w-6xl grid-cols-1 overflow-hidden rounded-[1.75rem] border border-champagne/25 bg-white/[.025] shadow-[0_18px_70px_rgba(2,7,25,.2),inset_0_1px_rgba(255,255,255,.05)] backdrop-blur-[3px] sm:mt-16 sm:grid-cols-3 sm:rounded-[2rem]">
             <AlignmentCard
               icon={
                 <span className="relative inline-flex">
@@ -329,7 +331,7 @@ export function Welcome() {
 
           <Button size="lg" onClick={() => navigate('/signup')} className={`${HERO_CTA} mt-8 h-16 max-w-md text-sm sm:mt-10 sm:w-auto sm:min-w-96 sm:text-base`}>
             Begin Your Journey
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </FadeUp>
       </section>
@@ -338,5 +340,6 @@ export function Welcome() {
         © 2026 Perennia. For love that fits, naturally.
       </footer>
     </div>
+    </MotionConfig>
   )
 }
