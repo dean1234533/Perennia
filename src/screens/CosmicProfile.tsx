@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, ChevronRight, Heart, Info } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Info } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
+import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { Button } from '@/components/ui/button'
 import { CosmicZodiacWheel } from './CosmicZodiacWheel'
 import { useApp } from '@/context/AppContext'
@@ -87,12 +88,7 @@ function CosmicSectionHeading({ children, id }: { children: string; id: string }
 }
 
 function CosmicHeaderMark() {
-  return (
-    <div className="cosmic-header-mark" aria-hidden="true">
-      <Heart />
-      <span>✦</span>
-    </div>
-  )
+  return <CelestialHeart className="mb-5 h-16 w-16 sm:h-20 sm:w-20" />
 }
 
 function WesternCard({ placement, value }: { placement: WesternPlacement; value?: string }) {

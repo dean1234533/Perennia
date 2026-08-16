@@ -53,9 +53,9 @@ export function Matches() {
           <Loader2 className="h-6 w-6 animate-spin text-gold" />
         </div>
       ) : matched.length === 0 ? (
-        <div className="glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center">
-          <p className="font-serif-display text-2xl text-champagne">No matches yet</p>
-          <p className="max-w-sm text-sm text-white/50">
+        <div className="perennia-empty-state-panel glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center">
+          <p className="perennia-empty-state-heading font-serif-display text-2xl text-champagne">No matches yet</p>
+          <p className="perennia-empty-state-copy max-w-sm text-sm text-white/50">
             Keep exploring your curated discovery collection — your next connection is waiting.
           </p>
         </div>

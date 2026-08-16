@@ -385,7 +385,10 @@ export function Discovery() {
                 <h2>Discovery Filters</h2>
                 <button onClick={() => setFilterOpen(false)} aria-label="Close filters"><X /></button>
               </div>
-              <MatchingPreferencesPanel onSaved={() => setFilterOpen(false)} />
+              <MatchingPreferencesPanel
+                onSaved={() => setFilterOpen(false)}
+                actionButtonClassName="discovery-filter-apply-button"
+              />
             </motion.div>
           </motion.div>
         )}
@@ -410,10 +413,10 @@ function Identity({ candidate }: { candidate: DiscoveryCandidate & { compatibili
 
 function DiscoveryState({ icon, title, body, action }: { icon?: ReactNode; title: string; body: string; action?: ReactNode }) {
   return (
-    <motion.div className="discovery-state" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div className="discovery-state perennia-empty-state-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
       {icon && <span className="discovery-state-icon">{icon}</span>}
-      <h1>{title}</h1>
-      <p>{body}</p>
+      <h1 className="perennia-empty-state-heading">{title}</h1>
+      <p className="perennia-empty-state-copy">{body}</p>
       {action}
     </motion.div>
   )

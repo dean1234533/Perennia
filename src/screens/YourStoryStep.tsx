@@ -41,7 +41,7 @@ function YourStoryForm() {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="glass-strong w-full max-w-lg rounded-[2rem] p-8 md:p-10"
+      className="your-story-panel w-full max-w-lg rounded-[2rem] p-8 md:p-10"
     >
       <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Your introduction</p>
       <h1 className="font-serif-display mb-2 text-3xl">Short Intro &amp; Bio</h1>
@@ -56,7 +56,7 @@ function YourStoryForm() {
             onChange={(e) => setAbout(e.target.value)}
             rows={3}
             placeholder="A short introduction..."
-            className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-gold/40"
+            className="your-story-field rounded-xl p-3 text-sm text-white outline-none focus:border-gold/40"
           />
         </div>
 
@@ -67,13 +67,13 @@ function YourStoryForm() {
               value={answers[question] ?? ''}
               onChange={(e) => setAnswers((prev) => ({ ...prev, [question]: e.target.value }))}
               rows={2}
-              className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-gold/40"
+              className="your-story-field rounded-xl p-3 text-sm text-white outline-none focus:border-gold/40"
             />
           </div>
         ))}
       </div>
 
-      <Button size="lg" className="mt-8 w-full" onClick={handleContinue} disabled={saving}>
+      <Button size="lg" className="your-story-continue-button mt-8 w-full" onClick={handleContinue} disabled={saving}>
         {saving ? 'Saving…' : <>Continue <ArrowRight className="h-4 w-4" /></>}
       </Button>
     </motion.div>

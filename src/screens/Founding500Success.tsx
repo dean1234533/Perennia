@@ -3,15 +3,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Sparkles, Loader2, BadgeCheck, ShieldCheck, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { PricingTimeline } from '@/components/founding500/PricingTimeline'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
+import './Founding500.css'
 
-const FLOW_PRIMARY_BUTTON = 'min-h-12 border border-gold/75 bg-[#0a1023]/45 text-champagne shadow-[0_0_18px_rgba(229,192,123,.22),inset_0_0_18px_rgba(229,192,123,.05)] backdrop-blur-md hover:border-gold hover:bg-gold/10 hover:text-white hover:shadow-[0_0_28px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:text-white/45 disabled:opacity-100'
+const FLOW_PRIMARY_BUTTON = 'founding-500-gold-button min-h-12 text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98]'
 
 export function Founding500Success() {
   const navigate = useNavigate()
@@ -34,8 +34,9 @@ export function Founding500Success() {
   }, [record])
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-midnight text-white">
-      <AtmosphericBackground />
+    <div className="founding-500-page founding-500-success-page relative min-h-screen overflow-x-clip bg-midnight text-white">
+      <div className="founding-500-background founding-500-success-background" aria-hidden="true" />
+      <div className="founding-500-vignette founding-500-success-vignette" aria-hidden="true" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-5 py-16 text-center sm:px-6">
         {!record ? (
@@ -79,17 +80,17 @@ export function Founding500Success() {
             </div>
 
             <div className="mx-auto mb-10 grid w-full max-w-xl grid-cols-2 gap-3 text-left sm:gap-4">
-              <div className="rounded-2xl border border-white/10 bg-[#071126]/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md sm:p-5">
+              <div className="founding-500-glass rounded-2xl p-4 sm:p-5">
                 <p className="text-[10px] uppercase tracking-widest text-white/40">Membership Tier</p>
                 <p className="font-serif-display text-lg text-champagne">{record.tier === 'premium' ? 'Premium' : 'Essential'}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-[#071126]/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md sm:p-5">
+              <div className="founding-500-glass rounded-2xl p-4 sm:p-5">
                 <p className="text-[10px] uppercase tracking-widest text-white/40">Current Price</p>
                 <p className="font-serif-display text-lg text-champagne">
                   {record.pricing.currency.toUpperCase() === 'GBP' ? '£' : '$'}{record.pricing.introPrice.toFixed(2)}/mo
                 </p>
               </div>
-              <div className="col-span-2 flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-[#071126]/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md">
+              <div className="founding-500-glass col-span-2 flex items-center justify-center gap-2 rounded-2xl p-4">
                 <ShieldCheck className={`h-4 w-4 ${onboarding.verification.status === 'verified' ? 'text-emerald-400' : 'text-white/30'}`} />
                 <p className="text-xs text-white/60">
                   {onboarding.verification.status === 'verified' ? 'Identity verified' : 'Verification pending'}
@@ -107,7 +108,7 @@ export function Founding500Success() {
             </div>
 
             <Button size="lg" variant="outline" className={`mx-auto w-full max-w-md ${FLOW_PRIMARY_BUTTON}`} onClick={() => navigate(destination)}>
-              Enter Perennia
+              Enter Perennia →
             </Button>
           </motion.div>
         )}

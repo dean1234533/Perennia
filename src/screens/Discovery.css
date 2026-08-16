@@ -244,6 +244,45 @@
 .discovery-filter-heading button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.05); color: rgba(255,255,255,.65); }
 .discovery-filter-heading svg { width: 19px; height: 19px; }
 
+.discovery-filter-apply-button {
+  position: relative;
+  isolation: isolate;
+  height: 3rem !important;
+  overflow: hidden;
+  border: 0 !important;
+  background: linear-gradient(110deg, rgba(85, 184, 255, 0.055), rgba(139, 108, 255, 0.075)) !important;
+  color: #fff !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 20, 0.82);
+  box-shadow: 0 0 20px rgba(99, 128, 255, 0.12) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  backdrop-filter: blur(10px) saturate(130%);
+}
+
+.discovery-filter-apply-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  padding: 1.25px;
+  border-radius: inherit;
+  background: linear-gradient(100deg, #55b8ff 0%, #6d93ff 50%, #8b6cff 100%);
+  content: '';
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.discovery-filter-apply-button:hover:not(:disabled) {
+  background: linear-gradient(110deg, rgba(85, 184, 255, 0.09), rgba(139, 108, 255, 0.11)) !important;
+  color: #fff !important;
+  box-shadow: 0 0 25px rgba(109, 120, 255, 0.18) !important;
+}
+
+.discovery-filter-apply-button:focus-visible {
+  outline: 2px solid rgba(85, 184, 255, 0.8);
+  outline-offset: 3px;
+}
+
 .discovery-page button:focus-visible { outline: 2px solid #a8b8ff; outline-offset: 3px; }
 @keyframes discovery-spin { to { transform: rotate(360deg); } }
 

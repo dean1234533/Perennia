@@ -37,30 +37,6 @@ html:has(.cosmic-profile) {
   padding: 4rem 1.5rem;
 }
 
-.cosmic-header-mark {
-  position: relative;
-  width: 48px;
-  height: 42px;
-  margin-bottom: 1.1rem;
-  color: #efcf86;
-  filter: drop-shadow(0 0 8px rgba(229, 192, 123, .4));
-}
-
-.cosmic-header-mark svg {
-  width: 100%;
-  height: 100%;
-  stroke-width: 1.15;
-}
-
-.cosmic-header-mark span {
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  transform: translateX(-50%);
-  color: #fff4cc;
-  font-size: .72rem;
-}
-
 .cosmic-profile-header {
   margin: -.15rem auto 1.2rem;
   max-width: 650px;
@@ -187,14 +163,13 @@ html:has(.cosmic-profile) {
 .cosmic-chinese-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(220, 229, 255, .38);
+  border: 1px solid rgba(220, 229, 255, .3);
   background:
-    linear-gradient(145deg, rgba(180, 204, 255, .19), rgba(89, 78, 166, .24) 56%, rgba(224, 165, 218, .16));
+    linear-gradient(145deg, rgba(40, 55, 103, .68), rgba(29, 28, 73, .66) 56%, rgba(47, 34, 83, .62));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .22),
-    inset 0 -1px 0 rgba(121, 139, 223, .12),
-    0 10px 28px rgba(16, 25, 83, .16),
-    0 0 18px rgba(132, 158, 255, .08);
+    inset 0 1px 0 rgba(255, 255, 255, .16),
+    inset 0 -1px 0 rgba(121, 139, 223, .1),
+    0 8px 22px rgba(8, 14, 45, .13);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
 }
@@ -357,22 +332,27 @@ html:has(.cosmic-profile) {
   width: min(390px, 100%) !important;
   min-height: 55px !important;
   margin: 1rem auto 0 !important;
-  border: 1px solid rgba(221, 232, 255, .42) !important;
+  border: 1.5px solid transparent !important;
   border-radius: 999px !important;
-  background: linear-gradient(110deg, rgba(179, 211, 255, .2), rgba(93, 79, 174, .27), rgba(229, 178, 220, .17)) !important;
-  color: #fff1c9 !important;
+  background:
+    linear-gradient(110deg, rgba(18, 45, 111, .1), rgba(78, 46, 138, .09)) padding-box,
+    linear-gradient(100deg, #55b8ff 0%, #8b6cff 100%) border-box !important;
+  color: #fff !important;
   font-family: var(--font-serif) !important;
   font-size: 1.35rem !important;
   font-weight: 500 !important;
-  box-shadow: 0 0 28px rgba(123, 158, 255, .18), inset 0 1px rgba(255, 255, 255, .2) !important;
-  backdrop-filter: blur(18px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+  text-shadow: 0 1px 8px rgba(5, 13, 38, .72);
+  box-shadow: 0 0 16px rgba(85, 184, 255, .15), 0 0 17px rgba(139, 108, 255, .11) !important;
+  backdrop-filter: blur(7px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(7px) saturate(120%) !important;
 }
 
 .cosmic-enter-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: linear-gradient(110deg, rgba(190, 220, 255, .26), rgba(105, 88, 190, .33), rgba(238, 190, 229, .22)) !important;
-  box-shadow: 0 0 34px rgba(139, 166, 255, .24), inset 0 1px rgba(255, 255, 255, .24) !important;
+  background:
+    linear-gradient(110deg, rgba(25, 59, 137, .14), rgba(91, 54, 157, .12)) padding-box,
+    linear-gradient(100deg, #55b8ff 0%, #8b6cff 100%) border-box !important;
+  box-shadow: 0 0 20px rgba(85, 184, 255, .2), 0 0 20px rgba(139, 108, 255, .14) !important;
 }
 
 .cosmic-enter-button:focus-visible {
@@ -410,12 +390,6 @@ html:has(.cosmic-profile) {
 
   .cosmic-app-shell-wrap {
     padding: 4.5rem 1rem 2rem;
-  }
-
-  .cosmic-header-mark {
-    width: 39px;
-    height: 35px;
-    margin-bottom: .8rem;
   }
 
   .cosmic-profile-header {

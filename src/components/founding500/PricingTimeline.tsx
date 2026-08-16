@@ -45,10 +45,10 @@ export function PricingTimeline({ pricing, currency, promoPeriodMonths }: Pricin
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className={`w-full max-w-sm rounded-2xl border px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.035),0_16px_45px_rgba(2,7,20,.14)] backdrop-blur-md ${
+            className={`founding-500-glass w-full max-w-sm rounded-2xl px-5 py-4 text-center ${
               step.emphasis
-                ? 'border-gold/35 bg-[#17142b]/55 shadow-[inset_0_1px_0_rgba(255,255,255,.05),0_0_24px_rgba(229,192,123,.1)]'
-                : 'border-white/10 bg-[#071126]/45'
+                ? 'founding-500-timeline-current'
+                : ''
             }`}
           >
             <p className={`mb-1 text-[10px] uppercase tracking-[0.25em] ${step.emphasis ? 'text-gold' : 'text-white/40'}`}>
@@ -66,7 +66,7 @@ export function PricingTimeline({ pricing, currency, promoPeriodMonths }: Pricin
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 + 0.15 }}
-              className="py-2 text-gold/40"
+              className="py-2 text-gold/70 drop-shadow-[0_0_6px_rgba(229,192,123,.35)]"
             >
               <ArrowDown className="h-4 w-4" />
             </motion.div>

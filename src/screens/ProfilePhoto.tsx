@@ -130,7 +130,7 @@ function ProfilePhotoForm() {
               ? '/your-story'
               : '/verify'
           )}
-          className="mx-auto inline-flex min-h-14 w-full max-w-xs items-center justify-center gap-3 rounded-full border border-gold/75 bg-midnight/25 px-8 text-base font-medium tracking-wide text-champagne shadow-[0_0_18px_rgba(224,183,94,0.24),inset_0_0_18px_rgba(224,183,94,0.07)] backdrop-blur-sm transition duration-300 hover:border-gold hover:bg-gold/[0.08] hover:shadow-[0_0_28px_rgba(224,183,94,0.36),inset_0_0_22px_rgba(224,183,94,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/65 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[0.985] disabled:cursor-not-allowed disabled:border-white/15 disabled:text-white/30 disabled:shadow-none"
+          className="profile-photo-continue-button mx-auto inline-flex min-h-14 w-full max-w-xs items-center justify-center gap-3 rounded-full px-8 text-base font-medium tracking-wide transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[0.985] disabled:cursor-not-allowed"
         >
           {saving ? 'Saving…' : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
         </button>

@@ -70,9 +70,9 @@ export function MessagesList() {
           <Loader2 className="h-6 w-6 animate-spin text-gold" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center">
-          <p className="font-serif-display text-2xl text-champagne">No conversations yet</p>
-          <p className="max-w-sm text-sm text-white/50">Like someone in Discovery to open a conversation.</p>
+        <div className="perennia-empty-state-panel glass flex flex-col items-center gap-3 rounded-3xl px-8 py-20 text-center">
+          <p className="perennia-empty-state-heading font-serif-display text-2xl text-champagne">No conversations yet</p>
+          <p className="perennia-empty-state-copy max-w-sm text-sm text-white/50">Like someone in Discovery to open a conversation.</p>
         </div>
       ) : (
         <div className="mx-auto flex max-w-2xl flex-col gap-2">

@@ -23,7 +23,7 @@ function distanceLabel(miles: number | null) {
  *  shows up in Discovery (see Discovery.tsx). Shared between the Discovery
  *  filter drawer and Profile > Matching Preferences in Settings so there's
  *  one real source of truth, not two out-of-sync copies. */
-export function MatchingPreferencesPanel({ onSaved }: { onSaved?: () => void }) {
+export function MatchingPreferencesPanel({ onSaved, actionButtonClassName }: { onSaved?: () => void; actionButtonClassName?: string }) {
   const { user } = useAuth()
   const { onboarding, updatePreferences } = useApp()
   const [ageMin, setAgeMin] = useState(onboarding.preferences.ageMin)
@@ -181,7 +181,7 @@ export function MatchingPreferencesPanel({ onSaved }: { onSaved?: () => void }) 
       </div>
 
       <motion.div whileTap={{ scale: 0.98 }}>
-        <Button className="w-full" size="lg" onClick={handleSave} disabled={saving}>
+        <Button className={`w-full ${actionButtonClassName ?? ''}`} size="lg" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Preferences'}
         </Button>
       </motion.div>

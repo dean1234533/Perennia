@@ -3,14 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ShieldCheck, Loader2, AlertTriangle, Lock, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFounding500Config, createFoundingCheckoutSession, FoundingCheckoutNotConfiguredError } from '@/lib/founding500'
 import type { Founding500Config, MembershipTier } from '@/types/founding500'
+import './Founding500.css'
 
-const FLOW_PRIMARY_BUTTON = 'min-h-12 border border-gold/75 bg-[#0a1023]/45 text-champagne shadow-[0_0_18px_rgba(229,192,123,.22),inset_0_0_18px_rgba(229,192,123,.05)] backdrop-blur-md hover:border-gold hover:bg-gold/10 hover:text-white hover:shadow-[0_0_28px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:bg-[#0a1023]/35 disabled:text-white/45 disabled:shadow-none disabled:opacity-100'
+const FLOW_PRIMARY_BUTTON = 'founding-500-outline-button min-h-12 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:text-white/40 disabled:opacity-100'
 const FLOW_SECONDARY_BUTTON = 'min-h-11 border border-white/20 bg-[#071126]/45 text-white/75 backdrop-blur-md hover:border-gold/50 hover:bg-white/[.07] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98]'
 
 function formatPrice(amount: number, currency: string) {
@@ -89,8 +89,9 @@ export function Founding500Checkout() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-midnight text-white">
-      <AtmosphericBackground />
+    <div className="founding-500-page relative min-h-screen overflow-x-clip bg-midnight text-white">
+      <div className="founding-500-background" aria-hidden="true" />
+      <div className="founding-500-vignette" aria-hidden="true" />
 
       <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Go back" className={`fixed left-4 top-4 z-30 md:left-8 md:top-8 ${FLOW_SECONDARY_BUTTON}`}>
         <ArrowLeft className="h-4 w-4" />
@@ -128,7 +129,7 @@ export function Founding500Checkout() {
         ) : (
           <>
             {/* Checkout summary */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-6 rounded-[1.75rem] border border-gold/25 bg-[#071126]/48 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,.045),0_24px_65px_rgba(2,7,20,.2)] backdrop-blur-md sm:p-8">
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="founding-500-glass founding-500-glass--featured mb-6 rounded-[1.75rem] p-6 sm:p-8">
               <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Your Founding 500 Membership</p>
               <h2 className="font-serif-display mb-4 text-2xl text-champagne">{tier === 'premium' ? 'Premium' : 'Essential'}</h2>
 
