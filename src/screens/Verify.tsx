@@ -201,13 +201,13 @@ export function Verify() {
               {(onboarding.legalName || onboarding.birthDate) && (
                 <div className="mx-auto my-7 max-w-md space-y-3 text-left">
                   {onboarding.legalName && (
-                    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+                    <div className="verification-detail-panel flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
                       <UserRound className="h-5 w-5 text-champagne" />
                       <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Legal name</p><p className="mt-1 text-white/90">{onboarding.legalName}</p></div>
                     </div>
                   )}
                   {onboarding.birthDate && (
-                    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+                    <div className="verification-detail-panel flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.035] p-4">
                       <CalendarDays className="h-5 w-5 text-champagne" />
                       <div><p className="text-[10px] uppercase tracking-[.18em] text-white/35">Date of birth</p><p className="mt-1 text-white/90">{formatBirthDate(onboarding.birthDate)}</p></div>
                     </div>

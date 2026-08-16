@@ -119,78 +119,158 @@ input:autofill {
   flex-direction: column;
   align-items: center;
   background: none;
-  filter: drop-shadow(0 8px 22px rgba(17, 49, 155, .18));
+  filter: drop-shadow(0 8px 24px rgba(17, 49, 155, .2));
 }
 
 .perennia-approved-wordmark__heart {
-  width: clamp(5rem, 15vw, 10rem);
-  height: clamp(5rem, 15vw, 10rem);
+  width: clamp(6.5rem, 18.5vw, 13.5rem);
+  height: clamp(6.5rem, 18.5vw, 13.5rem);
   object-fit: contain;
-  margin-bottom: -1.1rem;
+  margin-bottom: -1.45rem;
+  filter:
+    saturate(1.18)
+    contrast(1.06)
+    drop-shadow(0 0 9px rgba(55, 174, 255, .72))
+    drop-shadow(0 0 18px rgba(129, 77, 255, .45));
 }
 
 .perennia-approved-wordmark__crescent {
-  color: #f8fbff;
+  color: #eef5ff;
   font-family: Georgia, serif;
-  font-size: clamp(1.8rem, 4.5vw, 2.65rem);
+  font-size: clamp(1.65rem, 3.7vw, 2.5rem);
   line-height: 1;
-  text-shadow: 0 0 12px rgba(86, 153, 255, .85);
+  text-shadow:
+    0 0 5px rgba(255, 255, 255, .92),
+    0 0 13px rgba(70, 157, 255, .8),
+    0 0 20px rgba(132, 83, 255, .38);
 }
 
 .perennia-approved-wordmark__name {
-  margin-top: .1rem;
-  font-family: Georgia, 'Times New Roman', serif;
+  margin-top: .05rem;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   font-size: clamp(4rem, 13vw, 11rem);
-  font-weight: 400;
-  line-height: .92;
-  letter-spacing: -.055em;
+  font-weight: 500;
+  line-height: .88;
+  letter-spacing: -.035em;
   text-transform: uppercase;
   color: transparent;
-  background: linear-gradient(180deg, #fff 0%, #b8c9ff 25%, #486de2 58%, #8a50db 80%, #fff 100%);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #dce8ff 17%,
+    #8eaeea 35%,
+    #eef5ff 48%,
+    #5379df 63%,
+    #8c61d9 80%,
+    #f1eaff 96%
+  );
   -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-stroke: 1px rgba(247, 248, 255, .82);
-  text-shadow: 0 0 9px rgba(255, 255, 255, .65), 0 5px 4px rgba(15, 39, 123, .42);
+  -webkit-text-stroke: .85px rgba(243, 248, 255, .9);
+  text-shadow:
+    0 0 7px rgba(255, 255, 255, .65),
+    0 0 17px rgba(67, 132, 255, .35),
+    0 4px 2px rgba(14, 39, 124, .5),
+    2px 2px 0 rgba(93, 72, 196, .25);
 }
 
 .perennia-approved-wordmark__ornament {
   display: flex;
-  width: 88%;
+  width: 91%;
   align-items: center;
-  gap: .7rem;
-  color: #183ea9;
+  gap: .85rem;
+  color: #2c58c8;
 }
 
 .perennia-approved-wordmark__ornament i {
+  position: relative;
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, #244fc2 18%, #244fc2 82%, transparent);
-  box-shadow: 0 0 4px rgba(255, 255, 255, .72);
+  background: linear-gradient(90deg, transparent, #5e8ff2 18%, #214bb8 88%, #78a9ff);
+  box-shadow: 0 0 4px rgba(111, 177, 255, .66);
+}
+
+.perennia-approved-wordmark__ornament i:last-child {
+  background: linear-gradient(90deg, #78a9ff, #214bb8 12%, #5e8ff2 82%, transparent);
+}
+
+.perennia-approved-wordmark__ornament i::after {
+  content: '';
+  position: absolute;
+  right: -.22rem;
+  top: 50%;
+  width: .42rem;
+  height: .42rem;
+  border: 1px solid #4f83ec;
+  transform: translateY(-50%) rotate(45deg);
+  box-shadow: 0 0 7px rgba(105, 169, 255, .75);
+}
+
+.perennia-approved-wordmark__ornament i:last-child::after {
+  right: auto;
+  left: -.22rem;
 }
 
 .perennia-approved-wordmark__ornament b {
-  font-size: clamp(1.1rem, 3vw, 1.65rem);
+  position: relative;
+  display: grid;
+  width: clamp(1.7rem, 4vw, 2.45rem);
+  height: clamp(1.7rem, 4vw, 2.45rem);
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1.5px solid #4779e6;
+  color: transparent;
+  transform: rotate(45deg);
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, .7),
+    0 0 14px rgba(71, 121, 230, .55),
+    inset 0 0 7px rgba(112, 80, 220, .32);
+}
+
+.perennia-approved-wordmark__ornament b::before {
+  content: '\2726';
+  color: #eaf5ff;
+  font-size: clamp(.95rem, 2.2vw, 1.35rem);
   line-height: 1;
-  text-shadow: 0 0 8px rgba(255, 255, 255, .92);
+  transform: rotate(-45deg);
+  text-shadow:
+    0 0 5px #fff,
+    0 0 10px rgba(46, 153, 255, .95),
+    0 0 14px rgba(136, 80, 255, .8);
 }
 
 .perennia-glass-button {
   position: relative;
-  border: 2px solid transparent;
-  background:
-    linear-gradient(110deg, rgba(7, 35, 126, .72), rgba(68, 42, 170, .58)) padding-box,
-    linear-gradient(100deg, #55b8ff, #8b6cff, #ed9ee7) border-box;
-  box-shadow: 0 0 25px rgba(85, 184, 255, .3), inset 0 1px rgba(255, 255, 255, .3);
+  border: 1.5px solid transparent;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: .01em;
   backdrop-filter: blur(14px) saturate(135%);
   -webkit-backdrop-filter: blur(14px) saturate(135%);
   transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
 
+.perennia-glass-button--primary {
+  background:
+    linear-gradient(105deg, #148dff 0%, #496fee 47%, #8b55e5 100%) padding-box,
+    linear-gradient(100deg, #bce9ff 0%, #77b9ff 42%, #cfafff 100%) border-box;
+  box-shadow:
+    0 0 12px rgba(65, 164, 255, .38),
+    0 0 28px rgba(117, 79, 236, .26),
+    inset 0 1px rgba(255, 255, 255, .42),
+    inset 0 -1px rgba(27, 31, 124, .28);
+  text-shadow: 0 1px 3px rgba(17, 27, 95, .48);
+}
+
 .perennia-glass-button--secondary {
   background:
-    linear-gradient(110deg, rgba(14, 31, 91, .28), rgba(79, 43, 137, .22)) padding-box,
-    linear-gradient(100deg, rgba(85, 184, 255, .9), rgba(139, 108, 255, .9)) border-box;
-  box-shadow: 0 0 16px rgba(85, 184, 255, .14), inset 0 1px rgba(255, 255, 255, .16);
+    linear-gradient(110deg, rgba(20, 45, 112, .16), rgba(76, 44, 134, .13)) padding-box,
+    linear-gradient(100deg, #55b8ff 0%, #7f86ff 52%, #b06df0 100%) border-box;
+  box-shadow:
+    0 0 16px rgba(85, 184, 255, .16),
+    0 0 18px rgba(139, 108, 255, .11),
+    inset 0 1px rgba(255, 255, 255, .14);
+  text-shadow: 0 1px 3px rgba(6, 15, 56, .65);
 }
 
 .perennia-glass-button:hover:not(:disabled) {
@@ -313,6 +393,13 @@ input:autofill {
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+.verification-detail-panel {
+  border-color: rgba(200, 215, 255, .22);
+  background: linear-gradient(135deg, rgba(20, 24, 40, .42), rgba(38, 31, 72, .35));
+  box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 8px 24px rgba(10, 15, 45, .08);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
 }
 .verification-confirm-button {
   min-height: 3.5rem;
