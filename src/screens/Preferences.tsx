@@ -53,7 +53,7 @@ function GenderSelectionForm() {
       </h1>
 
       <div
-        className="mx-auto mt-10 grid w-full max-w-xs grid-cols-2 gap-4 sm:mt-12 sm:max-w-sm sm:gap-5"
+        className="mx-auto mt-10 grid w-full max-w-[22rem] grid-cols-2 gap-4 sm:mt-12 sm:max-w-[26rem] sm:gap-5"
         role="radiogroup"
         aria-label="Select whether you are a man or woman"
       >
@@ -66,11 +66,7 @@ function GenderSelectionForm() {
               role="radio"
               aria-checked={selected}
               onClick={() => setGender(value)}
-              className={`group relative flex aspect-[3/4] flex-col items-center justify-center gap-4 rounded-[1.5rem] border backdrop-blur-md transition-all duration-300 [@media(hover:hover)]:hover:-translate-y-0.5 ${
-                selected
-                  ? 'border-gold/60 bg-gold/[.06] shadow-[0_0_26px_-6px_rgba(229,192,123,.4)]'
-                  : 'border-white/12 bg-white/[.03] [@media(hover:hover)]:hover:border-champagne/35 [@media(hover:hover)]:hover:bg-white/[.05] [@media(hover:hover)]:hover:shadow-[0_0_20px_-8px_rgba(229,192,123,.3)]'
-              }`}
+              className={`gender-selection-card group relative flex h-[203px] flex-col items-center justify-center gap-4 rounded-[1.5rem] transition-all duration-300 sm:h-[243px] ${selected ? 'is-selected' : ''}`}
             >
               <Icon
                 className={`h-9 w-9 transition-colors sm:h-10 sm:w-10 ${selected ? 'text-champagne' : 'text-white/60 [@media(hover:hover)]:group-hover:text-white/80'}`}
@@ -99,7 +95,7 @@ function GenderSelectionForm() {
         size="lg"
         onClick={handleContinue}
         disabled={!gender}
-        className="mx-auto mt-10 w-full max-w-[14rem] shadow-[0_4px_18px_-6px_rgba(212,175,106,.45)] disabled:text-midnight/70 disabled:opacity-70 sm:mt-12"
+        className="gender-continue-button mx-auto mt-10 w-full max-w-[14rem] disabled:opacity-70 sm:mt-12"
       >
         Continue <ArrowRight className="h-4 w-4" />
       </Button>

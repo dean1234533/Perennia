@@ -123,7 +123,7 @@ function RelationshipGoalsForm() {
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <div className="rounded-[2rem] border border-champagne/15 bg-[linear-gradient(155deg,rgba(10,24,59,.42),rgba(7,13,39,.28))] p-5 shadow-[0_24px_80px_-45px_rgba(74,109,214,.55)] backdrop-blur-md sm:p-9">
+      <div className="relationship-interest-panel rounded-[2rem] p-5 sm:p-9">
         <header className="mx-auto mb-8 max-w-xl text-center">
           <p className="mb-2 text-xs uppercase tracking-[0.26em] text-gold/75">Your intentions</p>
           <h1 className="font-serif-display text-4xl text-gradient-gold sm:text-5xl">Relationship Interest</h1>
@@ -204,8 +204,8 @@ function RelationshipGoalsForm() {
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs leading-5 text-white/48"><Info className="h-3.5 w-3.5 shrink-0 text-gold/65" /> Your astrological compatibility score is calculated separately from these preferences.</p>
 
-        <Button size="lg" className="mt-7 w-full border border-champagne/70 text-midnight shadow-[0_10px_34px_-10px_rgba(229,192,123,.7)] hover:shadow-[0_12px_42px_-8px_rgba(229,192,123,.82)]" disabled={!goal} onClick={handleContinue}>
-          Continue to interests <ArrowRight className="h-4 w-4" />
+        <Button size="lg" className="relationship-interest-continue mt-7 w-full" disabled={!goal} onClick={handleContinue}>
+          Continue <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
     </motion.main>

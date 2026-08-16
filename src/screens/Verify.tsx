@@ -183,7 +183,7 @@ export function Verify() {
 
       <motion.div
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-        className={`verification-card w-full max-w-2xl text-center ${!isVerified && !detailsConfirmed && stage !== 'pending' && configured ? 'is-intro' : 'glass-strong rounded-[2rem] border-white/20 p-7 shadow-[0_0_50px_rgba(54,93,211,.16)] sm:p-10'}`}
+        className={`verification-card w-full max-w-2xl text-center ${!isVerified && !detailsConfirmed && stage !== 'pending' && configured ? 'is-intro' : isVerified && !detailsConfirmed ? 'verification-confirm-card rounded-[2rem] border border-transparent p-7 sm:p-10' : 'glass-strong rounded-[2rem] border-white/20 p-7 shadow-[0_0_50px_rgba(54,93,211,.16)] sm:p-10'}`}
       >
         <AnimatePresence mode="wait">
           {isVerified && !detailsConfirmed ? (
@@ -215,7 +215,7 @@ export function Verify() {
                 </div>
               )}
               {errorMessage && <p className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
-              <Button size="lg" className="w-full max-w-md" onClick={confirmAndContinue} disabled={stage === 'confirming'}>
+              <Button size="lg" className="verification-confirm-button w-full max-w-md rounded-full" onClick={confirmAndContinue} disabled={stage === 'confirming'}>
                 {stage === 'confirming' ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Confirm &amp; Continue <ArrowRight className="h-4 w-4" /></>}
               </Button>
               <p className="mt-4 text-xs text-white/35">If these details are incorrect, do not continue. Contact Perennia Support.</p>
