@@ -69,10 +69,10 @@ function AboutYouForm() {
     >
       <header className="mb-7 text-center">
         <h1 className="font-serif-display bg-gradient-to-r from-blue-200 via-white to-violet-200 bg-clip-text text-4xl text-transparent sm:text-5xl">About You</h1>
-        <p className="mt-2 text-sm text-white/55 sm:text-base">Tell us a little more about your everyday life.</p>
+        <p className="mt-2 text-sm text-white/75 sm:text-base">Tell us a little more about your everyday life.</p>
       </header>
 
-      <div className="about-you-card glass-strong rounded-[2rem] border-blue-200/25 p-6 shadow-[0_0_42px_rgba(83,105,220,.16)] sm:p-9">
+      <div className="about-you-card rounded-[2rem] p-6 sm:p-9">
         <div className="space-y-7">
           <section className="space-y-3">
             <Label htmlFor="profession" className="text-sm text-white/85">Profession / Job Title</Label>
@@ -82,7 +82,7 @@ function AboutYouForm() {
                 id="profession" value={hideProfession ? '' : profession} disabled={hideProfession}
                 onChange={(event) => setProfession(event.target.value)}
                 placeholder="e.g. Teacher, Engineer, Designer"
-                className="h-14 border-blue-200/30 bg-navy/40 pl-11 text-base focus:border-blue-200/65"
+                className="about-you-control h-14 pl-11 text-base focus:border-blue-200/65"
               />
             </div>
             <label className="flex cursor-pointer items-center gap-2.5 text-sm text-white/60">
@@ -103,6 +103,7 @@ function AboutYouForm() {
             <Select
               id="education" value={education} onChange={(event) => setEducation(event.target.value)}
               icon={<GraduationCap className="h-4 w-4" />}
+              className="about-you-control"
             >
               <option value="" disabled>Select education</option>
               {EDUCATION_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
@@ -118,7 +119,7 @@ function AboutYouForm() {
           </section>
         </div>
 
-        <Button size="lg" className="mt-9 w-full" onClick={handleContinue} disabled={saving}>
+        <Button size="lg" className="about-you-continue-button mt-9 w-full" onClick={handleContinue} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continue <ArrowRight className="h-4 w-4" /></>}
         </Button>
         <p className="mt-4 text-center text-xs text-white/35">You can update this information later from your profile.</p>
@@ -146,7 +147,7 @@ function LanguageMultiSelect({ values, onChange }: { values: string[]; onChange:
       <Languages className="pointer-events-none absolute left-4 top-5 z-10 h-4 w-4 text-blue-200/60" />
       <button
         type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}
-        className="flex min-h-14 w-full items-center gap-2 rounded-xl border border-blue-200/35 bg-navy/40 py-2 pl-11 pr-10 text-left transition focus:border-blue-200/70 focus:outline-none"
+        className="about-you-control flex min-h-14 w-full items-center gap-2 rounded-xl py-2 pl-11 pr-10 text-left transition focus:border-blue-200/70 focus:outline-none"
       >
         {values.length === 0 ? <span className="text-base text-white/35">Select languages</span> : (
           <span className="flex flex-wrap gap-1.5">
