@@ -177,66 +177,95 @@ input:autofill {
 .perennia-approved-wordmark__ornament {
   display: flex;
   width: 91%;
+  margin-top: .75rem;
+  margin-bottom: 1.5rem;
   align-items: center;
-  gap: .85rem;
-  color: #2c58c8;
+  gap: .45rem;
+  color: #173f9f;
 }
 
 .perennia-approved-wordmark__ornament i {
-  position: relative;
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, #5e8ff2 18%, #214bb8 88%, #78a9ff);
-  box-shadow: 0 0 4px rgba(111, 177, 255, .66);
+  background: linear-gradient(90deg, transparent 0%, #3264cf 9%, #173f9f 72%, #1643a8 100%);
+  box-shadow: 0 0 3px rgba(39, 91, 202, .55);
 }
 
 .perennia-approved-wordmark__ornament i:last-child {
-  background: linear-gradient(90deg, #78a9ff, #214bb8 12%, #5e8ff2 82%, transparent);
+  background: linear-gradient(90deg, #1643a8 0%, #173f9f 28%, #3264cf 91%, transparent 100%);
 }
 
-.perennia-approved-wordmark__ornament i::after {
-  content: '';
-  position: absolute;
-  right: -.22rem;
-  top: 50%;
-  width: .42rem;
-  height: .42rem;
-  border: 1px solid #4f83ec;
-  transform: translateY(-50%) rotate(45deg);
-  box-shadow: 0 0 7px rgba(105, 169, 255, .75);
+.perennia-approved-wordmark__flourish {
+  display: flex;
+  width: 2.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.perennia-approved-wordmark__ornament i:last-child::after {
-  right: auto;
-  left: -.22rem;
+.perennia-approved-wordmark__flourish > span {
+  display: block;
+  width: .38rem;
+  height: .38rem;
+  border: 1px solid #2454bd;
+  transform: rotate(45deg);
+  box-shadow: 0 0 4px rgba(40, 91, 201, .52);
+}
+
+.perennia-approved-wordmark__flourish > span:nth-child(2) {
+  width: .24rem;
+  height: .24rem;
+  background: #2454bd;
+}
+
+.perennia-approved-wordmark__flourish > span:nth-child(3) {
+  width: .18rem;
+  height: .18rem;
+  border: 0;
+  border-radius: 50%;
+  background: #4d7ee0;
+}
+
+.perennia-approved-wordmark__flourish--right {
+  transform: scaleX(-1);
 }
 
 .perennia-approved-wordmark__ornament b {
   position: relative;
   display: grid;
-  width: clamp(1.7rem, 4vw, 2.45rem);
-  height: clamp(1.7rem, 4vw, 2.45rem);
+  width: clamp(2.35rem, 5.4vw, 3rem);
+  height: clamp(2.35rem, 5.4vw, 3rem);
   flex: 0 0 auto;
   place-items: center;
-  border: 1.5px solid #4779e6;
+  border: 2px solid #2454bd;
   color: transparent;
   transform: rotate(45deg);
   box-shadow:
-    0 0 8px rgba(255, 255, 255, .7),
-    0 0 14px rgba(71, 121, 230, .55),
-    inset 0 0 7px rgba(112, 80, 220, .32);
+    0 0 5px rgba(80, 143, 255, .42),
+    0 0 11px rgba(45, 91, 200, .42),
+    inset 0 0 5px rgba(77, 101, 218, .28);
 }
 
-.perennia-approved-wordmark__ornament b::before {
-  content: '\2726';
-  color: #eaf5ff;
-  font-size: clamp(.95rem, 2.2vw, 1.35rem);
+.perennia-approved-wordmark__ornament b > span {
+  display: block;
+  z-index: 1;
+  color: #e9f7ff;
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
   line-height: 1;
+  font-weight: 700;
   transform: rotate(-45deg);
   text-shadow:
-    0 0 5px #fff,
-    0 0 10px rgba(46, 153, 255, .95),
-    0 0 14px rgba(136, 80, 255, .8);
+    0 0 4px #fff,
+    0 0 9px rgba(24, 170, 255, .95),
+    0 0 14px rgba(112, 72, 255, .78);
+}
+
+.perennia-approved-wordmark__ornament b::after {
+  content: '';
+  position: absolute;
+  inset: .34rem;
+  border: 1px solid rgba(74, 119, 226, .88);
+  box-shadow: inset 0 0 5px rgba(64, 128, 245, .34);
 }
 
 .perennia-glass-button {
@@ -252,25 +281,38 @@ input:autofill {
 
 .perennia-glass-button--primary {
   background:
-    linear-gradient(105deg, #148dff 0%, #496fee 47%, #8b55e5 100%) padding-box,
-    linear-gradient(100deg, #bce9ff 0%, #77b9ff 42%, #cfafff 100%) border-box;
+    linear-gradient(105deg, #043f9d 0%, #102f9f 48%, #6017b5 100%) padding-box,
+    linear-gradient(100deg, #66eeff 0%, #88bfff 42%, #ff9ef4 100%) border-box;
   box-shadow:
-    0 0 12px rgba(65, 164, 255, .38),
-    0 0 28px rgba(117, 79, 236, .26),
-    inset 0 1px rgba(255, 255, 255, .42),
-    inset 0 -1px rgba(27, 31, 124, .28);
-  text-shadow: 0 1px 3px rgba(17, 27, 95, .48);
+    -6px 0 16px rgba(48, 224, 255, .65),
+    7px 0 18px rgba(242, 112, 255, .62),
+    0 0 28px rgba(104, 99, 255, .42),
+    inset 0 1px rgba(255, 255, 255, .38),
+    inset 0 -1px rgba(8, 20, 99, .38);
+  text-shadow: 0 1px 3px rgba(5, 14, 73, .7);
 }
 
 .perennia-glass-button--secondary {
-  background:
-    linear-gradient(110deg, rgba(20, 45, 112, .16), rgba(76, 44, 134, .13)) padding-box,
-    linear-gradient(100deg, #55b8ff 0%, #7f86ff 52%, #b06df0 100%) border-box;
+  background: rgba(7, 14, 39, .06);
   box-shadow:
-    0 0 16px rgba(85, 184, 255, .16),
-    0 0 18px rgba(139, 108, 255, .11),
-    inset 0 1px rgba(255, 255, 255, .14);
+    0 0 10px rgba(66, 170, 255, .08),
+    inset 0 1px rgba(255, 255, 255, .05);
+  backdrop-filter: blur(7px) saturate(110%);
+  -webkit-backdrop-filter: blur(7px) saturate(110%);
   text-shadow: 0 1px 3px rgba(6, 15, 56, .65);
+}
+
+.perennia-glass-button--secondary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(100deg, #32bfff 0%, #738cff 52%, #d26ee8 100%);
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 .perennia-glass-button:hover:not(:disabled) {

@@ -105,7 +105,9 @@ export function Welcome() {
             <h1 className="perennia-approved-wordmark__name">Perennia</h1>
             <span className="perennia-approved-wordmark__ornament" aria-hidden="true">
               <i />
-              <b>✦</b>
+              <span className="perennia-approved-wordmark__flourish"><span /><span /><span /></span>
+              <b><span>✦</span></b>
+              <span className="perennia-approved-wordmark__flourish perennia-approved-wordmark__flourish--right"><span /><span /><span /></span>
               <i />
             </span>
           </div>
