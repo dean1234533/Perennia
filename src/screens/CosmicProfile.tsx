@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, ChevronRight, Heart, Info } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Info } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
@@ -89,8 +89,8 @@ function CosmicSectionHeading({ children, id }: { children: string; id: string }
 function CosmicHeaderMark() {
   return (
     <div className="cosmic-header-mark" aria-hidden="true">
-      <Heart />
-      <span>✦</span>
+      <img src="/perennia-logo-transparent-v2.png" alt="" width="1254" height="1254" />
+      <span>☾</span>
     </div>
   )
 }
@@ -240,7 +240,7 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="cosmic-profile"
     >
-      {isOnboarding && <CosmicProfileBackButton compact={false} />}
+      {!isOnboarding && <CosmicHeaderMark />}
       <header className="cosmic-profile-header">
         <p className="cosmic-eyebrow">Your Astrological Foundation</p>
         <h1>Your Cosmic Profile</h1>
@@ -335,7 +335,9 @@ export function CosmicProfile() {
       totalSteps={12}
       headerMark={<CosmicHeaderMark />}
       progressVariant="nodes"
+      className="cosmic-profile-onboarding"
     >
+      <CosmicProfileBackButton compact={false} />
       <CosmicProfileContent isOnboarding />
     </OnboardingShell>
   )
