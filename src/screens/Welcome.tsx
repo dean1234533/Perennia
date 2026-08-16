@@ -91,7 +91,7 @@ export function Welcome() {
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-4xl flex-col items-center justify-center px-5 py-8 text-center sm:px-10 sm:py-10"
         >
-          <div className="perennia-approved-wordmark w-[min(92vw,46rem)]" aria-label="Perennia">
+          <div className="perennia-approved-wordmark w-[min(92vw,60rem)]" aria-label="Perennia">
             <img
               src="/perennia-logo-transparent-v2.png"
               alt=""
@@ -117,7 +117,7 @@ export function Welcome() {
             introduce you to people with genuine long-term potential.
           </p>
 
-          <div className="flex w-full max-w-md flex-col items-center gap-3">
+          <div className="flex w-full max-w-md flex-col items-center gap-3 lg:max-w-xl">
             <Button
               size="lg"
               onClick={() => navigate('/signup')}

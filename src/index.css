@@ -123,8 +123,8 @@ input:autofill {
 }
 
 .perennia-approved-wordmark__heart {
-  width: clamp(5rem, 15vw, 8rem);
-  height: clamp(5rem, 15vw, 8rem);
+  width: clamp(5rem, 15vw, 10rem);
+  height: clamp(5rem, 15vw, 10rem);
   object-fit: contain;
   margin-bottom: -1.1rem;
 }
@@ -140,7 +140,7 @@ input:autofill {
 .perennia-approved-wordmark__name {
   margin-top: .1rem;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(4rem, 13vw, 8.7rem);
+  font-size: clamp(4rem, 13vw, 11rem);
   font-weight: 400;
   line-height: .92;
   letter-spacing: -.055em;
