@@ -1,0 +1,119 @@
+.founding-500-page {
+  isolation: isolate;
+  background: #030817;
+}
+
+.founding-500-background,
+.founding-500-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.founding-500-background {
+  z-index: -2;
+  background-image: url('/founding-500-background-v2.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.founding-500-vignette {
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(1, 5, 20, 0.12) 0%, rgba(1, 5, 20, 0.04) 48%, rgba(1, 5, 20, 0.35) 100%),
+    radial-gradient(ellipse at center, transparent 30%, rgba(0, 3, 15, 0.2) 100%);
+}
+
+.founding-500-heart-logo {
+  width: clamp(5rem, 7.5vw, 7.75rem);
+  height: clamp(5rem, 7.5vw, 7.75rem);
+  margin-bottom: 0.15rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px rgba(61, 187, 255, 0.55)) drop-shadow(0 0 24px rgba(181, 64, 255, 0.34));
+}
+
+.founding-500-glass {
+  border: 1px solid rgba(207, 218, 255, 0.2) !important;
+  background:
+    linear-gradient(145deg, rgba(56, 70, 136, 0.4), rgba(48, 35, 106, 0.31) 54%, rgba(9, 22, 61, 0.4)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(139, 116, 255, 0.08),
+    0 18px 48px rgba(0, 4, 22, 0.25) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+.founding-500-glass--featured {
+  border-color: rgba(244, 207, 119, 0.38) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 0 32px rgba(215, 172, 81, 0.11),
+    0 18px 48px rgba(0, 4, 22, 0.25) !important;
+}
+
+.founding-500-outline-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: 0 0 20px rgba(72, 161, 255, 0.08) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.founding-500-outline-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(100deg, #38c8ff 0%, #608dff 48%, #dd4cff 100%);
+  content: '';
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.founding-500-outline-button:hover:not(:disabled) {
+  color: #fff !important;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.42);
+  box-shadow: 0 0 28px rgba(135, 77, 255, 0.2) !important;
+}
+
+.founding-500-outline-button:disabled::before {
+  opacity: 0.35;
+}
+
+.founding-500-back-button {
+  border: 1px solid rgba(229, 192, 123, 0.5) !important;
+  background: rgba(4, 9, 27, 0.2) !important;
+  color: #f6db91 !important;
+  box-shadow: 0 0 18px rgba(229, 192, 123, 0.08) !important;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.founding-500-back-button:hover {
+  border-color: rgba(246, 219, 145, 0.75) !important;
+  background: rgba(229, 192, 123, 0.08) !important;
+}
+
+@media (max-width: 767px) {
+  .founding-500-background {
+    background-position: 50% top;
+  }
+
+  .founding-500-vignette {
+    background: linear-gradient(180deg, rgba(1, 5, 20, 0.16), rgba(1, 5, 20, 0.28));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .founding-500-outline-button {
+    transition: none !important;
+  }
+}

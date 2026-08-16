@@ -3,16 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AtmosphericBackground } from '@/components/shared/AtmosphericBackground'
 import { MemberCounter } from '@/components/founding500/MemberCounter'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { ensureFounding500Config, subscribeFounding500Config } from '@/lib/founding500'
 import type { Founding500Config, MembershipTier } from '@/types/founding500'
+import './Founding500.css'
 
-const FLOW_PRIMARY_BUTTON = 'min-h-12 border border-gold/75 bg-[#0a1023]/45 text-champagne shadow-[0_0_18px_rgba(229,192,123,.22),inset_0_0_18px_rgba(229,192,123,.05)] backdrop-blur-md hover:border-gold hover:bg-gold/10 hover:text-white hover:shadow-[0_0_28px_rgba(229,192,123,.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:bg-[#0a1023]/35 disabled:text-white/45 disabled:shadow-none disabled:opacity-100'
-const FLOW_SECONDARY_BUTTON = 'min-h-12 border border-blue-200/35 bg-[#071126]/45 text-blue-100 shadow-[0_0_16px_rgba(96,135,255,.14)] backdrop-blur-md hover:border-blue-200/60 hover:bg-blue-300/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/60 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:border-white/20 disabled:text-white/45 disabled:opacity-100'
+const FLOW_PRIMARY_BUTTON = 'founding-500-outline-button min-h-12 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:text-white/40 disabled:opacity-100'
+const FLOW_SECONDARY_BUTTON = 'founding-500-outline-button min-h-12 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[.98] disabled:text-white/40 disabled:opacity-100'
 
 const BENEFITS = [
   { icon: 'shield', title: 'Locked-in founding pricing', body: 'Never adjusted while you remain a member.' },
@@ -55,14 +55,11 @@ export function Founding500() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-midnight text-white">
-      <AtmosphericBackground />
-      <div
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{ background: 'radial-gradient(90% 60% at 50% 0%, rgba(124,58,237,0.18) 0%, transparent 60%)' }}
-      />
+    <div className="founding-500-page relative min-h-screen overflow-x-clip bg-midnight text-white">
+      <div className="founding-500-background" aria-hidden="true" />
+      <div className="founding-500-vignette" aria-hidden="true" />
 
-      <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Go back" className={`fixed left-4 top-4 z-30 md:left-7 md:top-6 md:w-auto md:px-4 ${FLOW_SECONDARY_BUTTON}`}>
+      <Button variant="outline" size="icon" onClick={() => navigate(-1)} aria-label="Go back" className="founding-500-back-button fixed left-4 top-4 z-30 min-h-12 md:left-7 md:top-6 md:w-auto md:px-4">
         <ArrowLeft className="h-4 w-4" /><span className="hidden md:inline">Back</span>
       </Button>
 
@@ -93,7 +90,7 @@ export function Founding500() {
           animate={{ opacity: 1, y: 0 }}
           className="mx-auto mb-2 flex flex-col items-center"
         >
-          <HeartMark className="mb-1 h-8 w-8 text-gold md:h-10 md:w-10" />
+          <img className="founding-500-heart-logo" src="/perennia-logo-transparent-v2.png" alt="" width="1254" height="1254" />
           <div className="mb-2 flex items-center" aria-hidden="true">
             {[0, 1, 2, 3, 4, 5, 6].map((step) => (
               <span key={step} className="flex items-center">
@@ -152,7 +149,7 @@ export function Founding500() {
             <SectionRule>As a Founding Member You Get</SectionRule>
             <div className="grid grid-cols-4 gap-1.5 md:grid-cols-2 md:gap-3">
               {BENEFITS.map((b, i) => (
-                <motion.div key={b.title} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} className="flex min-h-[9rem] flex-col items-center rounded-xl border border-white/10 bg-[#071126]/44 px-1.5 py-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.035)] backdrop-blur-md md:min-h-[10rem] md:rounded-2xl md:p-4">
+                <motion.div key={b.title} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} className="founding-500-glass flex min-h-[9rem] flex-col items-center rounded-xl px-1.5 py-2.5 text-center md:min-h-[10rem] md:rounded-2xl md:p-4">
                   <BenefitMark kind={b.icon} />
                   <p className="mb-1 text-[8px] font-medium uppercase leading-snug text-champagne sm:text-[9px] md:text-xs">{b.title}</p>
                   <p className="text-[8px] leading-snug text-white/60 sm:text-[9px] md:text-[11px] md:leading-relaxed">{b.body}</p>
@@ -162,7 +159,7 @@ export function Founding500() {
           </section>
 
           {!isFull && (
-            <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative mx-auto mt-3 flex w-full max-w-3xl flex-col items-center rounded-[1.5rem] border border-white/12 bg-[#071126]/38 px-5 pb-4 pt-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.04)] backdrop-blur-md md:col-start-1 md:row-start-2 md:-mt-1">
+            <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="founding-500-glass relative mx-auto mt-3 flex w-full max-w-3xl flex-col items-center rounded-[1.5rem] px-5 pb-4 pt-7 text-center md:col-start-1 md:row-start-2 md:-mt-1">
               <span className="absolute -top-5 flex h-10 w-10 items-center justify-center rounded-full border border-gold/35 bg-[#12162c] shadow-[0_0_18px_rgba(229,192,123,.22)]"><ShieldMark className="h-6 w-6 text-gold" checked /></span>
               <h2 className="font-serif-display text-2xl text-champagne md:text-3xl">Your Place Is Waiting</h2>
               <p className="mb-3 text-xs text-white/60">{config.memberLimit - config.currentMemberCount} of {config.memberLimit} founding places remain.</p>
@@ -215,10 +212,10 @@ function TierCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className={`relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.045),0_20px_55px_rgba(2,7,20,.18)] backdrop-blur-md sm:p-5 md:p-6 ${
+      className={`founding-500-glass relative flex h-full flex-col overflow-hidden rounded-[1.5rem] p-4 sm:p-5 md:p-6 ${
         featured
-          ? 'border-gold/45 bg-[#16132a]/55 shadow-[inset_0_1px_0_rgba(255,255,255,.05),0_0_34px_rgba(229,192,123,.13)]'
-          : 'border-blue-200/20 bg-[#071126]/52'
+          ? 'founding-500-glass--featured'
+          : ''
       } ${className ?? ''}`}
     >
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">

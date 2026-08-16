@@ -6,7 +6,7 @@ export function MemberCounter({ config }: { config: Founding500Config }) {
   const remaining = Math.max(config.memberLimit - config.currentMemberCount, 0)
 
   return (
-    <div className="mx-auto w-full max-w-sm rounded-[1.35rem] border border-white/10 bg-[#071126]/45 px-5 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.04),0_20px_60px_rgba(2,7,20,.16)] backdrop-blur-md sm:px-8">
+    <div className="founding-500-glass mx-auto w-full max-w-sm rounded-[1.35rem] px-5 py-3 text-center sm:px-8">
       <p className="mb-1 text-[10px] uppercase tracking-[0.35em] text-gold/70 sm:text-xs">Founding 500</p>
       <p className="font-serif-display mb-2 text-xl text-champagne sm:text-2xl">
         {config.currentMemberCount} / {config.memberLimit} <span className="text-white/40">Members</span>
