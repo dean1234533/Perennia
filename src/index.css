@@ -401,6 +401,41 @@ input:autofill {
     linear-gradient(100deg, #55b8ff 0%, #8b6cff 100%) border-box !important;
   box-shadow: 0 0 20px rgba(85, 184, 255, .19), 0 0 20px rgba(139, 108, 255, .13) !important;
 }
+.interests-panel {
+  border: 1px solid rgba(180, 200, 255, .18);
+  background: rgba(20, 24, 40, .55);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .25);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.interests-panel .text-white\/40,
+.interests-panel .text-white\/45,
+.interests-panel .text-white\/48,
+.interests-panel .text-white\/50 {
+  color: rgba(255, 255, 255, .74) !important;
+}
+.interests-selection-indicator:not(.bg-gold) {
+  border-color: rgba(255, 255, 255, .68);
+  background: rgba(12, 22, 54, .18);
+}
+.interests-continue-button {
+  height: 3rem !important;
+  min-height: 3rem;
+  border: 1.5px solid transparent !important;
+  background:
+    linear-gradient(110deg, rgba(18, 45, 111, .1), rgba(78, 46, 138, .09)) padding-box,
+    linear-gradient(100deg, #55b8ff 0%, #8b6cff 100%) border-box !important;
+  color: #fff !important;
+  box-shadow: 0 0 16px rgba(85, 184, 255, .14), 0 0 17px rgba(139, 108, 255, .1) !important;
+  backdrop-filter: blur(7px) saturate(120%);
+  -webkit-backdrop-filter: blur(7px) saturate(120%);
+}
+.interests-continue-button:hover:not(:disabled) {
+  background:
+    linear-gradient(110deg, rgba(25, 59, 137, .14), rgba(91, 54, 157, .12)) padding-box,
+    linear-gradient(100deg, #55b8ff 0%, #8b6cff 100%) border-box !important;
+  box-shadow: 0 0 20px rgba(85, 184, 255, .19), 0 0 20px rgba(139, 108, 255, .13) !important;
+}
 .verification-action-card {
   min-height:8.2rem;
   border:1px solid rgba(255,255,255,.52);

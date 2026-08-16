@@ -148,7 +148,7 @@ function InterestsForm() {
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <div className="rounded-[2rem] border border-white/[0.035] bg-navy/[0.08] p-1 sm:p-2">
+      <div className="interests-panel rounded-[2rem] p-1 sm:p-2">
         <header className="mx-auto mb-9 max-w-2xl px-4 text-center sm:mb-11">
           <p className="mb-2 text-[11px] uppercase tracking-[0.3em] text-gold/70">Shape your profile</p>
           <h1 className="font-serif-display text-4xl text-gradient-gold sm:text-5xl lg:text-6xl">Interests</h1>
@@ -193,7 +193,7 @@ function InterestsForm() {
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
                   <span className="min-w-0 flex-1 text-sm font-medium">{interest}</span>
-                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${isSelected ? 'border-gold bg-gold text-midnight' : 'border-white/20 text-transparent'}`}>
+                  <span className={`interests-selection-indicator flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${isSelected ? 'border-gold bg-gold text-midnight' : 'text-transparent'}`}>
                     <Check className="h-3.5 w-3.5" strokeWidth={3} />
                   </span>
                 </button>
@@ -223,7 +223,7 @@ function InterestsForm() {
                   </span>
                   <span className={`block pr-6 font-serif-display text-lg ${isSelected ? 'text-champagne' : 'text-white/85'}`}>{vibe.title}</span>
                   <span className="mt-1.5 block text-xs leading-5 text-white/45">{vibe.description}</span>
-                  <span className={`absolute right-3.5 top-3.5 flex h-6 w-6 items-center justify-center rounded-full border transition ${isSelected ? 'border-gold bg-gold text-midnight' : 'border-white/20 text-transparent'}`}>
+                  <span className={`interests-selection-indicator absolute right-3.5 top-3.5 flex h-6 w-6 items-center justify-center rounded-full border transition ${isSelected ? 'border-gold bg-gold text-midnight' : 'text-transparent'}`}>
                     <Check className="h-3.5 w-3.5" strokeWidth={3} />
                   </span>
                 </button>
@@ -251,7 +251,7 @@ function InterestsForm() {
         </div>
 
         <div className="mx-auto mt-7 max-w-sm px-3 pb-3 sm:px-0 sm:pb-5">
-          <Button size="lg" className="w-full" disabled={!canContinue || saving} onClick={handleContinue}>
+          <Button size="lg" className="interests-continue-button w-full" disabled={!canContinue || saving} onClick={handleContinue}>
             {saving ? 'Saving…' : remaining > 0 ? `Choose ${remaining} more` : !lifestyleVibe ? 'Choose your lifestyle vibe' : <>Continue <ArrowRight className="h-4 w-4" /></>}
           </Button>
         </div>
