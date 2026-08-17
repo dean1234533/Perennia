@@ -5,7 +5,7 @@ import {
   Check, Upload, Trash2, Star, X, Plus, Shield, ShieldCheck,
   GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
   Heart, Sparkles, BriefcaseBusiness, MapPinned, Pencil, Eye, Gift,
-  LockKeyhole, ArrowRight, ChevronUp, Ruler, GraduationCap, Languages,
+  LockKeyhole, ArrowRight, Ruler, GraduationCap, Languages,
   Crown, UtensilsCrossed, Dumbbell, Music2, Plane, Palette, Leaf,
   Film, Sprout, type LucideIcon,
 } from 'lucide-react'
@@ -124,8 +124,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [membership, setMembership] = useState<FoundingMemberRecord | null>(null)
   const [heroExpanded, setHeroExpanded] = useState(false)
   const [brandPanelOpen, setBrandPanelOpen] = useState(false)
-  const [aboutOpen, setAboutOpen] = useState(true)
-  const [interestsOpen, setInterestsOpen] = useState(true)
+  const [premiumPanel, setPremiumPanel] = useState<'viewers' | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -345,7 +344,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
               <MoreHorizontal className="h-5 w-5" />
             </button>
             {editMode && (
-              <Button size="sm" onClick={saveExtras}><Check className="h-3.5 w-3.5" /> Save</Button>
+              <Button size="sm" className="profile-save-button" onClick={saveExtras}><Check className="h-3.5 w-3.5" /> Save</Button>
             )}
           </div>
         </div>
@@ -406,9 +405,9 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
 
           <section className={`profile-premium-strip ${isPremium ? 'is-member' : ''}`} aria-label="Premium features">
             <div className="profile-premium-title"><Crown /><span>Premium<br />Features</span></div>
-            <button type="button" onClick={() => navigate('/settings')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
-            <button type="button"><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
-            <button type="button"><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
+            <button type="button" onClick={() => navigate('/settings#privacy')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
+            <button type="button" onClick={() => isPremium ? setPremiumPanel('viewers') : navigate('/founding-500')}><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
+            <button type="button" onClick={() => navigate(isPremium ? '/discovery' : '/founding-500')}><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
             {!isPremium && <button type="button" className="profile-premium-cta" onClick={() => navigate('/founding-500')}><span>Discover<br />Premium</span><ArrowRight /></button>}
           </section>
 
@@ -438,52 +437,44 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
 
           <div className="profile-detail-grid">
             <section className="profile-neutral-card">
-              <button type="button" className="profile-neutral-heading" onClick={() => setAboutOpen((value) => !value)} aria-expanded={aboutOpen}>
-                <span>About Me</span><ChevronUp className={aboutOpen ? '' : 'is-collapsed'} />
-              </button>
-              {aboutOpen && (
-                <div className="profile-about-content">
-                  <div className="profile-about-facts">
-                    {(onboarding.heightCm || preview) && <ProfileFact icon={Ruler} label="Height" value={formatHeight(onboarding.heightCm || 185)} />}
-                    {draft.education && <ProfileFact icon={GraduationCap} label="Education" value={draft.education} />}
-                    {draft.languages[0] && <ProfileFact icon={Languages} label="First language" value={draft.languages[0]} />}
-                    {draft.languages.length > 0 && <ProfileFact icon={Languages} label="Languages" value={draft.languages.join(', ')} />}
-                    {draft.profession && <ProfileFact icon={BriefcaseBusiness} label="Job title" value={draft.profession} />}
-                  </div>
-                  {draft.about && <p className="profile-about-story">{draft.about}</p>}
+              <h2 className="profile-neutral-heading">About Me</h2>
+              <div className="profile-about-content">
+                <div className="profile-about-facts">
+                  {(onboarding.heightCm || preview) && <ProfileFact icon={Ruler} label="Height" value={formatHeight(onboarding.heightCm || 185)} />}
+                  {draft.education && <ProfileFact icon={GraduationCap} label="Education" value={draft.education} />}
+                  {draft.languages[0] && <ProfileFact icon={Languages} label="First language" value={draft.languages[0]} />}
+                  {draft.languages.length > 0 && <ProfileFact icon={Languages} label="Languages" value={draft.languages.join(', ')} />}
+                  {draft.profession && <ProfileFact icon={BriefcaseBusiness} label="Job title" value={draft.profession} />}
                 </div>
-              )}
+                {draft.about && <p className="profile-about-story">{draft.about}</p>}
+              </div>
             </section>
 
             <section className="profile-neutral-card">
-              <button type="button" className="profile-neutral-heading" onClick={() => setInterestsOpen((value) => !value)} aria-expanded={interestsOpen}>
-                <span>Interests &amp; Lifestyle</span><ChevronUp className={interestsOpen ? '' : 'is-collapsed'} />
-              </button>
-              {interestsOpen && (
-                <div className="profile-interests-content">
-                  <strong>Interests</strong>
-                  <div className="profile-neutral-chips">
-                    {draft.interests.map((interest) => {
-                      const InterestIcon = interestIcon(interest)
-                      return <span key={interest}>{InterestIcon && <InterestIcon />} {interest}</span>
-                    })}
-                    {!draft.interests.length && <small>Add interests from Edit Profile.</small>}
-                  </div>
-                  <strong>Lifestyle</strong>
-                  <div className="profile-neutral-chips is-lifestyle">
-                    {draft.lifestyleVibe && <span>{draft.lifestyleVibe}</span>}
-                    {draft.values.slice(0, 5).map((value) => <span key={value}>{value}</span>)}
-                    {draft.openToNewThings && <span>Open to new things</span>}
-                  </div>
+              <h2 className="profile-neutral-heading">Interests &amp; Lifestyle</h2>
+              <div className="profile-interests-content">
+                <strong>Interests</strong>
+                <div className="profile-neutral-chips">
+                  {draft.interests.map((interest) => {
+                    const InterestIcon = interestIcon(interest)
+                    return <span key={interest}>{InterestIcon && <InterestIcon />} {interest}</span>
+                  })}
+                  {!draft.interests.length && <small>Add interests from Edit Profile.</small>}
                 </div>
-              )}
+                <strong>Lifestyle</strong>
+                <div className="profile-neutral-chips is-lifestyle">
+                  {draft.lifestyleVibe && <span>{draft.lifestyleVibe}</span>}
+                  {draft.values.slice(0, 5).map((value) => <span key={value}>{value}</span>)}
+                  {draft.openToNewThings && <span>Open to new things</span>}
+                </div>
+              </div>
             </section>
           </div>
 
       {/* Manage media (edit mode) */}
       <AnimatePresence>
         {editMode && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-10 overflow-hidden">
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="profile-edit-content mt-10 overflow-hidden">
             <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Manage Media</p>
             <div className="mb-4 flex flex-wrap gap-2">
               {categories.map((c) => (
@@ -569,7 +560,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           Interests step, Lifestyle to profession/education/languages from
           About You, Travel to the favourite-places/dream-destinations
           fields also collected there. */}
-      <div className={`${editMode ? 'grid' : 'hidden'} mt-10 grid-cols-1 gap-4 sm:grid-cols-2`}>
+      <div className={`profile-edit-content ${editMode ? 'grid' : 'hidden'} mt-10 grid-cols-1 gap-4 sm:grid-cols-2`}>
         <ProfileSection icon={Feather} title="Bio">
           {storyPrompts.length ? (
             <div className="flex flex-col gap-3">
@@ -691,6 +682,40 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {premiumPanel === 'viewers' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
+            onClick={(event) => event.target === event.currentTarget && setPremiumPanel(null)}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-viewers-title"
+              initial={{ scale: .95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass-strong w-full max-w-sm rounded-2xl p-6"
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <h3 id="profile-viewers-title" className="font-serif-display text-xl text-champagne">Profile Viewers</h3>
+                <button type="button" onClick={() => setPremiumPanel(null)} aria-label="Close profile viewers" className="cursor-pointer text-white/45 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex flex-col items-center rounded-2xl border border-white/10 bg-white/[.025] px-6 py-9 text-center">
+                <Eye className="h-7 w-7 text-blue-200/70" strokeWidth={1.6} />
+                <p className="mt-3 text-sm text-white/80">No viewer activity to show yet</p>
+                <p className="mt-1 text-xs leading-relaxed text-white/45">Profile viewer activity will appear here when it becomes available.</p>
+              </div>
+              <Button variant="glass" className="mt-4 w-full" onClick={() => setPremiumPanel(null)}>Done</Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Upload modal */}
       <AnimatePresence>
@@ -883,7 +908,7 @@ function ProfileMediaRow({
     <div className="profile-media-row">
       <div className="profile-media-heading">
         <h2>{title}</h2>
-        <button type="button" onClick={onAdd}><Plus /> Add</button>
+        <button type="button" onClick={onAdd} aria-label={`Add ${type === 'photos' ? 'a photo' : 'a video'}`}><Plus /> Add</button>
       </div>
       <div className="profile-media-scroller">
         {items.map((item, index) => (

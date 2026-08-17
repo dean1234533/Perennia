@@ -398,20 +398,10 @@ export function MyProfileActionsMenu({
       </MenuGroup>
       <MenuGroup title="Account & Privacy">
         <MenuAction icon={Shield} label="Privacy Settings" onClick={() => setPanel('privacy')} />
-        <MenuAction icon={UserRoundX} label="Blocked Users" onClick={() => setPanel('blocked-users')} />
-        <MenuAction icon={Shield} label="Safety Settings" onClick={() => setPanel('safety')} />
         <MenuAction icon={Bell} label="Notifications" onClick={() => setPanel('notifications')} />
       </MenuGroup>
       <MenuGroup title="Membership">
         <MenuAction icon={CreditCard} label="Manage Subscription" onClick={() => setPanel('membership')} />
-        <MenuAction icon={Sparkles} label="View / Upgrade Membership" onClick={() => go('/founding-500')} />
-        <MenuAction
-          icon={billingLoading ? Loader2 : WalletCards}
-          label={billingLoading ? 'Opening billing…' : 'Billing Information'}
-          onClick={openBilling}
-        />
-        {billingError && <p className="px-3 pb-1 text-xs text-rose-300">{billingError}</p>}
-        <MenuAction icon={X} label="Cancel Subscription" danger onClick={() => setConfirming('cancel-subscription')} />
       </MenuGroup>
       <MenuGroup title="Safety & Support">
         <MenuAction icon={BadgeHelp} label="Help & Support" onClick={() => { window.location.href = 'mailto:support@perennia.com'; onClose() }} />

@@ -40,10 +40,10 @@ function Row({
         </div>
         <div className="text-left">
           <p className="text-sm font-medium text-white">{label}</p>
-          {description && <p className="text-xs text-white/40">{description}</p>}
+          {description && <p className="text-xs text-white/65">{description}</p>}
         </div>
       </div>
-      {right ?? (onClick && <ChevronRight className="h-4 w-4 text-white/25 transition-transform group-hover:translate-x-0.5" />)}
+      {right ?? (onClick && <ChevronRight className="h-4 w-4 text-white/50 transition-transform group-hover:translate-x-0.5" />)}
     </>
   )
 
@@ -255,7 +255,7 @@ export function Settings() {
                           ? 'text-emerald-400'
                           : onboarding.verification.status === 'pending'
                             ? 'text-gold'
-                            : 'text-white/40'
+                            : 'text-white/65'
                       }`}
                     >
                       {onboarding.verification.status === 'verified'
@@ -377,14 +377,14 @@ export function Settings() {
       ].map((section) => (
         <motion.div id={section.id} className="scroll-mt-20" key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.delay }}>
           <p className="mb-3 mt-8 text-xs uppercase tracking-[0.25em] text-gold/60">{section.title}</p>
-          <Card className="border-white/5">
+          <Card className="settings-panel">
             <CardContent className="divide-y divide-transparent px-5 py-1">{section.content}</CardContent>
           </Card>
         </motion.div>
       ))}
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }} className="mt-8">
-        <Button variant="outline" className="w-full text-rose-300 border-rose-400/30 hover:bg-rose-500/10" onClick={logout}>
+        <Button variant="outline" className="settings-logout w-full" onClick={logout}>
           <LogOut className="h-4 w-4" /> Log Out
         </Button>
       </motion.div>
