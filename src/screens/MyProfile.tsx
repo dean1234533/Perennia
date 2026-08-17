@@ -18,6 +18,7 @@ import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
 import { MyProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { CircularCropper } from '@/components/shared/CircularCropper'
+import { ProfileCosmicWheel } from '@/components/shared/ProfileCosmicWheel'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import { subscribeUserMedia, renameCategoryRemote, type MediaDoc } from '@/lib/firestore'
 import {
@@ -415,7 +416,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           <div className="profile-content-grid">
             <button type="button" className="profile-cosmic-card" onClick={() => navigate('/cosmic-profile')}>
               <span><strong>My Cosmic Profile</strong><small>Explore your full astrological blueprint</small><em>View Cosmic Profile <ArrowRight /></em></span>
-              <CosmicWheelGraphic />
+              <ProfileCosmicWheel />
             </button>
 
             <section id="profile-media" className="profile-media-card scroll-mt-20">
@@ -562,7 +563,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           About You, Travel to the favourite-places/dream-destinations
           fields also collected there. */}
       <div className="profile-edit-content mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <ProfileSection icon={Feather} title="Bio" open={openInfoSection === 'bio'} onToggle={() => setOpenInfoSection((current) => current === 'bio' ? null : 'bio')}>
+        <ProfileSection icon={Feather} title="Bio" open={editMode || openInfoSection === 'bio'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'bio' ? null : 'bio')}>
           {storyPrompts.length ? (
             <div className="flex flex-col gap-3">
               {storyPrompts.map((p) => (
@@ -577,7 +578,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={Sparkles} title="Interests" open={openInfoSection === 'interests'} onToggle={() => setOpenInfoSection((current) => current === 'interests' ? null : 'interests')}>
+        <ProfileSection icon={Sparkles} title="Interests" open={editMode || openInfoSection === 'interests'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'interests' ? null : 'interests')}>
           {editMode ? (
             <>
               <Reorder.Group axis="x" values={draft.interests} onReorder={(v) => setDraft((d) => ({ ...d, interests: v }))} className="mb-3 flex flex-wrap gap-2">
@@ -612,7 +613,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle" open={openInfoSection === 'lifestyle'} onToggle={() => setOpenInfoSection((current) => current === 'lifestyle' ? null : 'lifestyle')}>
+        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle" open={editMode || openInfoSection === 'lifestyle'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'lifestyle' ? null : 'lifestyle')}>
           {editMode ? (
             <div className="flex flex-col gap-3">
               {(['profession', 'education'] as const).map((field) => (
@@ -645,7 +646,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={MapPinned} title="Travel" open={openInfoSection === 'travel'} onToggle={() => setOpenInfoSection((current) => current === 'travel' ? null : 'travel')}>
+        <ProfileSection icon={MapPinned} title="Travel" open={editMode || openInfoSection === 'travel'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'travel' ? null : 'travel')}>
           {editMode ? (
             <div className="flex flex-col gap-3">
               {(['favoritePlaces', 'dreamDestinations'] as const).map((field) => (
@@ -866,32 +867,6 @@ function interestIcon(interest: string): LucideIcon | null {
   return Sparkles
 }
 
-function CosmicWheelGraphic() {
-  const glyphs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']
-  return (
-    <span className="profile-cosmic-wheel" aria-hidden="true">
-      <svg viewBox="0 0 160 160" role="presentation">
-        <circle cx="80" cy="80" r="72" />
-        <circle cx="80" cy="80" r="54" />
-        <circle cx="80" cy="80" r="27" />
-        {Array.from({ length: 12 }, (_, index) => {
-          const angle = index * Math.PI / 6
-          const x1 = 80 + Math.cos(angle) * 27
-          const y1 = 80 + Math.sin(angle) * 27
-          const x2 = 80 + Math.cos(angle) * 72
-          const y2 = 80 + Math.sin(angle) * 72
-          return <line key={`line-${index}`} x1={x1} y1={y1} x2={x2} y2={y2} />
-        })}
-        {glyphs.map((glyph, index) => {
-          const angle = index * Math.PI / 6 - Math.PI / 2
-          return <text key={glyph} x={80 + Math.cos(angle) * 63} y={83 + Math.sin(angle) * 63}>{glyph}</text>
-        })}
-        <path d="M80 61 86 74 100 80 86 86 80 100 74 86 60 80 74 74Z" />
-      </svg>
-    </span>
-  )
-}
-
 function ProfileMediaRow({
   title,
   items,
@@ -939,15 +914,21 @@ function ProfileFact({ icon: Icon, label, value }: { icon: LucideIcon; label: st
   return <p><Icon /><span>{label}</span><strong>{value}</strong></p>
 }
 
-function ProfileSection({ icon: Icon, title, open, onToggle, children }: { icon: LucideIcon; title: string; open: boolean; onToggle: () => void; children: ReactNode }) {
+function ProfileSection({ icon: Icon, title, open, collapsible, onToggle, children }: { icon: LucideIcon; title: string; open: boolean; collapsible: boolean; onToggle: () => void; children: ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-      <button type="button" onClick={onToggle} aria-expanded={open} className={`flex w-full items-center justify-between gap-3 text-left ${open ? 'mb-3' : ''}`}>
-        <span className="flex items-center gap-1.5 text-xs uppercase tracking-[0.25em] text-gold/70">
+      {collapsible ? (
+        <button type="button" onClick={onToggle} aria-expanded={open} className={`flex w-full items-center justify-between gap-3 text-left ${open ? 'mb-3' : ''}`}>
+          <span className="flex items-center gap-1.5 text-xs uppercase tracking-[0.25em] text-gold/70">
+            <Icon className="h-3.5 w-3.5" strokeWidth={1.75} /> {title}
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-white/50 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      ) : (
+        <p className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-[0.25em] text-gold/70">
           <Icon className="h-3.5 w-3.5" strokeWidth={1.75} /> {title}
-        </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-white/50 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
+        </p>
+      )}
       {open && children}
     </div>
   )

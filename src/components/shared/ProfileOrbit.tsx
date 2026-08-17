@@ -156,7 +156,7 @@ export function ProfileOrbit({
             <div className="pointer-events-none absolute -inset-[11px] rounded-full border border-[#8eafff]/55 shadow-[0_0_16px_rgba(83,126,236,.22)]" />
             <div className="pointer-events-none absolute -inset-[5px] rounded-full border border-white/65 shadow-[inset_0_0_10px_rgba(111,152,255,.18)]" />
             <div className={cn(
-              'relative flex items-center justify-center overflow-hidden rounded-full border border-[#f1d6a7]/90 bg-[#06132c] p-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,.22),0_0_25px_rgba(54,96,198,.28)]',
+              'profile-orbit-photo relative flex items-center justify-center overflow-hidden rounded-full border border-[#f1d6a7]/90 bg-[#06132c] p-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,.22),0_0_25px_rgba(54,96,198,.28)]',
               compact
                 ? 'h-[184px] w-[184px] sm:h-[224px] sm:w-[224px]'
                 : 'h-[158px] w-[158px] sm:h-[210px] sm:w-[210px] md:h-[244px] md:w-[244px]'
@@ -173,7 +173,7 @@ export function ProfileOrbit({
             <span className="pointer-events-none absolute -left-[8px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#ffe1a8] shadow-[0_0_5px_2px_rgba(255,218,153,.75),0_0_14px_5px_rgba(75,116,235,.32)]" />
             <span className="pointer-events-none absolute -right-[7px] top-[43%] h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_5px_2px_rgba(255,255,255,.72),0_0_13px_5px_rgba(80,125,246,.4)]" />
             {typeof compatibility === 'number' && (
-              <div className="glass-strong absolute left-1/2 -top-3 flex h-11 w-11 -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border border-gold/40 text-xs font-semibold text-champagne shadow-lg" aria-label={`${compatibility}% compatibility`}>
+              <div className="profile-compatibility-badge glass-strong absolute left-1/2 -top-2 flex h-9 w-9 -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border border-gold/40 text-[10px] font-semibold text-champagne shadow-lg" aria-label={`${compatibility}% compatibility`}>
                 {compatibility}%
               </div>
             )}

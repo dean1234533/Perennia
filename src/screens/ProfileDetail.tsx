@@ -13,6 +13,7 @@ import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer
 import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
 import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
 import { OtherProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
+import { ProfileCosmicWheel } from '@/components/shared/ProfileCosmicWheel'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import { getUserDoc, subscribeUserMedia, getPrivateLifestyle, type DiscoveryCandidate, type MediaDoc, type PrivateLifestyle } from '@/lib/firestore'
 import { emptySelfProfile } from '@/data/selfProfile'
@@ -257,7 +258,7 @@ export function ProfileDetail() {
           <div className="profile-content-grid">
             <button type="button" className="profile-cosmic-card" onClick={() => navigate(`/compatibility/${profile.uid}`)}>
               <span><strong>Cosmic Profile</strong><small>Explore your compatibility and their astrological blueprint</small><em>View Cosmic Profile <ArrowRight /></em></span>
-              <span className="profile-cosmic-wheel" aria-hidden="true">✦</span>
+              <ProfileCosmicWheel />
             </button>
             <section className="profile-media-card">
               <VisitorMediaRow title="Photos" items={profilePhotos} onOpen={(index) => { setMediaMode('photos'); setGridViewerIndex(index) }} />

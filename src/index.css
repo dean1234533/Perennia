@@ -1244,7 +1244,7 @@ button {
 .profile-hero-orbit { min-width:0; padding-bottom:0; transition:padding-bottom .28s ease; }
 .profile-cosmic-hero.is-expanded .profile-hero-orbit { padding-bottom:1.25rem; }
 .profile-hero-orbit .profile-orbit { height:20rem!important; max-width:38rem!important; }
-.profile-hero-orbit .profile-orbit > button > div > div:last-of-type { width:14.5rem; height:14.5rem; }
+.profile-hero-orbit .profile-orbit-photo { width:14.5rem; height:14.5rem; }
 .profile-hero-identity { min-width:0; padding:1.25rem 0; }
 .profile-hero-identity h1 { display:flex; align-items:center; gap:.65rem; font-family:var(--font-serif); font-size:clamp(2.2rem,3.15vw,3rem); font-weight:500; line-height:1.05; letter-spacing:.01em; }
 .profile-founding-mark { display:grid; width:1.8rem; height:1.8rem; place-items:center; border-radius:50%; background:linear-gradient(145deg,#f4d693,#b67722); color:#291807; box-shadow:0 0 12px rgba(201,154,74,.36); }
@@ -1399,7 +1399,7 @@ button {
   .profile-hero-orbit { padding:.35rem 1rem .75rem; }
   .profile-cosmic-hero.is-expanded .profile-hero-orbit { padding-bottom:1.2rem; }
   .profile-hero-orbit .profile-orbit { height:clamp(15.75rem,70vw,17rem)!important; max-width:22rem!important; }
-  .profile-hero-orbit .profile-orbit > button > div > div:last-of-type { width:clamp(9.5rem,45vw,10.75rem); height:clamp(9.5rem,45vw,10.75rem); }
+  .profile-hero-orbit .profile-orbit-photo { width:clamp(9.5rem,45vw,10.75rem); height:clamp(9.5rem,45vw,10.75rem); }
   .profile-hero-identity { margin-top:.05rem; padding:.7rem 1.1rem .72rem; border-radius:1.6rem 1.6rem 0 0; background:#f7f7f8; color:#151821; text-align:center; }
   .profile-hero-identity h1 { justify-content:center; color:#151821; font-size:1.72rem; }
   .profile-status-badges { justify-content:center; gap:.3rem; margin-top:.32rem; }
