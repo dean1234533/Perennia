@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, ChevronUp, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Play, Sparkles, UserPlus, UserCheck, X, Crown, ShieldCheck, Shield } from 'lucide-react'
+import { ArrowRight, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Play, Sparkles, UserPlus, UserCheck, X, Crown, ShieldCheck, Shield } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { Badge } from '@/components/ui/badge'
@@ -39,8 +39,6 @@ export function ProfileDetail() {
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
   const [friendState, setFriendState] = useState<FriendState>('none')
   const [heroExpanded, setHeroExpanded] = useState(false)
-  const [aboutOpen, setAboutOpen] = useState(true)
-  const [interestsOpen, setInterestsOpen] = useState(true)
   const [isFoundingMember, setIsFoundingMember] = useState(false)
   // A successful read here already means access was allowed (public, or a
   // real match — see firestore.rules) — a denied/missing read is treated
@@ -176,6 +174,8 @@ export function ProfileDetail() {
 
   const isMatched = matchedIds.includes(profile.uid)
   const extras = profile.profileExtras
+  const hasAboutInformation = Boolean(extras?.about || extras?.education || extras?.languages?.length || extras?.profession)
+  const hasInterestsInformation = Boolean(extras?.interests?.length || extras?.lifestyleVibe || extras?.values?.length)
 
   const handleLike = () => {
     setLiked(true)
@@ -266,12 +266,32 @@ export function ProfileDetail() {
           </div>
           <div className="profile-detail-grid">
             <section className="profile-neutral-card">
-              <button className="profile-neutral-heading" onClick={() => setAboutOpen((value) => !value)} aria-expanded={aboutOpen}><span>About Me</span><ChevronUp className={aboutOpen ? '' : 'is-collapsed'} /></button>
-              {aboutOpen && <div className="profile-about-content"><div className="profile-about-facts">{extras?.education && <p><GraduationCap /><span>Education</span><strong>{extras.education}</strong></p>}{extras?.languages?.length ? <p><MessageCircle /><span>Languages</span><strong>{extras.languages.join(', ')}</strong></p> : null}{extras?.profession && <p><Briefcase /><span>Job title</span><strong>{extras.profession}</strong></p>}</div>{extras?.about && <p className="profile-about-story">{extras.about}</p>}</div>}
+              <h2 className="profile-neutral-heading">About Me</h2>
+              {hasAboutInformation ? (
+                <div className="profile-about-content">
+                  <div className="profile-about-facts">
+                    {extras?.education && <p><GraduationCap /><span>Education</span><strong>{extras.education}</strong></p>}
+                    {extras?.languages?.length ? <p><MessageCircle /><span>Languages</span><strong>{extras.languages.join(', ')}</strong></p> : null}
+                    {extras?.profession && <p><Briefcase /><span>Job title</span><strong>{extras.profession}</strong></p>}
+                  </div>
+                  {extras?.about && <p className="profile-about-story">{extras.about}</p>}
+                </div>
+              ) : (
+                <p className="px-4 pb-4 text-sm text-slate-500">No About Me information shared yet.</p>
+              )}
             </section>
             <section className="profile-neutral-card">
-              <button className="profile-neutral-heading" onClick={() => setInterestsOpen((value) => !value)} aria-expanded={interestsOpen}><span>Interests &amp; Lifestyle</span><ChevronUp className={interestsOpen ? '' : 'is-collapsed'} /></button>
-              {interestsOpen && <div className="profile-interests-content"><strong>Interests</strong><div className="profile-neutral-chips">{extras?.interests?.map((interest) => <span key={interest}>{interest}</span>)}</div><strong>Lifestyle</strong><div className="profile-neutral-chips is-lifestyle">{extras?.lifestyleVibe && <span>{extras.lifestyleVibe}</span>}{extras?.values?.slice(0, 5).map((value) => <span key={value}>{value}</span>)}</div></div>}
+              <h2 className="profile-neutral-heading">Interests &amp; Lifestyle</h2>
+              {hasInterestsInformation ? (
+                <div className="profile-interests-content">
+                  <strong>Interests</strong>
+                  <div className="profile-neutral-chips">{extras?.interests?.map((interest) => <span key={interest}>{interest}</span>)}</div>
+                  <strong>Lifestyle</strong>
+                  <div className="profile-neutral-chips is-lifestyle">{extras?.lifestyleVibe && <span>{extras.lifestyleVibe}</span>}{extras?.values?.slice(0, 5).map((value) => <span key={value}>{value}</span>)}</div>
+                </div>
+              ) : (
+                <p className="px-4 pb-4 text-sm text-slate-500">No interests or lifestyle information shared yet.</p>
+              )}
             </section>
           </div>
         </div>

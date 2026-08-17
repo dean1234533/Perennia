@@ -173,7 +173,7 @@ export function ProfileOrbit({
             <span className="pointer-events-none absolute -left-[8px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#ffe1a8] shadow-[0_0_5px_2px_rgba(255,218,153,.75),0_0_14px_5px_rgba(75,116,235,.32)]" />
             <span className="pointer-events-none absolute -right-[7px] top-[43%] h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_5px_2px_rgba(255,255,255,.72),0_0_13px_5px_rgba(80,125,246,.4)]" />
             {typeof compatibility === 'number' && (
-              <div className="glass-strong absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 text-xs font-semibold text-champagne shadow-lg">
+              <div className="glass-strong absolute left-1/2 -top-3 flex h-11 w-11 -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border border-gold/40 text-xs font-semibold text-champagne shadow-lg" aria-label={`${compatibility}% compatibility`}>
                 {compatibility}%
               </div>
             )}

@@ -5,7 +5,7 @@ import {
   Check, Upload, Trash2, Star, X, Plus, Shield, ShieldCheck,
   GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
   Heart, Sparkles, BriefcaseBusiness, MapPinned, Pencil, Eye, Gift,
-  LockKeyhole, ArrowRight, Ruler, GraduationCap, Languages,
+  LockKeyhole, ArrowRight, ChevronDown, Ruler, GraduationCap, Languages,
   Crown, UtensilsCrossed, Dumbbell, Music2, Plane, Palette, Leaf,
   Film, Sprout, type LucideIcon,
 } from 'lucide-react'
@@ -125,6 +125,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [heroExpanded, setHeroExpanded] = useState(false)
   const [brandPanelOpen, setBrandPanelOpen] = useState(false)
   const [premiumPanel, setPremiumPanel] = useState<'viewers' | null>(null)
+  const [openInfoSection, setOpenInfoSection] = useState<'bio' | 'interests' | 'lifestyle' | 'travel' | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -560,8 +561,8 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           Interests step, Lifestyle to profession/education/languages from
           About You, Travel to the favourite-places/dream-destinations
           fields also collected there. */}
-      <div className={`profile-edit-content ${editMode ? 'grid' : 'hidden'} mt-10 grid-cols-1 gap-4 sm:grid-cols-2`}>
-        <ProfileSection icon={Feather} title="Bio">
+      <div className="profile-edit-content mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ProfileSection icon={Feather} title="Bio" open={openInfoSection === 'bio'} onToggle={() => setOpenInfoSection((current) => current === 'bio' ? null : 'bio')}>
           {storyPrompts.length ? (
             <div className="flex flex-col gap-3">
               {storyPrompts.map((p) => (
@@ -576,7 +577,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={Sparkles} title="Interests">
+        <ProfileSection icon={Sparkles} title="Interests" open={openInfoSection === 'interests'} onToggle={() => setOpenInfoSection((current) => current === 'interests' ? null : 'interests')}>
           {editMode ? (
             <>
               <Reorder.Group axis="x" values={draft.interests} onReorder={(v) => setDraft((d) => ({ ...d, interests: v }))} className="mb-3 flex flex-wrap gap-2">
@@ -611,7 +612,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle">
+        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle" open={openInfoSection === 'lifestyle'} onToggle={() => setOpenInfoSection((current) => current === 'lifestyle' ? null : 'lifestyle')}>
           {editMode ? (
             <div className="flex flex-col gap-3">
               {(['profession', 'education'] as const).map((field) => (
@@ -644,7 +645,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={MapPinned} title="Travel">
+        <ProfileSection icon={MapPinned} title="Travel" open={openInfoSection === 'travel'} onToggle={() => setOpenInfoSection((current) => current === 'travel' ? null : 'travel')}>
           {editMode ? (
             <div className="flex flex-col gap-3">
               {(['favoritePlaces', 'dreamDestinations'] as const).map((field) => (
@@ -938,13 +939,16 @@ function ProfileFact({ icon: Icon, label, value }: { icon: LucideIcon; label: st
   return <p><Icon /><span>{label}</span><strong>{value}</strong></p>
 }
 
-function ProfileSection({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: ReactNode }) {
+function ProfileSection({ icon: Icon, title, open, onToggle, children }: { icon: LucideIcon; title: string; open: boolean; onToggle: () => void; children: ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-      <p className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-[0.25em] text-gold/70">
-        <Icon className="h-3.5 w-3.5" strokeWidth={1.75} /> {title}
-      </p>
-      {children}
+      <button type="button" onClick={onToggle} aria-expanded={open} className={`flex w-full items-center justify-between gap-3 text-left ${open ? 'mb-3' : ''}`}>
+        <span className="flex items-center gap-1.5 text-xs uppercase tracking-[0.25em] text-gold/70">
+          <Icon className="h-3.5 w-3.5" strokeWidth={1.75} /> {title}
+        </span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-white/50 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && children}
     </div>
   )
 }
