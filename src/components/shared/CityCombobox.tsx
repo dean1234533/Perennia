@@ -125,7 +125,10 @@ export function CityCombobox({
             <button
               key={`${c.name}-${c.country}-${i}`}
               type="button"
-              onPointerDown={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                handleSelect(c)
+              }}
               onClick={() => handleSelect(c)}
               className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-white/85 hover:bg-white/[0.06] cursor-pointer"
             >
