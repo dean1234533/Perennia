@@ -174,7 +174,7 @@ export function Verify() {
   const activeStep = detailsConfirmed ? 4 : isVerified ? 3 : stage === 'pending' ? 2 : stage === 'launching' ? 1 : 0
 
   return (
-    <OnboardingShell className="verification-onboarding-shell">
+    <OnboardingShell step={2} totalSteps={12} className="verification-onboarding-shell">
       <div className="verification-heading mb-5 text-center">
         <h1 className="font-serif-display text-4xl sm:text-5xl">Verify Your Identity</h1>
         <p className="mt-2 text-sm text-white/55">Keep our community safe with verified profiles</p>

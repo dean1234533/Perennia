@@ -32,7 +32,7 @@ const LANGUAGE_OPTIONS = [
 export function AboutYouDetails() {
   const { profileLoaded } = useApp()
   return (
-    <OnboardingShell step={8} totalSteps={12}>
+    <OnboardingShell step={7} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <AboutYouForm />}
     </OnboardingShell>
   )
@@ -58,7 +58,7 @@ function AboutYouForm() {
     })
     updateOnboarding({ aboutYouCompletedAt: new Date().toISOString() })
     setSaving(false)
-    navigate('/profile-photo')
+    navigate('/lifestyle')
   }
 
   return (

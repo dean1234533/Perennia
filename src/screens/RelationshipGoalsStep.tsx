@@ -71,7 +71,7 @@ export function RelationshipGoalsStep() {
   const canRenderLocalPreview = hasDevelopmentVerificationBypass()
 
   return (
-    <OnboardingShell step={6} totalSteps={12}>
+    <OnboardingShell step={5} totalSteps={12}>
       {!profileLoaded && !canRenderLocalPreview ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <RelationshipGoalsForm />}
     </OnboardingShell>
   )

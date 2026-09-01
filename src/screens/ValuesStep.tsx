@@ -32,7 +32,7 @@ function ValuesForm() {
     setSaving(true)
     await updateProfileExtras({ ...profileExtras, values: selected })
     setSaving(false)
-    navigate('/your-story')
+    navigate('/profile-photo')
   }
 
   return (

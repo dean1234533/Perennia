@@ -62,7 +62,7 @@ export function BirthDetails() {
 
   if (recoveringBirthDate && !onboarding.birthDate) {
     return (
-      <OnboardingShell step={4} totalSteps={12}>
+      <OnboardingShell step={3} totalSteps={12}>
         <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-navy/40 px-5 py-4 text-sm text-white/65">
           <Loader2 className="h-5 w-5 animate-spin text-gold" /> Loading your verified birth date…
         </div>
@@ -77,14 +77,14 @@ export function BirthDetails() {
 
   if (locked) {
     return (
-      <OnboardingShell step={4} totalSteps={12}>
+      <OnboardingShell step={3} totalSteps={12}>
         <LockedSummary />
       </OnboardingShell>
     )
   }
 
   return (
-    <OnboardingShell step={4} totalSteps={12}>
+    <OnboardingShell step={3} totalSteps={12}>
       <BirthDetailsForm />
     </OnboardingShell>
   )

@@ -16,7 +16,7 @@ const choices: { value: GenderChoice; label: string; Icon: typeof Mars }[] = [
 
 export function Preferences() {
   return (
-    <OnboardingShell step={5} totalSteps={12}>
+    <OnboardingShell step={4} totalSteps={12}>
       <GenderSelectionForm />
     </OnboardingShell>
   )

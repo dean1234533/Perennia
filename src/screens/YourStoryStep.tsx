@@ -12,7 +12,7 @@ export function YourStoryStep() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={10} totalSteps={12}>
+    <OnboardingShell step={11} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <YourStoryForm />}
     </OnboardingShell>
   )

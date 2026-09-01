@@ -14,7 +14,7 @@ export function ProfilePhoto() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={9} totalSteps={12}>
+    <OnboardingShell step={10} totalSteps={12}>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <ProfilePhotoForm />}
     </OnboardingShell>
   )
@@ -72,7 +72,7 @@ function ProfilePhotoForm() {
       >
         <button
           type="button"
-          onClick={() => navigate('/about-you')}
+          onClick={() => navigate('/values')}
           className="mb-5 inline-flex min-h-11 w-full items-center gap-2 self-start text-left text-sm text-champagne/75 transition-colors hover:text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight sm:absolute sm:left-0 sm:top-0 sm:mb-0 sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
