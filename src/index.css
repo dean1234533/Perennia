@@ -720,7 +720,7 @@ input:autofill {
   background:
     radial-gradient(ellipse 28% 100% at 0% 50%, rgba(31, 204, 255, .28), rgba(22, 105, 230, .13) 45%, transparent 78%) padding-box,
     radial-gradient(ellipse 28% 100% at 100% 50%, rgba(238, 72, 255, .24), rgba(120, 55, 225, .12) 45%, transparent 78%) padding-box,
-    linear-gradient(105deg, rgba(4, 20, 58, .98), rgba(4, 9, 31, .99) 52%, rgba(17, 7, 44, .98)) padding-box,
+    linear-gradient(105deg, rgba(10, 48, 151, .98) 0%, rgba(12, 20, 87, .99) 52%, rgba(58, 18, 113, .98) 100%) padding-box,
     linear-gradient(100deg, #44e2ff 0%, #258cff 33%, #826aff 68%, #ff68e3 100%) border-box !important;
   color: #fff !important;
   box-shadow:
@@ -747,7 +747,7 @@ input:autofill {
     background:
       radial-gradient(ellipse 34% 115% at 0% 50%, rgba(54, 221, 255, .55), rgba(35, 123, 245, .24) 43%, transparent 76%) padding-box,
       radial-gradient(ellipse 36% 115% at 100% 50%, rgba(255, 100, 232, .5), rgba(129, 61, 239, .24) 43%, transparent 76%) padding-box,
-      linear-gradient(105deg, rgba(4, 25, 73, .99), rgba(6, 11, 43, .99) 51%, rgba(28, 9, 61, .99)) padding-box,
+      linear-gradient(105deg, rgba(10, 48, 151, .98) 0%, rgba(12, 20, 87, .99) 52%, rgba(58, 18, 113, .98) 100%) padding-box,
       linear-gradient(100deg, #e6fcff 0%, #4be5ff 13%, #438fff 36%, #8a75ff 64%, #ff67df 87%, #fff0fc 100%) border-box !important;
     box-shadow:
       0 0 7px rgba(245, 249, 255, .82),
