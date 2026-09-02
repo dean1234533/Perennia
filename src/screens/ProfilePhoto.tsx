@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Camera, Loader2 } from 'lucide-react'
+import { Camera, Loader2 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { CircularCropper } from '@/components/shared/CircularCropper'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
@@ -70,14 +71,10 @@ function ProfilePhotoForm() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full max-w-2xl px-4 pb-6 text-center sm:px-8 sm:pb-10"
       >
-        <button
-          type="button"
-          onClick={() => navigate('/values')}
-          className="mb-5 inline-flex min-h-11 w-full items-center gap-2 self-start text-left text-sm text-champagne/75 transition-colors hover:text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight sm:absolute sm:left-0 sm:top-0 sm:mb-0 sm:w-auto"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back
-        </button>
+        <OnboardingBackButton
+          to="/values"
+          className="mb-5 w-full justify-start self-start sm:absolute sm:left-0 sm:top-0 sm:mb-0 sm:w-auto"
+        />
 
         <header className="mx-auto mb-7 max-w-lg sm:mb-8 sm:pt-3">
           <h1 className="font-serif-display mb-3 text-4xl tracking-wide text-champagne sm:text-5xl">Profile Photo</h1>
@@ -122,18 +119,20 @@ function ProfilePhotoForm() {
           <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/55" />
         </div>
 
-        <button
-          type="button"
-          disabled={!preview || saving}
+        <OnboardingPrimaryButton
+          disabled={!preview}
+          loading={saving}
+          loadingLabel="Saving…"
+          showArrow
           onClick={() => navigate(
             hasDevelopmentVerificationBypass() || (onboarding.verification.status === 'verified' && onboarding.verification.detailsConfirmedAt)
               ? '/your-story'
               : '/verify'
           )}
-          className="profile-photo-continue-button mx-auto inline-flex min-h-14 w-full max-w-xs items-center justify-center gap-3 rounded-full px-8 text-base font-medium tracking-wide transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 focus-visible:ring-offset-4 focus-visible:ring-offset-midnight active:scale-[0.985] disabled:cursor-not-allowed"
+          className="mx-auto w-full max-w-xs"
         >
-          {saving ? 'Saving…' : (<>Continue <ArrowRight className="h-4 w-4" /></>)}
-        </button>
+          Continue
+        </OnboardingPrimaryButton>
       </motion.main>
 
       {file && (
