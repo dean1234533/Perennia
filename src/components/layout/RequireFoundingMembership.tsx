@@ -21,8 +21,6 @@ const RESUMABLE_ONBOARDING_PATHS = new Set([
   '/relationship-goals',
   '/interests',
   '/about-you',
-  '/lifestyle',
-  '/values',
   '/profile-photo',
   '/your-story',
   '/cosmic-profile',

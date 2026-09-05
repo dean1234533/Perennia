@@ -72,7 +72,7 @@ function ProfilePhotoForm() {
         className="relative w-full max-w-2xl px-4 pb-6 text-center sm:px-8 sm:pb-10"
       >
         <OnboardingBackButton
-          to="/values"
+          to="/about-you"
           className="mb-5 w-full justify-start self-start sm:absolute sm:left-0 sm:top-0 sm:mb-0 sm:w-auto"
         />
 

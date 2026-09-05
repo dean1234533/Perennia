@@ -58,7 +58,7 @@ function AboutYouForm() {
     })
     updateOnboarding({ aboutYouCompletedAt: new Date().toISOString() })
     setSaving(false)
-    navigate('/lifestyle')
+    navigate('/profile-photo')
   }
 
   return (
