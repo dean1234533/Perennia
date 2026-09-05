@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Check, Mars, Venus } from 'lucide-react'
+import { Check, Mars, Venus } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { useApp } from '@/context/AppContext'
 import type { OnboardingData } from '@/context/AppContext'
 
@@ -40,13 +40,7 @@ function GenderSelectionForm() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="flex w-full max-w-xl flex-col items-center pb-4"
     >
-      <button
-        type="button"
-        onClick={() => navigate('/birth-details')}
-        className="mb-8 inline-flex items-center gap-2 self-start text-sm text-white/50 transition-colors [@media(hover:hover)]:hover:text-white/85"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
+      <OnboardingBackButton to="/birth-details" className="mb-8 self-start" />
 
       <h1 className="font-serif-display text-center text-4xl text-gradient-gold sm:text-5xl">
         I am a…
@@ -91,14 +85,14 @@ function GenderSelectionForm() {
         })}
       </div>
 
-      <Button
-        size="lg"
+      <OnboardingPrimaryButton
         onClick={handleContinue}
         disabled={!gender}
-        className="gender-continue-button mx-auto mt-10 w-full max-w-[14rem] disabled:opacity-70 sm:mt-12"
+        showArrow
+        className="mx-auto mt-10 w-full max-w-[14rem] sm:mt-12"
       >
-        Continue <ArrowRight className="h-4 w-4" />
-      </Button>
+        Continue
+      </OnboardingPrimaryButton>
     </motion.main>
   )
 }

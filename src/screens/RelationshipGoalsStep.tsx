@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft,
-  ArrowRight,
   Baby,
   Brain,
   Check,
@@ -28,7 +26,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Switch } from '@/components/ui/switch'
 import { useApp } from '@/context/AppContext'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
@@ -119,9 +117,7 @@ function RelationshipGoalsForm() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-3xl pb-4"
     >
-      <button onClick={() => navigate('/preferences')} className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-navy/25 px-3.5 text-sm text-white/65 transition hover:border-gold/30 hover:text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
+      <OnboardingBackButton to="/preferences" className="mb-5" />
 
       <div className="relationship-interest-panel rounded-[2rem] p-5 sm:p-9">
         <header className="mx-auto mb-8 max-w-xl text-center">
@@ -204,9 +200,9 @@ function RelationshipGoalsForm() {
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs leading-5 text-white/48"><Info className="h-3.5 w-3.5 shrink-0 text-gold/65" /> Your astrological compatibility score is calculated separately from these preferences.</p>
 
-        <Button size="lg" className="relationship-interest-continue mt-7 w-full" disabled={!goal} onClick={handleContinue}>
-          Continue <ArrowRight className="h-4 w-4" />
-        </Button>
+        <OnboardingPrimaryButton className="mt-7 w-full" disabled={!goal} showArrow onClick={handleContinue}>
+          Continue
+        </OnboardingPrimaryButton>
       </div>
     </motion.main>
   )
