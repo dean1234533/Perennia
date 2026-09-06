@@ -14,9 +14,7 @@ const ProfilePhoto = lazy(() => import('@/screens/ProfilePhoto').then((module) =
 const BirthDetails = lazy(() => import('@/screens/BirthDetails').then((module) => ({ default: module.BirthDetails })))
 const AboutYouDetails = lazy(() => import('@/screens/AboutYouDetails').then((module) => ({ default: module.AboutYouDetails })))
 const RelationshipGoalsStep = lazy(() => import('@/screens/RelationshipGoalsStep').then((module) => ({ default: module.RelationshipGoalsStep })))
-const LifestyleStep = lazy(() => import('@/screens/LifestyleStep').then((module) => ({ default: module.LifestyleStep })))
 const InterestsStep = lazy(() => import('@/screens/InterestsStep').then((module) => ({ default: module.InterestsStep })))
-const ValuesStep = lazy(() => import('@/screens/ValuesStep').then((module) => ({ default: module.ValuesStep })))
 const YourStoryStep = lazy(() => import('@/screens/YourStoryStep').then((module) => ({ default: module.YourStoryStep })))
 const Preferences = lazy(() => import('@/screens/Preferences').then((module) => ({ default: module.Preferences })))
 const CosmicProfile = lazy(() => import('@/screens/CosmicProfile').then((module) => ({ default: module.CosmicProfile })))
@@ -54,9 +52,9 @@ function App() {
             <Route path="/birth-details" element={<RequireVerifiedIdentity><BirthDetails /></RequireVerifiedIdentity>} />
             <Route path="/about-you" element={<RequireVerifiedIdentity><AboutYouDetails /></RequireVerifiedIdentity>} />
             <Route path="/relationship-goals" element={<RequireVerifiedIdentity><RelationshipGoalsStep /></RequireVerifiedIdentity>} />
-            <Route path="/lifestyle" element={<RequireVerifiedIdentity><LifestyleStep /></RequireVerifiedIdentity>} />
+            <Route path="/lifestyle" element={<RequireVerifiedIdentity><Navigate to="/profile-photo" replace /></RequireVerifiedIdentity>} />
             <Route path="/interests" element={<RequireVerifiedIdentity><InterestsStep /></RequireVerifiedIdentity>} />
-            <Route path="/values" element={<RequireVerifiedIdentity><ValuesStep /></RequireVerifiedIdentity>} />
+            <Route path="/values" element={<RequireVerifiedIdentity><Navigate to="/profile-photo" replace /></RequireVerifiedIdentity>} />
             <Route path="/your-story" element={<RequireVerifiedIdentity><YourStoryStep /></RequireVerifiedIdentity>} />
             <Route path="/preferences" element={<RequireVerifiedIdentity><Preferences /></RequireVerifiedIdentity>} />
             <Route path="/cosmic-profile" element={<RequireVerifiedIdentity><CosmicProfile /></RequireVerifiedIdentity>} />
