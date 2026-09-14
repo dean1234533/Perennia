@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, BriefcaseBusiness, ChevronDown, GraduationCap, Languages, Loader2, Search, X } from 'lucide-react'
+import { BriefcaseBusiness, ChevronDown, GraduationCap, Languages, Loader2, Search, X } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Select } from '@/components/ui/select'
 import { useApp } from '@/context/AppContext'
 
@@ -46,8 +46,20 @@ function AboutYouForm() {
   const [education, setEducation] = useState(profileExtras.education)
   const [languages, setLanguages] = useState(profileExtras.languages)
   const [saving, setSaving] = useState(false)
+  const professionComplete = hideProfession || profession.trim().length > 0
+  const educationComplete = education.trim().length > 0
+  const languagesComplete = languages.length > 0
+  const canContinue = professionComplete && educationComplete && languagesComplete
+  const continueLabel = !professionComplete
+    ? 'Complete your profession'
+    : !educationComplete
+      ? 'Choose your education'
+      : !languagesComplete
+        ? 'Choose at least one language'
+        : 'Continue'
 
   const handleContinue = async () => {
+    if (!canContinue) return
     setSaving(true)
     await updateProfileExtras({
       ...profileExtras,
@@ -67,6 +79,8 @@ function AboutYouForm() {
       transition={{ duration: .55, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-xl pb-4"
     >
+      <OnboardingBackButton to="/interests" className="mb-5" />
+
       <header className="mb-7 text-center">
         <h1 className="font-serif-display bg-gradient-to-r from-blue-200 via-white to-violet-200 bg-clip-text text-4xl text-transparent sm:text-5xl">About You</h1>
         <p className="mt-2 text-sm text-white/75 sm:text-base">Tell us a little more about your everyday life.</p>
@@ -119,9 +133,16 @@ function AboutYouForm() {
           </section>
         </div>
 
-        <Button size="lg" className="about-you-continue-button mt-9 w-full" onClick={handleContinue} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continue <ArrowRight className="h-4 w-4" /></>}
-        </Button>
+        <OnboardingPrimaryButton
+          className="mt-9 w-full"
+          disabled={!canContinue || saving}
+          loading={saving}
+          loadingLabel="Saving…"
+          showArrow={canContinue}
+          onClick={handleContinue}
+        >
+          {continueLabel}
+        </OnboardingPrimaryButton>
         <p className="mt-4 text-center text-xs text-white/35">You can update this information later from your profile.</p>
       </div>
     </motion.main>

@@ -2,8 +2,6 @@ import { useMemo, useState, type ComponentType } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft,
-  ArrowRight,
   BookOpen,
   BriefcaseBusiness,
   Camera,
@@ -30,7 +28,7 @@ import {
   Volleyball,
 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Switch } from '@/components/ui/switch'
 import { useApp } from '@/context/AppContext'
 import {
@@ -144,9 +142,7 @@ function InterestsForm() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-6xl pb-6"
     >
-      <button onClick={() => navigate('/relationship-goals')} className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-navy/25 px-3.5 text-sm text-white/65 transition hover:border-gold/30 hover:text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45 active:scale-[0.97]">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
+      <OnboardingBackButton to="/relationship-goals" className="mb-5" />
 
       <div className="interests-panel rounded-[2rem] p-1 sm:p-2">
         <header className="mx-auto mb-9 max-w-2xl px-4 text-center sm:mb-11">
@@ -251,9 +247,16 @@ function InterestsForm() {
         </div>
 
         <div className="mx-auto mt-7 max-w-sm px-3 pb-3 sm:px-0 sm:pb-5">
-          <Button size="lg" className="interests-continue-button w-full" disabled={!canContinue || saving} onClick={handleContinue}>
-            {saving ? 'Saving…' : remaining > 0 ? `Choose ${remaining} more` : !lifestyleVibe ? 'Choose your lifestyle vibe' : <>Continue <ArrowRight className="h-4 w-4" /></>}
-          </Button>
+          <OnboardingPrimaryButton
+            className="w-full"
+            disabled={!canContinue || saving}
+            loading={saving}
+            loadingLabel="Saving…"
+            showArrow={canContinue}
+            onClick={handleContinue}
+          >
+            {remaining > 0 ? `Choose ${remaining} more` : !lifestyleVibe ? 'Choose your lifestyle vibe' : 'Continue'}
+          </OnboardingPrimaryButton>
         </div>
       </div>
     </motion.main>
