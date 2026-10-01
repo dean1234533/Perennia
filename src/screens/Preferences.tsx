@@ -6,17 +6,19 @@ import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { useApp } from '@/context/AppContext'
 import type { OnboardingData } from '@/context/AppContext'
+import { SUPPORTED_GENDERS } from '@/data/onboardingOptions'
+import { getOnboardingStep } from '@/lib/onboardingFlow'
 
 type GenderChoice = Exclude<OnboardingData['gender'], ''>
 
 const choices: { value: GenderChoice; label: string; Icon: typeof Mars }[] = [
-  { value: 'male', label: 'Man', Icon: Mars },
-  { value: 'female', label: 'Woman', Icon: Venus },
+  { value: SUPPORTED_GENDERS[0], label: 'Man', Icon: Mars },
+  { value: SUPPORTED_GENDERS[1], label: 'Woman', Icon: Venus },
 ]
 
 export function Preferences() {
   return (
-    <OnboardingShell step={4} totalSteps={12}>
+    <OnboardingShell>
       <GenderSelectionForm />
     </OnboardingShell>
   )
@@ -24,13 +26,24 @@ export function Preferences() {
 
 function GenderSelectionForm() {
   const navigate = useNavigate()
-  const { onboarding, updateOnboarding } = useApp()
+  const { onboarding, saveOnboarding } = useApp()
   const [gender, setGender] = useState<OnboardingData['gender']>(onboarding.gender)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const genderComplete = SUPPORTED_GENDERS.some((value) => value === gender)
 
-  const handleContinue = () => {
-    if (!gender) return
-    updateOnboarding({ gender })
-    navigate('/relationship-goals')
+  const handleContinue = async () => {
+    if (!genderComplete) return
+    setSaving(true)
+    setError('')
+    try {
+      await saveOnboarding({ gender })
+      navigate(getOnboardingStep('preferences').nextRoute!)
+    } catch {
+      setError('Could not save your preference. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -40,7 +53,7 @@ function GenderSelectionForm() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="flex w-full max-w-xl flex-col items-center pb-4"
     >
-      <OnboardingBackButton to="/birth-details" className="mb-8 self-start" />
+      <OnboardingBackButton to={getOnboardingStep('preferences').previousRoute!} className="mb-8 self-start" />
 
       <h1 className="font-serif-display text-center text-4xl text-gradient-gold sm:text-5xl">
         I am a…
@@ -85,9 +98,13 @@ function GenderSelectionForm() {
         })}
       </div>
 
+      {error && <p role="alert" className="mt-6 text-sm text-rose-300">{error}</p>}
+
       <OnboardingPrimaryButton
         onClick={handleContinue}
-        disabled={!gender}
+        disabled={!genderComplete || saving}
+        loading={saving}
+        loadingLabel="Saving…"
         showArrow
         className="mx-auto mt-10 w-full max-w-[14rem] sm:mt-12"
       >

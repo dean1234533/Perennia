@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowRight, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, GraduationCap, Play, Sparkles, UserPlus, UserCheck, X, Crown, ShieldCheck, Shield } from 'lucide-react'
+import { MotionConfig } from 'framer-motion'
+import { ArrowRight, Gift, Heart, MessageCircle, Loader2, MoreHorizontal, MapPin, Briefcase, Play, UserPlus, UserCheck, X, Crown, ShieldCheck, Shield } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
-import { MasonryGallery } from '@/components/shared/MasonryGallery'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
-import { CompatibilitySnapshot } from '@/components/shared/CompatibilitySnapshot'
-import { ProfileDetailSections } from '@/components/shared/ProfileDetailSections'
 import { OtherProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { ProfileCosmicWheel } from '@/components/shared/ProfileCosmicWheel'
+import { ProfileAstrologyIdentity } from '@/components/shared/ProfileAstrologyIdentity'
+import { ProfileAboutFacts } from '@/components/shared/ProfileAboutFacts'
+import { hasProfileAboutValues } from '@/data/profileAbout'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
-import { getUserDoc, subscribeUserMedia, getPrivateLifestyle, type DiscoveryCandidate, type MediaDoc, type PrivateLifestyle } from '@/lib/firestore'
+import { getConversation, getUserDoc, subscribeUserMedia, type DiscoveryCandidate, type MediaDoc } from '@/lib/firestore'
 import { emptySelfProfile } from '@/data/selfProfile'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { calculateAge } from '@/lib/age'
@@ -25,29 +24,35 @@ import { subscribeFriendState, sendFriendRequest, respondToFriendRequest, unfrie
 import { reportProfileRemote } from '@/lib/privacyApi'
 import { getPublicFoundingStatus } from '@/lib/founding500'
 
-export function ProfileDetail() {
+export interface ProfileDetailPreviewData {
+  profile: DiscoveryCandidate
+  media: MediaDoc[]
+  compatibility: CompatibilityResult
+  friendState: FriendState
+  isFoundingMember: boolean
+  isMatched: boolean
+}
+
+export function ProfileDetail({ previewData }: { previewData?: ProfileDetailPreviewData } = {}) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { likeProfile, passProfile, blockProfile, muteProfile, matchedIds, profileExtras, onboarding } = useApp()
+  const { likeProfile, blockProfile, muteProfile, matchedIds, onboarding } = useApp()
   const { user } = useAuth()
-  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
-  const [media, setMedia] = useState<MediaDoc[]>([])
-  const [result, setResult] = useState<CompatibilityResult | null>(null)
+  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(previewData?.profile)
+  const [media, setMedia] = useState<MediaDoc[]>(previewData?.media ?? [])
+  const [result, setResult] = useState<CompatibilityResult | null>(previewData?.compatibility ?? null)
   const [liked, setLiked] = useState(false)
   const [videoViewerCategory, setVideoViewerCategory] = useState<string | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
-  const [friendState, setFriendState] = useState<FriendState>('none')
+  const [friendState, setFriendState] = useState<FriendState>(previewData?.friendState ?? 'none')
   const [heroExpanded, setHeroExpanded] = useState(false)
-  const [isFoundingMember, setIsFoundingMember] = useState(false)
-  // A successful read here already means access was allowed (public, or a
-  // real match — see firestore.rules) — a denied/missing read is treated
-  // identically to "nothing set," never surfaced as an error.
-  const [lifestyle, setLifestyle] = useState<PrivateLifestyle | null>(null)
-  const [selfLifestyle, setSelfLifestyle] = useState<PrivateLifestyle | null>(null)
-
+  const [messageOpening, setMessageOpening] = useState(false)
+  const [previewConversationOpen, setPreviewConversationOpen] = useState(false)
+  const [isFoundingMember, setIsFoundingMember] = useState(previewData?.isFoundingMember ?? false)
   useEffect(() => {
+    if (previewData) return
     if (!id) return
     // Normalized against real defaults before it ever reaches render — a
     // profile viewed here belongs to someone else's account, which can
@@ -62,9 +67,8 @@ export function ProfileDetail() {
       storyPrompts: doc.storyPrompts ?? [],
       profileExtras: doc.profileExtras ? { ...emptySelfProfile, ...doc.profileExtras } : null,
     } : null))
-    getPrivateLifestyle(id).then(setLifestyle)
     return subscribeUserMedia(id, setMedia)
-  }, [id])
+  }, [id, previewData])
 
   // The profile replaces a centered loading state after its member data
   // arrives. Reset at that point as well as on the route change so browser
@@ -75,19 +79,16 @@ export function ProfileDetail() {
   }, [profile?.uid])
 
   useEffect(() => {
-    if (!user) return
-    getPrivateLifestyle(user.uid).then(setSelfLifestyle)
-  }, [user])
-
-  useEffect(() => {
+    if (previewData) return
     if (!user || !id) return
     return subscribeFriendState(user.uid, id, setFriendState)
-  }, [user, id])
+  }, [previewData, user, id])
 
   useEffect(() => {
+    if (previewData) return
     if (!id || !user) return
     getPublicFoundingStatus(id).then(setIsFoundingMember).catch(() => setIsFoundingMember(false))
-  }, [id, user])
+  }, [id, previewData, user])
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
@@ -99,6 +100,7 @@ export function ProfileDetail() {
   )
 
   useEffect(() => {
+    if (previewData) return
     // getCompatibility rejects (400) an incomplete birth chart — only call
     // it once both sides genuinely have one, real for any member who
     // hasn't finished their own birth details yet.
@@ -125,7 +127,7 @@ export function ProfileDetail() {
       .then(setResult)
       .catch((err) => console.warn('[Perennia] Failed to load compatibility:', err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.uid, selfChartComplete, otherChartComplete])
+  }, [profile?.uid, previewData, selfChartComplete, otherChartComplete])
 
   if (profile === undefined) {
     return (
@@ -145,7 +147,6 @@ export function ProfileDetail() {
   }
 
   const displayItems = media.map(toDisplayItem)
-  const galleryImages = displayItems.filter((i) => i.type === 'image')
   const visibleGalleryMedia = displayItems.filter((item) => item.type === (mediaMode === 'photos' ? 'image' : 'video') && item.processingStatus === 'ready')
   const profilePhotos = displayItems.filter((item) => item.type === 'image' && item.processingStatus === 'ready')
   const profileVideos = displayItems.filter((item) => item.type === 'video' && item.processingStatus === 'ready')
@@ -173,13 +174,50 @@ export function ProfileDetail() {
     }
   }
 
-  const isMatched = matchedIds.includes(profile.uid)
+  const isMatched = previewData?.isMatched ?? matchedIds.includes(profile.uid)
   const extras = profile.profileExtras
-  const hasAboutInformation = Boolean(extras?.about || extras?.education || extras?.languages?.length || extras?.profession)
+  const preferredName = profile.name.split(' ')[0]
+  const visitorStoryPrompts = profile.storyPrompts.filter((prompt) => prompt.answer.trim())
+  const hasVisitorStory = visitorStoryPrompts.length > 0 || Boolean(extras?.about)
+  const hasAboutInformation = hasProfileAboutValues({
+    education: extras?.education,
+    languages: extras?.languages,
+    profession: extras?.profession,
+    heightCm: profile.heightCm,
+    childrenStatus: extras?.children,
+    wantsChildren: extras?.wantsChildren,
+    faithOrBeliefs: profile.religion,
+    maritalBackground: extras?.maritalBackground,
+  })
   const hasInterestsInformation = Boolean(extras?.interests?.length || extras?.lifestyleVibe || extras?.values?.length)
+  const hasTravelInformation = Boolean(extras?.favoritePlaces?.length || extras?.dreamDestinations?.length)
+
+  const handleMessage = async () => {
+    if (previewData) {
+      setPreviewConversationOpen(true)
+      return
+    }
+    if (!user || messageOpening) return
+    setMessageOpening(true)
+    try {
+      const pairConversationId = [user.uid, profile.uid].sort().join('_')
+      const existingConversation = await getConversation(pairConversationId)
+      if (existingConversation) {
+        navigate(`/messages/${pairConversationId}`, { state: { otherUid: profile.uid } })
+        return
+      }
+      const introduction = await likeProfile(profile.uid)
+      navigate(`/messages/${introduction.conversationId ?? pairConversationId}`, { state: { otherUid: profile.uid } })
+    } catch (error) {
+      console.warn('[Perennia] Could not open this conversation:', error)
+    } finally {
+      setMessageOpening(false)
+    }
+  }
 
   const handleLike = () => {
     setLiked(true)
+    if (previewData) return
     likeProfile(profile.uid).then(({ matchId, conversationId }) => {
       setTimeout(() => {
         if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: profile.uid, compatibility: result?.compatibility ?? null } })
@@ -189,12 +227,11 @@ export function ProfileDetail() {
     })
   }
 
-  const handlePass = () => {
-    passProfile(profile.uid)
-    navigate('/discovery')
-  }
-
   const handleFriendAction = async () => {
+    if (previewData) {
+      setFriendState((current) => current === 'friends' ? 'none' : 'friends')
+      return
+    }
     if (friendState === 'none') await sendFriendRequest(profile.uid)
     else if (friendState === 'incoming') await respondToFriendRequest(profile.uid, true)
     else if (friendState === 'friends') await unfriend(profile.uid)
@@ -203,7 +240,8 @@ export function ProfileDetail() {
   const friendLabel = friendState === 'incoming' ? 'Accept Friend' : friendState === 'outgoing' ? 'Request Sent' : friendState === 'friends' ? 'Friends' : 'Add Friend'
 
   return (
-    <div className="profile-page-shell profile-page profile-owner-page profile-visitor-page">
+    <MotionConfig reducedMotion="user">
+      <div className="profile-page-shell profile-page profile-owner-page profile-visitor-page">
       <section className={`profile-cosmic-hero ${heroExpanded ? 'is-expanded' : ''}`} onClick={() => setHeroExpanded((value) => !value)}>
         <div className="profile-topbar" onClick={(event) => event.stopPropagation()}>
           <button type="button" className="profile-wordmark" onClick={() => navigate('/')}><CelestialHeart className="h-8 w-8" /> <span>Perennia</span></button>
@@ -239,16 +277,28 @@ export function ProfileDetail() {
             </div>
             <div className="profile-identity-footer">
               <div className="profile-public-astrology">
-                {profile.sunSign && <VisitorAstrology symbol={westernGlyph(profile.sunSign)} value={profile.sunSign} label="Western Sign" />}
-                {profile.chineseAnimal && <VisitorAstrology symbol={animalGlyph(profile.chineseAnimal)} value={profile.chineseAnimal} label="Chinese Animal" />}
+                {profile.sunSign && <ProfileAstrologyIdentity kind="western" value={profile.sunSign} label="Western Sign" />}
+                {profile.chineseAnimal && <ProfileAstrologyIdentity kind="chinese" value={profile.chineseAnimal} label="Chinese Animal" />}
               </div>
               <div className="profile-visitor-actions">
-                {isMatched && user && <button onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}><MessageCircle /> Message</button>}
+                {isMatched && (user || previewData) && <button onClick={() => void handleMessage()} disabled={messageOpening}>{messageOpening ? <Loader2 className="animate-spin" /> : <MessageCircle />} Message</button>}
                 <button onClick={() => void handleFriendAction()} disabled={friendState === 'outgoing'}>{friendState === 'friends' ? <UserCheck /> : <UserPlus />} {friendLabel}</button>
                 {friendState === 'incoming' && <button onClick={() => void respondToFriendRequest(profile.uid, false)}><X /> Decline</button>}
                 <button onClick={handleLike}><Heart className={liked ? 'fill-current' : ''} /> Like</button>
               </div>
             </div>
+            {previewData && (
+              <button
+                type="button"
+                className="profile-send-gift-action"
+                onClick={() => navigate('/dev/design-preview?screen=giftSend')}
+              >
+                <span className="profile-send-gift-action__icon"><Gift aria-hidden="true" /></span>
+                <span><strong>Send a Gift</strong><small>Choose a thoughtful gift, arranged privately by Perennia</small></span>
+                <ArrowRight aria-hidden="true" />
+              </button>
+            )}
+            {previewConversationOpen && <p className="profile-preview-message-status" role="status">In-memory conversation ready for {preferredName}. No data was saved.</p>}
           </div>
         </div>
       </section>
@@ -257,7 +307,7 @@ export function ProfileDetail() {
         <div className="profile-neutral-content">
           <div className="profile-content-grid">
             <button type="button" className="profile-cosmic-card" onClick={() => navigate(`/compatibility/${profile.uid}`)}>
-              <span><strong>Cosmic Profile</strong><small>Explore your compatibility and their astrological blueprint</small><em>View Cosmic Profile <ArrowRight /></em></span>
+              <span><strong>Cosmic Profile</strong><small>Explore your compatibility and their astrological blueprint</small><em>Check Our Compatibility <ArrowRight /></em></span>
               <ProfileCosmicWheel />
             </button>
             <section className="profile-media-card">
@@ -269,13 +319,17 @@ export function ProfileDetail() {
             <section className="profile-neutral-card">
               <h2 className="profile-neutral-heading">About Me</h2>
               {hasAboutInformation ? (
-                <div className="profile-about-content">
-                  <div className="profile-about-facts">
-                    {extras?.education && <p><GraduationCap /><span>Education</span><strong>{extras.education}</strong></p>}
-                    {extras?.languages?.length ? <p><MessageCircle /><span>Languages</span><strong>{extras.languages.join(', ')}</strong></p> : null}
-                    {extras?.profession && <p><Briefcase /><span>Job title</span><strong>{extras.profession}</strong></p>}
-                  </div>
-                  {extras?.about && <p className="profile-about-story">{extras.about}</p>}
+                <div className="profile-about-content profile-about-content--facts-only">
+                  <ProfileAboutFacts
+                    education={extras?.education}
+                    languages={extras?.languages}
+                    profession={extras?.profession}
+                    heightCm={profile.heightCm}
+                    childrenStatus={extras?.children}
+                    wantsChildren={extras?.wantsChildren}
+                    faithOrBeliefs={profile.religion}
+                    maritalBackground={extras?.maritalBackground}
+                  />
                 </div>
               ) : (
                 <p className="px-4 pb-4 text-sm text-slate-500">No About Me information shared yet.</p>
@@ -294,180 +348,40 @@ export function ProfileDetail() {
                 <p className="px-4 pb-4 text-sm text-slate-500">No interests or lifestyle information shared yet.</p>
               )}
             </section>
-          </div>
-        </div>
-      </div>
-
-      <div className="hidden mx-auto max-w-4xl px-6 md:px-0">
-        <ProfileOrbit
-          photoUrl={profile.profilePhotoUrl || null}
-          name={profile.name}
-          age={calculateAge(profile.birthDate) ?? undefined}
-          verificationStatus={profile.verification?.status ?? 'unverified'}
-          categories={orbitCategories}
-          onCategorySelect={handleOrbitSelect}
-          compatibility={result?.compatibility}
-        />
-
-        {((extras?.location && profile.showDistance) || extras?.profession || extras?.education) && (
-          <div className="mb-8 mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60">
-            {extras?.location && profile.showDistance && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {extras.location}</span>}
-            {extras?.profession && <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" /> {extras.profession}</span>}
-            {extras?.education && <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4" /> {extras.education}</span>}
-          </div>
-        )}
-
-        {/* Compatibility snapshot */}
-        <div className="mb-8">
-          {!selfChartComplete ? (
-            <div className="glass flex flex-col items-center gap-3 rounded-[1.75rem] px-8 py-10 text-center">
-              <Sparkles className="h-6 w-6 text-gold/60" />
-              <p className="text-sm text-white/60">Complete your cosmic profile to see real compatibility here.</p>
-              <Button size="sm" onClick={() => navigate('/birth-details')}>Add Birth Details</Button>
-            </div>
-          ) : !otherChartComplete ? (
-            <div className="glass flex flex-col items-center gap-3 rounded-[1.75rem] px-8 py-10 text-center">
-              <Sparkles className="h-6 w-6 text-gold/60" />
-              <p className="text-sm text-white/60">{profile.name.split(' ')[0]} hasn't finished their cosmic profile yet.</p>
-            </div>
-          ) : !result ? (
-            <div className="glass flex items-center justify-center rounded-[1.75rem] px-8 py-10">
-              <Loader2 className="h-5 w-5 animate-spin text-gold" />
-            </div>
-          ) : (
-            <CompatibilitySnapshot
-              profile={profile}
-              self={profileExtras}
-              otherLifestyle={lifestyle?.items ?? []}
-              selfLifestyle={selfLifestyle?.items ?? []}
-              compatibility={result.compatibility}
-              compatibilityLabel={result.band}
-            />
-          )}
-        </div>
-
-        {/* Bio */}
-        {extras?.about && (
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">About {profile.name.split(' ')[0]}</p>
-            <p className="font-serif-display text-2xl leading-snug text-white/90 md:text-3xl">{extras.about}</p>
-          </motion.div>
-        )}
-
-        {/* Interests */}
-        {!!extras?.interests.length && (
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-            <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Interests</p>
-            <div className="flex flex-wrap gap-2">
-              {extras.interests.map((interest) => (
-                <Badge key={interest} variant="glass">{interest}</Badge>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Relationship goal + intentions */}
-        {(profile.relationshipGoal || extras?.goals) && (
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-            <p className="mb-3 text-xs uppercase tracking-[0.25em] text-gold/70">Looking For</p>
-            {profile.relationshipGoal && (
-              <Badge variant="gold" className="mb-3">{profile.relationshipGoal}</Badge>
-            )}
-            {extras?.goals && <p className="max-w-2xl text-xl leading-relaxed text-white/70">{extras.goals}</p>}
-          </motion.div>
-        )}
-
-        {/* Story prompts */}
-        {profile.storyPrompts.length > 0 && profile.storyPrompts.map((prompt, i) => (
-          <motion.div key={prompt.question} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="mb-8">
-            <p className="mb-3 text-xs uppercase tracking-widest text-gold/70">{prompt.question}</p>
-            <p className="font-serif-display text-3xl italic leading-snug text-white/95 md:text-4xl">"{prompt.answer}"</p>
-          </motion.div>
-        ))}
-
-        {/* Lifestyle — a successful read already means visibility allowed it
-            (public, or a real match); private/unmatched reads come back
-            null from getPrivateLifestyle and simply render nothing. */}
-        {!!lifestyle?.items.length && (
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-            <p className="mb-4 text-xs uppercase tracking-[0.25em] text-gold/70">Lifestyle</p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-              {lifestyle.items.map((item) => (
-                <div key={item.label}>
-                  <p className="text-[10px] uppercase tracking-widest text-white/40">{item.label}</p>
-                  <p className="text-sm text-white/80">{item.value}</p>
+            {hasVisitorStory && (
+              <section className="profile-neutral-card profile-neutral-card--wide">
+                <h2 className="profile-neutral-heading profile-visitor-story-heading">{preferredName}’s Story</h2>
+                <div className="profile-visitor-story">
+                  {visitorStoryPrompts.length > 0 ? visitorStoryPrompts.map((prompt) => (
+                    <article key={prompt.question}>
+                      <strong>{prompt.question}</strong>
+                      <p>{prompt.answer}</p>
+                    </article>
+                  )) : <p>{extras?.about}</p>}
                 </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Gallery */}
-        {galleryImages.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
-            <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">Moments</p>
-            <h2 className="font-serif-display mb-5 text-2xl text-champagne">Exploring {profile.name.split(' ')[0]}'s World</h2>
-            <MasonryGallery items={galleryImages} categories={categories} />
-          </motion.div>
-        )}
-
-        {/* Premium detail sections */}
-        {(!!extras?.values.length || !!extras?.music.length || !!extras?.languages.length) && (
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12">
-            <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">More About {profile.name.split(' ')[0]}</p>
-            {!!extras?.values.length && (
-              <div className="mb-5 flex flex-wrap gap-2">
-                {extras.values.map((value) => (
-                  <Badge key={value} variant="gold">{value}</Badge>
-                ))}
-              </div>
+              </section>
             )}
-            <ProfileDetailSections
-              music={extras?.music ?? []}
-              languages={extras?.languages ?? []}
-              favoritePlaces={extras?.favoritePlaces ?? []}
-              dreamDestinations={extras?.dreamDestinations ?? []}
-              fitness={extras?.fitness ?? ''}
-              books={extras?.books ?? ''}
-              movies={extras?.movies ?? ''}
-            />
-          </motion.div>
-        )}
-
-        <Button variant="link" onClick={() => navigate(`/compatibility/${profile.uid}`)} className="mx-auto flex text-sm">
-          <Sparkles className="h-3.5 w-3.5" /> View Full Compatibility Report →
-        </Button>
-      </div>
-
-      {/* Floating action buttons */}
-      <div className="hidden fixed bottom-24 left-1/2 z-30 -translate-x-1/2 items-center gap-4 lg:bottom-8">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.08 }}
-          onClick={handlePass}
-          className="glass-strong flex h-14 w-14 items-center justify-center rounded-full text-white/60 shadow-xl cursor-pointer hover:text-white"
-        >
-          <X className="h-6 w-6" />
-        </motion.button>
-        {isMatched && user && (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.08 }}
-            onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}
-            className="glass-strong flex h-14 w-14 items-center justify-center rounded-full text-champagne shadow-xl cursor-pointer hover:text-white"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </motion.button>
-        )}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.08 }}
-          animate={liked ? { scale: [1, 1.3, 1] } : {}}
-          onClick={handleLike}
-          className="glow-gold flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-champagne to-gold text-midnight shadow-xl cursor-pointer"
-        >
-          <Heart className={`h-7 w-7 ${liked ? 'fill-midnight' : ''}`} />
-        </motion.button>
+            {hasTravelInformation && (
+              <section className="profile-neutral-card profile-neutral-card--wide">
+                <h2 className="profile-neutral-heading">Travel</h2>
+                <div className="profile-travel-content">
+                  {extras?.favoritePlaces?.length ? (
+                    <div>
+                      <strong>Favourite Places</strong>
+                      <p>{extras.favoritePlaces.join(', ')}</p>
+                    </div>
+                  ) : null}
+                  {extras?.dreamDestinations?.length ? (
+                    <div>
+                      <strong>Dream Destinations</strong>
+                      <p>{extras.dreamDestinations.join(', ')}</p>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
       </div>
 
       {videoViewerCategory && (
@@ -486,30 +400,20 @@ export function ProfileDetail() {
         open={profileMenuOpen}
         onClose={() => setProfileMenuOpen(false)}
         profileName={profile.name}
-        onReport={() => reportProfileRemote(profile.uid)}
+        onReport={() => previewData ? Promise.resolve() : reportProfileRemote(profile.uid)}
         onBlock={() => {
+          if (previewData) return
           blockProfile(profile.uid)
           navigate('/discovery')
         }}
         onMute={() => {
+          if (previewData) return
           void muteProfile(profile.uid)
         }}
       />
-    </div>
+      </div>
+    </MotionConfig>
   )
-}
-
-const VISITOR_WESTERN_GLYPHS: Record<string, string> = {
-  aries:'♈', taurus:'♉', gemini:'♊', cancer:'♋', leo:'♌', virgo:'♍', libra:'♎', scorpio:'♏', sagittarius:'♐', capricorn:'♑', aquarius:'♒', pisces:'♓',
-}
-const VISITOR_ANIMAL_GLYPHS: Record<string, string> = {
-  rat:'鼠', ox:'牛', tiger:'虎', rabbit:'兔', dragon:'龍', snake:'蛇', horse:'馬', goat:'羊', sheep:'羊', monkey:'猴', rooster:'雞', dog:'狗', pig:'豬',
-}
-function westernGlyph(value: string) { return VISITOR_WESTERN_GLYPHS[value.toLowerCase()] ?? '✦' }
-function animalGlyph(value: string) { return VISITOR_ANIMAL_GLYPHS[value.toLowerCase()] ?? '✦' }
-
-function VisitorAstrology({ symbol, value, label }: { symbol: string; value: string; label: string }) {
-  return <span className="profile-astrology-identity"><b aria-hidden="true">{symbol}</b><span><strong>{value}</strong><small>{label}</small></span></span>
 }
 
 function VisitorMediaRow({ title, items, video = false, onOpen }: { title: string; items: DisplayMediaItem[]; video?: boolean; onOpen: (index: number) => void }) {

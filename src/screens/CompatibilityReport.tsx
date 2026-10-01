@@ -1,69 +1,108 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Sparkles, MessageCircle, Loader2, AlertTriangle } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, ArrowRight, LockKeyhole, Sparkles, AlertTriangle, Loader2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import { ProgressRing } from '@/components/ui/progress-ring'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Starfield } from '@/components/shared/Starfield'
-import { SelfAvatar } from '@/components/shared/SelfAvatar'
 import { getUserDoc, type DiscoveryCandidate } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
+import { CHINESE_ANIMALS, CHINESE_ELEMENTS, CHINESE_POLARITIES } from '@/data/chineseAstrologyPresentation'
+import { ConnectionHeartsIcon } from '@/components/shared/ConnectionHeartsIcon'
+import {
+  COMPATIBILITY_REPORT_PRICE,
+  compatibilityExperienceFromResult,
+  type CompatibilityAccess,
+  type CompatibilityDimension,
+  type CompatibilityDimensionKey,
+  type CompatibilityExperienceData,
+  type CompatibilityPerson,
+} from '@/data/compatibilityExperience'
+import './CompatibilityReport.css'
 
-const FACTOR_LABELS: Record<keyof CompatibilityResult['factors'], string> = {
-  sun: 'Sun Sign',
-  moon: 'Moon Sign',
-  rising: 'Rising Sign',
-  animal: 'Chinese Animal',
-  element: 'Chinese Element',
-  yinYang: 'Yin / Yang',
+const WESTERN_SIGNS = new Set([
+  'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
+])
+
+function normalized(value: string) {
+  return value.trim().toLowerCase()
 }
 
-const INSIGHT_LABELS: Record<keyof CompatibilityResult['insights'], string> = {
-  understanding: 'Understanding',
-  emotionalConnection: 'Emotional Connection',
-  communication: 'Communication',
-  relationshipGrowth: 'Relationship Growth',
-  challenges: 'Challenges',
-  longTermPotential: 'Long-Term Potential',
+function westernAsset(value: string) {
+  const key = normalized(value)
+  return WESTERN_SIGNS.has(key) ? `/approved-symbol-cards-v4/zodiac-white/${key}.png` : null
 }
 
-export function CompatibilityReport() {
+function chineseAnimalAsset(value: string) {
+  const key = normalized(value) === 'sheep' ? 'goat' : normalized(value)
+  return CHINESE_ANIMALS[key]?.asset ?? null
+}
+
+function elementAsset(value: string) {
+  return CHINESE_ELEMENTS[normalized(value)]?.asset ?? null
+}
+
+function polarityAsset(value: string) {
+  return CHINESE_POLARITIES[normalized(value)]?.asset ?? null
+}
+
+function dimensionValue(person: CompatibilityPerson, key: CompatibilityDimensionKey) {
+  switch (key) {
+    case 'animal': return person.chineseAnimal
+    case 'element': return `${person.yinYang} ${person.chineseElement}`
+    case 'yinYang': return person.yinYang
+    case 'sun': return person.sunSign
+    case 'moon': return person.moonSign
+    case 'rising': return person.risingSign
+  }
+}
+
+function dimensionAsset(person: CompatibilityPerson, key: CompatibilityDimensionKey) {
+  switch (key) {
+    case 'animal': return chineseAnimalAsset(person.chineseAnimal)
+    case 'element': return elementAsset(person.chineseElement)
+    case 'yinYang': return polarityAsset(person.yinYang)
+    case 'sun': return westernAsset(person.sunSign)
+    case 'moon': return westernAsset(person.moonSign)
+    case 'rising': return westernAsset(person.risingSign)
+  }
+}
+
+export interface CompatibilityReportPreviewData {
+  access: CompatibilityAccess
+  experience: CompatibilityExperienceData
+}
+
+export function CompatibilityReport({ previewData }: { previewData?: CompatibilityReportPreviewData } = {}) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
-  const { matchedIds, onboarding } = useApp()
-  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(undefined)
-
+  const { onboarding } = useApp()
+  const [profile, setProfile] = useState<DiscoveryCandidate | null | undefined>(previewData ? null : undefined)
   const [result, setResult] = useState<CompatibilityResult | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!previewData)
   const [error, setError] = useState('')
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
-    onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang
+    onboarding.chineseAnimal && onboarding.chineseElement && onboarding.yinYang,
   )
   const otherChartComplete = Boolean(
     profile?.sunSign && profile.moonSign && profile.risingSign &&
-    profile.chineseAnimal && profile.chineseElement && profile.yinYang
+    profile.chineseAnimal && profile.chineseElement && profile.yinYang,
   )
 
   useEffect(() => {
-    if (!id) return
-    getUserDoc(id).then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
-  }, [id])
+    if (previewData || !id) return
+    getUserDoc(id)
+      .then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
+      .catch(() => setProfile(null))
+  }, [id, previewData])
 
   useEffect(() => {
-    // getCompatibility rejects (400) an incomplete birth chart — only call
-    // it once both sides genuinely have one.
+    if (previewData) return
     if (!profile || !selfChartComplete || !otherChartComplete) {
       setLoading(false)
       return
     }
-    setLoading(true)
-    setError('')
+
     const personA: PersonBirthProfile = {
       sunSign: onboarding.sunSign,
       moonSign: onboarding.moonSign,
@@ -80,234 +119,229 @@ export function CompatibilityReport() {
       chineseElement: profile.chineseElement,
       yinYang: profile.yinYang,
     }
+
+    setLoading(true)
+    setError('')
     getCompatibility({ personA, personB })
       .then(setResult)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load your compatibility report.'))
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load your compatibility report.'))
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.uid, selfChartComplete, otherChartComplete])
+  }, [profile?.uid, previewData, selfChartComplete, otherChartComplete])
 
-  if (profile === undefined) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-gold" />
-      </div>
-    )
+  const productionExperience = profile && result
+    ? compatibilityExperienceFromResult({
+        personA: {
+          preferredName: onboarding.name.split(' ')[0] || 'You',
+          profilePhotoUrl: onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl,
+          profilePath: '/my-profile',
+          sunSign: onboarding.sunSign,
+          moonSign: onboarding.moonSign,
+          risingSign: onboarding.risingSign,
+          chineseAnimal: onboarding.chineseAnimal,
+          chineseElement: onboarding.chineseElement,
+          yinYang: onboarding.yinYang,
+        },
+        personB: {
+          preferredName: profile.name.split(' ')[0],
+          profilePhotoUrl: profile.profilePhotoThumbUrl || profile.profilePhotoUrl,
+          profilePath: `/profile/${profile.uid}`,
+          sunSign: profile.sunSign,
+          moonSign: profile.moonSign,
+          risingSign: profile.risingSign,
+          chineseAnimal: profile.chineseAnimal,
+          chineseElement: profile.chineseElement,
+          yinYang: profile.yinYang,
+        },
+        result,
+      })
+    : null
+  const experience = previewData?.experience ?? productionExperience
+
+  if (!previewData && profile === undefined) return <CompatibilityStatus loading />
+  if (!previewData && !profile) return <CompatibilityStatus title="Report not found" />
+  if (!previewData && !selfChartComplete) {
+    return <CompatibilityStatus title="Complete Your Cosmic Profile" body="Add your birth details before opening a compatibility report." />
   }
-
-  if (!profile) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-        <p className="font-serif-display text-2xl text-champagne">Report not found</p>
-        <Button onClick={() => navigate('/discovery')}>Back to Discovery</Button>
-      </div>
-    )
+  if (!previewData && !otherChartComplete) {
+    return <CompatibilityStatus title="Not Ready Yet" body={`${profile?.name.split(' ')[0] ?? 'This member'} has not completed their cosmic profile.`} />
   }
+  if (!previewData && loading) return <CompatibilityStatus loading />
+  if (!previewData && error) return <CompatibilityStatus title="Couldn’t Load This Report" body={error} />
+  if (!experience) return <CompatibilityStatus title="Compatibility unavailable" />
 
-  const factorEntries = result
-    ? (Object.entries(result.factors) as [keyof CompatibilityResult['factors'], CompatibilityResult['factors'][keyof CompatibilityResult['factors']]][])
-        .sort((a, b) => b[1].score - a[1].score)
-    : []
-  const [topFactor, ...otherFactors] = factorEntries
-  const insightEntries = result
-    ? (Object.entries(result.insights) as [keyof CompatibilityResult['insights'], string][])
-    : []
+  const access = previewData?.access ?? 'full'
 
   return (
-    <div className="relative pb-24">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[500px] overflow-hidden">
-        <Starfield density={70} />
+    <main className="compatibility-experience">
+      <div className="compatibility-stars" aria-hidden="true" />
+      <div className="compatibility-shell">
+        <button type="button" className="compatibility-back" onClick={() => navigate(-1)} aria-label="Go back">
+          <ArrowLeft />
+        </button>
+        {access === 'full' ? <FullCompatibility experience={experience} /> : <CompatibilityTeaser experience={experience} />}
       </div>
+    </main>
+  )
+}
 
-      <Button variant="glass" size="icon" onClick={() => navigate(-1)} className="fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72">
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
-
-      <div className="relative z-10 mx-auto max-w-3xl px-6 pt-16 text-center md:pt-24">
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-3 text-xs uppercase tracking-[0.3em] text-gold/80"
-        >
-          Compatibility Report
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="font-serif-display mb-2 text-3xl md:text-5xl"
-        >
-          You &amp; {profile.name.split(' ')[0]}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mb-12 text-white/50"
-        >
-          A closer look at the real alignment across six weighted dimensions — sun, moon, rising,
-          Chinese animal, element, and yin/yang.
-        </motion.p>
-
-        {!selfChartComplete ? (
-          <div className="glass-strong mb-16 flex flex-col items-center gap-4 rounded-[2rem] px-8 py-14 text-center">
-            <AlertTriangle className="h-8 w-8 text-gold" />
-            <p className="font-serif-display text-2xl text-champagne">Complete Your Cosmic Profile</p>
-            <p className="max-w-sm text-sm text-white/55">
-              Your real compatibility report needs your birth date, time, and place to calculate your
-              Sun, Moon, Rising, and Chinese zodiac.
-            </p>
-            <Button onClick={() => navigate('/birth-details')}>Add Birth Details</Button>
-          </div>
-        ) : !otherChartComplete ? (
-          <div className="glass-strong mb-16 flex flex-col items-center gap-4 rounded-[2rem] px-8 py-14 text-center">
-            <AlertTriangle className="h-8 w-8 text-gold" />
-            <p className="font-serif-display text-2xl text-champagne">Not Ready Yet</p>
-            <p className="max-w-sm text-sm text-white/55">
-              {profile.name.split(' ')[0]} hasn't finished their cosmic profile yet, so a real
-              compatibility report isn't possible until they do.
-            </p>
-          </div>
-        ) : loading ? (
-          <div className="mb-16 flex flex-col items-center gap-3 py-14">
-            <Loader2 className="h-8 w-8 animate-spin text-gold" />
-            <p className="text-sm text-white/50">Calculating your real compatibility…</p>
-          </div>
-        ) : error ? (
-          <div className="glass-strong mb-16 flex flex-col items-center gap-4 rounded-[2rem] px-8 py-14 text-center">
-            <AlertTriangle className="h-8 w-8 text-rose-400" />
-            <p className="font-serif-display text-2xl text-champagne">Couldn't Load This Report</p>
-            <p className="max-w-sm text-sm text-white/55">{error}</p>
-            <Button variant="glass" onClick={() => window.location.reload()}>Try Again</Button>
-          </div>
-        ) : result ? (
-          <>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-6 flex justify-center"
-            >
-              <ProgressRing value={result.compatibility} size={260} strokeWidth={12} label={`${result.compatibility}%`} sublabel={result.band} />
-            </motion.div>
-
-            <div className="mb-16 flex items-center justify-center gap-4">
-              <SelfAvatar className="h-12 w-12 rounded-full border-2 border-gold/40" />
-              <Sparkles className="h-5 w-5 text-gold" />
-              <img src={profile.profilePhotoUrl} alt={profile.name} className="h-12 w-12 rounded-full border-2 border-gold/40 object-cover" />
-            </div>
-          </>
-        ) : null}
+function CompatibilityStatus({ loading, title, body }: { loading?: boolean; title?: string; body?: string }) {
+  return (
+    <main className="compatibility-experience compatibility-status-page">
+      <div className="compatibility-status-card">
+        {loading ? <Loader2 className="compatibility-spinner" /> : <AlertTriangle />}
+        <h1>{loading ? 'Preparing your compatibility…' : title}</h1>
+        {body && <p>{body}</p>}
       </div>
+    </main>
+  )
+}
 
-      {result && (
-        <div className="relative z-10 mx-auto max-w-4xl px-6">
-          {/* Strongest dimension — featured, full-width */}
-          {topFactor && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6 }}
-              className="glass glow-gold mb-6 overflow-hidden rounded-[1.75rem]"
-            >
-              <div className="p-8 md:p-10">
-                <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-gold/70">
-                  <Sparkles className="h-3 w-3" /> Strongest Dimension
-                </div>
-                <div className="mb-4 flex items-end justify-between">
-                  <h3 className="font-serif-display text-3xl text-champagne md:text-4xl">{FACTOR_LABELS[topFactor[0]]}</h3>
-                  <span className="font-serif-display text-gradient-gold text-4xl md:text-5xl">{topFactor[1].score}%</span>
-                </div>
-                <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${topFactor[1].score}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-                    className="h-full rounded-full bg-gradient-to-r from-gold to-champagne"
-                  />
-                </div>
-                <p className="max-w-2xl text-white/70 leading-relaxed">{topFactor[1].insight}</p>
+function FullCompatibility({ experience }: { experience: CompatibilityExperienceData }) {
+  return (
+    <>
+      <header className="compatibility-header">
+        {experience.isPreviewSample && <span className="compatibility-sample-label">In-memory preview percentages</span>}
+        <p className="compatibility-eyebrow"><Sparkles /> Perennia Compatibility Overview <Sparkles /></p>
+        <h1>A holistic view of your cosmic connection</h1>
+      </header>
+
+      <section className="compatibility-overview" aria-label="Overall compatibility">
+        <CompatibilityIdentity person={experience.personA} side="A" />
+        <div className="compatibility-score-orb">
+          <small>Overall compatibility</small>
+          <strong>{experience.overallScore}%</strong>
+          <span>{experience.overallLabel}</span>
+        </div>
+        <CompatibilityIdentity person={experience.personB} side="B" />
+      </section>
+
+      <section className="compatibility-dimension-grid" aria-label="Six compatibility dimensions">
+        {experience.dimensions.map((dimension, index) => (
+          <CompatibilityDimensionCard key={dimension.key} dimension={dimension} index={index + 1} personA={experience.personA} personB={experience.personB} />
+        ))}
+      </section>
+
+      <section className="compatibility-conclusion-grid">
+        <div className="compatibility-breakdown">
+          <h2>Compatibility breakdown</h2>
+          <div>
+            {experience.dimensions.map((dimension) => (
+              <div className="compatibility-breakdown-row" key={dimension.key}>
+                <span>{dimension.title}</span>
+                <i><b style={{ width: `${dimension.score}%` }} /></i>
+                <strong>{dimension.score}%</strong>
               </div>
-            </motion.div>
-          )}
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {otherFactors.map(([key, factor], i) => (
-              <motion.div
-                key={key}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.6, delay: (i % 2) * 0.1 }}
-              >
-                <Card className="h-full overflow-hidden">
-                  <CardContent className="p-7">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-serif-display text-xl text-champagne">{FACTOR_LABELS[key]}</h3>
-                      <span className="font-serif-display text-2xl text-gradient-gold">{factor.score}%</span>
-                    </div>
-                    <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${factor.score}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-                        className="h-full rounded-full bg-gradient-to-r from-gold to-champagne"
-                      />
-                    </div>
-                    <p className="text-sm leading-relaxed text-white/55">{factor.insight}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
             ))}
           </div>
-
-          {/* Overall narrative — six fixed dimensions of the relationship */}
-          <div className="mt-14">
-            <p className="mb-1 text-xs uppercase tracking-[0.25em] text-gold/70">The Full Picture</p>
-            <h2 className="font-serif-display mb-6 text-2xl text-champagne">What This Alignment Means</h2>
-            <div className="grid gap-5 md:grid-cols-2">
-              {insightEntries.map(([key, text], i) => (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-60px' }}
-                  transition={{ duration: 0.5, delay: i * 0.05 }}
-                  className="glass rounded-2xl p-6"
-                >
-                  <p className="mb-2 text-xs uppercase tracking-widest text-gold/60">{INSIGHT_LABELS[key]}</p>
-                  <p className="text-sm leading-relaxed text-white/70">{text}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="glass-strong glow-gold mt-10 flex flex-col items-center rounded-[2rem] px-8 py-14 text-center"
-          >
-            <h2 className="font-serif-display mb-3 text-2xl md:text-3xl">Ready to Explore This Further?</h2>
-            <p className="mb-8 max-w-md text-white/55">
-              Compatibility this rare doesn't happen often. Perhaps it's time to say hello.
-            </p>
-            {matchedIds.includes(profile.uid) && user ? (
-              <Button size="lg" onClick={() => navigate(`/messages/${[user.uid, profile.uid].sort().join('_')}`)}>
-                <MessageCircle className="h-4 w-4" /> Message {profile.name.split(' ')[0]}
-              </Button>
-            ) : (
-              <Button size="lg" onClick={() => navigate(`/profile/${profile.uid}`)}>
-                <MessageCircle className="h-4 w-4" /> View {profile.name.split(' ')[0]}'s Profile
-              </Button>
-            )}
-          </motion.div>
         </div>
-      )}
+        <div className="compatibility-meaning">
+          <ConnectionHeartsIcon />
+          <div><h2>What this means</h2><p>{experience.summary}</p></div>
+        </div>
+      </section>
+
+      <p className="compatibility-guidance-note">
+        Compatibility guidance offers insight, not a guarantee of relationship success. Every lasting connection is shaped by the people building it.
+      </p>
+    </>
+  )
+}
+
+function CompatibilityIdentity({ person, side }: { person: CompatibilityPerson; side: 'A' | 'B' }) {
+  return (
+    <article className="compatibility-identity">
+      <CompatibilityProfilePhoto person={person} />
+      <div>
+        <small>Person {side}</small>
+        <h2>{person.preferredName}</h2>
+        <strong>{person.chineseAnimal}</strong>
+        <p>{person.yinYang} {person.chineseElement}</p>
+        {person.naturalAnimalElement && <span>Natural element · {person.naturalAnimalElement}</span>}
+      </div>
+    </article>
+  )
+}
+
+function CompatibilityProfilePhoto({ person }: { person: CompatibilityPerson }) {
+  if (!person.profilePhotoUrl) return null
+  const image = <img src={person.profilePhotoUrl} alt={`${person.preferredName}'s profile`} draggable={false} />
+  return person.profilePath ? (
+    <Link className="compatibility-profile-photo" to={person.profilePath} aria-label={`View ${person.preferredName}'s profile`}>
+      {image}
+    </Link>
+  ) : <span className="compatibility-profile-photo">{image}</span>
+}
+
+function CompatibilityDimensionCard({ dimension, index, personA, personB }: { dimension: CompatibilityDimension; index: number; personA: CompatibilityPerson; personB: CompatibilityPerson }) {
+  return (
+    <article className={`compatibility-dimension compatibility-dimension--${dimension.key}`}>
+      <h2><span>{index}.</span> {dimension.title}</h2>
+      <div className="compatibility-pair">
+        <CompatibilityValue person={personA} dimension={dimension.key} />
+        <div className="compatibility-mini-score" style={{ '--score': `${dimension.score * 3.6}deg` } as CSSProperties}><span>{dimension.score}%</span></div>
+        <CompatibilityValue person={personB} dimension={dimension.key} />
+      </div>
+      <strong className="compatibility-dimension-label">{dimension.label}</strong>
+      <p>{dimension.explanation}</p>
+    </article>
+  )
+}
+
+function CompatibilityValue({ person, dimension }: { person: CompatibilityPerson; dimension: CompatibilityDimensionKey }) {
+  const asset = dimensionAsset(person, dimension)
+  return (
+    <div className="compatibility-value">
+      {asset && <img src={asset} alt="" draggable={false} />}
+      <strong>{dimensionValue(person, dimension)}</strong>
+      <small>{person.preferredName}</small>
     </div>
+  )
+}
+
+function CompatibilityTeaser({ experience }: { experience: CompatibilityExperienceData }) {
+  return (
+    <section className="compatibility-teaser">
+      <header className="compatibility-header">
+        <span className="compatibility-sample-label">In-memory entitlement preview</span>
+        <p className="compatibility-eyebrow"><Sparkles /> Your Compatibility Preview <Sparkles /></p>
+        <h1>{experience.personA.preferredName} &amp; {experience.personB.preferredName}</h1>
+      </header>
+
+      <div className="compatibility-teaser-identities">
+        <TeaserIdentity person={experience.personA} />
+        <span><ConnectionHeartsIcon /></span>
+        <TeaserIdentity person={experience.personB} />
+      </div>
+
+      <div className="compatibility-free-insight">
+        <ConnectionHeartsIcon /><div><small>Your free insight</small><p>{experience.freeInsight}</p></div>
+      </div>
+
+      <div className="compatibility-locked-grid" aria-label="Locked compatibility categories">
+        {experience.dimensions.map((dimension) => <div key={dimension.key}><LockKeyhole /><span>{dimension.title}</span></div>)}
+      </div>
+
+      <div className="compatibility-unlock-card">
+        <LockKeyhole />
+        <h2>See your complete cosmic connection</h2>
+        <p>Unlock all six compatibility dimensions, detailed guidance and your complete overview.</p>
+        <button type="button">Unlock Compatibility <ArrowRight /></button>
+        <strong>Unlock this report for {COMPATIBILITY_REPORT_PRICE.display}</strong>
+        <a href="/founding-500">Included with Perennia Match</a>
+      </div>
+
+      <p className="compatibility-guidance-note">Compatibility guidance offers insight, not a guarantee of relationship success.</p>
+    </section>
+  )
+}
+
+function TeaserIdentity({ person }: { person: CompatibilityPerson }) {
+  return (
+    <article>
+      <div><CompatibilityProfilePhoto person={person} /></div>
+      <h2>{person.preferredName}</h2>
+      <p>{person.sunSign} · {person.chineseAnimal}</p>
+    </article>
   )
 }

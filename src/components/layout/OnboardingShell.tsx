@@ -1,63 +1,32 @@
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
-import { useApp } from '@/context/AppContext'
-
-const ACTIVE_ONBOARDING_STEPS = new Map<string, number>([
-  ['/signup', 1],
-  ['/verify', 2],
-  ['/birth-details', 3],
-  ['/preferences', 4],
-  ['/relationship-goals', 5],
-  ['/interests', 6],
-  ['/about-you', 7],
-  ['/profile-photo', 8],
-  ['/your-story', 9],
-  ['/cosmic-profile', 10],
-])
-
-const ACTIVE_ONBOARDING_TOTAL_STEPS = ACTIVE_ONBOARDING_STEPS.size
-const RESUMABLE_ONBOARDING_PATHS = new Set(
-  [...ACTIVE_ONBOARDING_STEPS.keys()].filter((path) => path !== '/signup'),
-)
+import { getOnboardingStepByRoute, ONBOARDING_STEPS, ONBOARDING_TOTAL_STEPS } from '@/lib/onboardingFlow'
 
 export function OnboardingShell({
   children,
-  step,
-  totalSteps,
   headerMark,
   progressVariant = 'bars',
   className = '',
 }: {
   children: ReactNode
-  step?: number
-  totalSteps?: number
   headerMark?: ReactNode
   progressVariant?: 'bars' | 'nodes'
   className?: string
 }) {
+  const shouldReduceMotion = useReducedMotion()
   const location = useLocation()
-  const { onboarding, onboardingComplete, profileLoaded, updateOnboarding } = useApp()
-  const activeStep = ACTIVE_ONBOARDING_STEPS.get(location.pathname)
-  const displayedStep = activeStep ?? step
-  const displayedTotalSteps = activeStep === undefined ? totalSteps : ACTIVE_ONBOARDING_TOTAL_STEPS
-
-  // Store the actual screen being viewed. This makes a later sign-in resume
-  // optional steps exactly, rather than guessing solely from required fields.
-  useEffect(() => {
-    if (
-      profileLoaded &&
-      !onboardingComplete &&
-      RESUMABLE_ONBOARDING_PATHS.has(location.pathname) &&
-      onboarding.onboardingResumePath !== location.pathname
-    ) {
-      void updateOnboarding({ onboardingResumePath: location.pathname }).catch((error) => {
-        console.warn('[Perennia] Failed to save onboarding position:', error)
-      })
-    }
-  }, [location.pathname, onboarding.onboardingResumePath, onboardingComplete, profileLoaded, updateOnboarding])
+  const previewScreenId = location.pathname === '/dev/design-preview'
+    ? new URLSearchParams(location.search).get('screen')
+    : null
+  const previewStep = previewScreenId
+    ? ONBOARDING_STEPS.find((step) => step.id === previewScreenId)
+    : undefined
+  const currentStep = previewStep ?? getOnboardingStepByRoute(location.pathname)
+  const displayedStep = currentStep ? ONBOARDING_STEPS.indexOf(currentStep) + 1 : undefined
+  const displayedTotalSteps = currentStep ? ONBOARDING_TOTAL_STEPS : undefined
 
   return (
     <div className={`relative flex min-h-screen flex-col items-center bg-midnight text-white ${className}`}>
@@ -110,9 +79,9 @@ export function OnboardingShell({
                     {i < displayedStep && (
                       <motion.div
                         className="h-full rounded-full bg-gradient-to-r from-gold to-champagne"
-                        initial={{ width: 0 }}
+                        initial={shouldReduceMotion ? false : { width: 0 }}
                         animate={{ width: '100%' }}
-                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.5, ease: 'easeOut' }}
                       />
                     )}
                   </div>

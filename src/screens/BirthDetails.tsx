@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { Clock, Globe2, ArrowRight, Loader2, ShieldCheck, Pencil, MapPin, X } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { Button } from '@/components/ui/button'
+import { OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Select } from '@/components/ui/select'
 import { CityCombobox } from '@/components/shared/CityCombobox'
 import { EditBirthDetailsModal } from '@/components/shared/EditBirthDetailsModal'
@@ -12,10 +13,18 @@ import { useApp } from '@/context/AppContext'
 import { computeNatalChart } from '@/lib/natalChart'
 import { firebaseConfigured } from '@/lib/firebase'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
+import { getOnboardingStep } from '@/lib/onboardingFlow'
 import { refreshIdentityVerificationStatus } from '@/lib/identityVerification'
 import { COUNTRIES, countryName } from '@/data/countries'
 import { TIME_OPTIONS } from '@/lib/timeOptions'
 import type { CityMatch } from '@/lib/citySearchApi'
+
+const DESIGN_PREVIEW_CITY: CityMatch = {
+  name: 'Sample City',
+  country: 'GB',
+  lat: 51.5,
+  lon: -0.1,
+}
 
 function formatBirthDate(dateStr: string): string {
   if (!dateStr) return ''
@@ -62,7 +71,7 @@ export function BirthDetails() {
 
   if (recoveringBirthDate && !onboarding.birthDate) {
     return (
-      <OnboardingShell step={3} totalSteps={12}>
+      <OnboardingShell>
         <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-navy/40 px-5 py-4 text-sm text-white/65">
           <Loader2 className="h-5 w-5 animate-spin text-gold" /> Loading your verified birth date…
         </div>
@@ -77,14 +86,14 @@ export function BirthDetails() {
 
   if (locked) {
     return (
-      <OnboardingShell step={3} totalSteps={12}>
+      <OnboardingShell>
         <LockedSummary />
       </OnboardingShell>
     )
   }
 
   return (
-    <OnboardingShell step={3} totalSteps={12}>
+    <OnboardingShell>
       <BirthDetailsForm />
     </OnboardingShell>
   )
@@ -144,7 +153,7 @@ function LockedSummary() {
         <MapPin className="h-3.5 w-3.5" /> Edit Current Location
       </button>
 
-      <Button size="lg" className="w-full" onClick={() => navigate('/preferences')}>
+      <Button size="lg" className="w-full" onClick={() => navigate(getOnboardingStep('birthDetails').nextRoute!)}>
         Continue <ArrowRight className="h-4 w-4" />
       </Button>
 
@@ -235,7 +244,7 @@ function EditCurrentLocationModal({ onClose }: { onClose: () => void }) {
 
 function BirthDetailsForm() {
   const navigate = useNavigate()
-  const { onboarding, updateOnboarding } = useApp()
+  const { isDesignPreview, onboarding, saveOnboarding } = useApp()
 
   const [time, setTime] = useState(onboarding.birthTime)
   const [timeUnknown, setTimeUnknown] = useState(onboarding.birthTimeUnknown)
@@ -250,13 +259,13 @@ function BirthDetailsForm() {
   // valid re-selection instead.
   const validCountryCode = (code: string) => COUNTRIES.some((c) => c.code === code)
 
-  const [birthCountry, setBirthCountry] = useState(validCountryCode(onboarding.birthCountry) ? onboarding.birthCountry : '')
-  const [birthCity, setBirthCity] = useState<CityMatch | null>(null)
+  const [birthCountry, setBirthCountry] = useState(isDesignPreview ? 'GB' : validCountryCode(onboarding.birthCountry) ? onboarding.birthCountry : '')
+  const [birthCity, setBirthCity] = useState<CityMatch | null>(isDesignPreview ? DESIGN_PREVIEW_CITY : null)
 
-  const [currentCountry, setCurrentCountry] = useState(validCountryCode(onboarding.country) ? onboarding.country : '')
-  const [currentCity, setCurrentCity] = useState<CityMatch | null>(null)
+  const [currentCountry, setCurrentCountry] = useState(isDesignPreview ? 'GB' : validCountryCode(onboarding.country) ? onboarding.country : '')
+  const [currentCity, setCurrentCity] = useState<CityMatch | null>(isDesignPreview ? DESIGN_PREVIEW_CITY : null)
 
-  const [confirmed, setConfirmed] = useState(false)
+  const [confirmed, setConfirmed] = useState(isDesignPreview)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -312,7 +321,8 @@ function BirthDetailsForm() {
           birthTimeUnknown: timeUnknown,
           birthPlace,
         })
-        updateOnboarding({
+        await saveOnboarding({
+          birthDetailsConfirmedAt: new Date().toISOString(),
           birthDate: resolvedBirthDate,
           birthTime: timeUnknown ? '' : time,
           birthTimeUnknown: timeUnknown,
@@ -333,7 +343,8 @@ function BirthDetailsForm() {
           currentLocationLon: currentCity!.lon,
         })
       } else {
-        updateOnboarding({
+        await saveOnboarding({
+          birthDetailsConfirmedAt: new Date().toISOString(),
           birthDate: resolvedBirthDate,
           birthTime: timeUnknown ? '' : time,
           birthTimeUnknown: timeUnknown,
@@ -348,7 +359,7 @@ function BirthDetailsForm() {
           currentLocationLon: currentCity!.lon,
         })
       }
-      navigate('/preferences')
+      navigate(getOnboardingStep('birthDetails').nextRoute!)
     } catch (err) {
       const message = (err as { message?: string })?.message ?? ''
       setError(message || 'Could not confirm your birth details. Please check your entries and try again.')
@@ -496,14 +507,15 @@ function BirthDetailsForm() {
             </motion.p>
           )}
 
-          <Button
+          <OnboardingPrimaryButton
             type="submit"
-            size="lg"
-            className={`birth-details-cta mt-1 min-h-14 w-full font-serif-display text-xl sm:text-2xl ${!isValid && !saving ? 'opacity-60' : ''}`}
+            className={`mt-1 w-full ${!isValid && !saving ? 'opacity-60' : ''}`}
             disabled={saving}
+            loading={saving}
+            loadingLabel="Confirming…"
           >
-            {saving ? (<><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>) : 'Confirm Birth Details'}
-          </Button>
+            Confirm Birth Details
+          </OnboardingPrimaryButton>
         </form>
       </motion.div>
     </>

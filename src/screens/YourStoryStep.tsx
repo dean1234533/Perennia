@@ -7,18 +7,21 @@ import { Label } from '@/components/ui/label'
 import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { useApp } from '@/context/AppContext'
 import { STORY_PROMPTS } from '@/data/storyPrompts'
+import { getOnboardingStep, STORY_COMPLETION_LIMITS } from '@/lib/onboardingFlow'
 
-const BIO_MIN_LENGTH = 50
-const BIO_MAX_LENGTH = 500
-const PROMPT_MIN_LENGTH = 20
-const PROMPT_MAX_LENGTH = 300
-const REQUIRED_PROMPT_ANSWERS = 2
+const {
+  biographyMin: BIO_MIN_LENGTH,
+  biographyMax: BIO_MAX_LENGTH,
+  promptMin: PROMPT_MIN_LENGTH,
+  promptMax: PROMPT_MAX_LENGTH,
+  requiredPrompts: REQUIRED_PROMPT_ANSWERS,
+} = STORY_COMPLETION_LIMITS
 
 export function YourStoryStep() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={11} totalSteps={12}>
+    <OnboardingShell>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <YourStoryForm />}
     </OnboardingShell>
   )
@@ -27,18 +30,27 @@ export function YourStoryStep() {
 // Only mounted once profileLoaded — see AboutYouDetails.tsx for why.
 function YourStoryForm() {
   const navigate = useNavigate()
-  const { onboarding, updateOnboarding, profileExtras, updateProfileExtras } = useApp()
+  const { onboarding, saveOnboarding, profileExtras, saveProfileExtras } = useApp()
   const [about, setAbout] = useState(profileExtras.about)
   const existingByQuestion = Object.fromEntries(onboarding.storyPrompts.map((p) => [p.question, p.answer]))
   const [answers, setAnswers] = useState<Record<string, string>>(existingByQuestion)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const aboutLength = about.trim().length
   const aboutComplete = aboutLength >= BIO_MIN_LENGTH && aboutLength <= BIO_MAX_LENGTH
   const validPromptCount = STORY_PROMPTS.filter((question) => {
     const length = (answers[question] ?? '').trim().length
     return length >= PROMPT_MIN_LENGTH && length <= PROMPT_MAX_LENGTH
   }).length
-  const remainingPrompts = Math.max(0, REQUIRED_PROMPT_ANSWERS - validPromptCount)
+  const hasInvalidStartedPrompt = STORY_PROMPTS.some((question) => {
+    const length = (answers[question] ?? '').trim().length
+    return length > 0 && (length < PROMPT_MIN_LENGTH || length > PROMPT_MAX_LENGTH)
+  })
+  const remainingPrompts = Math.max(
+    0,
+    REQUIRED_PROMPT_ANSWERS - validPromptCount,
+    hasInvalidStartedPrompt ? 1 : 0,
+  )
   const canContinue = aboutComplete && remainingPrompts === 0
   const continueLabel = !aboutComplete
     ? 'Write your short intro'
@@ -51,11 +63,17 @@ function YourStoryForm() {
   const handleContinue = async () => {
     if (!canContinue) return
     setSaving(true)
-    await updateProfileExtras({ ...profileExtras, about: about.trim() })
-    const storyPrompts = STORY_PROMPTS.filter((q) => answers[q]?.trim()).map((q) => ({ question: q, answer: answers[q].trim() }))
-    updateOnboarding({ storyPrompts })
-    setSaving(false)
-    navigate('/cosmic-profile')
+    setError('')
+    try {
+      await saveProfileExtras({ ...profileExtras, about: about.trim() })
+      const storyPrompts = STORY_PROMPTS.filter((q) => answers[q]?.trim()).map((q) => ({ question: q, answer: answers[q].trim() }))
+      await saveOnboarding({ storyPrompts })
+      navigate(getOnboardingStep('yourStory').nextRoute!)
+    } catch {
+      setError('Could not save your story. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -65,7 +83,7 @@ function YourStoryForm() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="your-story-panel w-full max-w-lg rounded-[2rem] p-8 md:p-10"
     >
-      <OnboardingBackButton to="/profile-photo" className="mb-5" />
+      <OnboardingBackButton to={getOnboardingStep('yourStory').previousRoute!} className="mb-5" />
 
       <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold/70">Your introduction</p>
       <h1 className="font-serif-display mb-2 text-3xl">Short Intro &amp; Bio</h1>
@@ -110,6 +128,8 @@ function YourStoryForm() {
           )
         })}
       </div>
+
+      {error && <p role="alert" className="mt-5 text-center text-sm text-rose-300">{error}</p>}
 
       <OnboardingPrimaryButton
         className="mt-8 w-full"

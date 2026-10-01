@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   BadgeCheck, MapPin, Sun, Moon, ArrowUpCircle, CheckCheck,
   ShieldCheck, ScanFace, Sparkles,
@@ -112,6 +112,7 @@ export function CosmicProfileMockup() {
 }
 
 export function CompatibilityMockup() {
+  const shouldReduceMotion = useReducedMotion()
   const sections = [
     { label: 'Emotional Connection', score: 92 },
     { label: 'Life Values', score: 88 },
@@ -130,10 +131,10 @@ export function CompatibilityMockup() {
               </div>
               <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
                 <motion.div
-                  initial={{ width: 0 }}
+                  initial={shouldReduceMotion ? false : { width: 0 }}
                   whileInView={{ width: `${s.score}%` }}
                   viewport={{ once: true }}
-                  transition={{ duration: 1, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className="h-full rounded-full bg-gradient-to-r from-gold to-champagne"
                 />
               </div>
@@ -146,6 +147,7 @@ export function CompatibilityMockup() {
 }
 
 export function MessagingMockup() {
+  const shouldReduceMotion = useReducedMotion()
   return (
     <DeviceFrame label="Messages">
       <div className="flex flex-col gap-2.5 p-5">
@@ -168,8 +170,8 @@ export function MessagingMockup() {
               <motion.span
                 key={d}
                 className="h-1.5 w-1.5 rounded-full bg-white/50"
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 0.9, repeat: Infinity, delay: d * 0.15 }}
+                animate={shouldReduceMotion ? { y: 0 } : { y: [0, -4, 0] }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.9, repeat: Infinity, delay: d * 0.15 }}
               />
             ))}
           </div>
@@ -180,6 +182,7 @@ export function MessagingMockup() {
 }
 
 export function VerificationMockup() {
+  const shouldReduceMotion = useReducedMotion()
   return (
     <DeviceFrame label="Identity Verification">
       <div className="flex flex-col items-center gap-4 p-8 text-center">
@@ -187,8 +190,8 @@ export function VerificationMockup() {
           <ScanFace className="h-9 w-9 text-white/25" />
           <motion.div
             className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent"
-            animate={{ top: ['5%', '92%', '5%'] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            animate={shouldReduceMotion ? { top: '50%' } : { top: ['5%', '92%', '5%'] }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
         <div className="flex items-center gap-1.5 text-xs text-emerald-400">

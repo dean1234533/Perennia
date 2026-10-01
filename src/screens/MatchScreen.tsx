@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Sparkles, MessageCircle, Compass, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ interface MatchLocationState {
 }
 
 export function MatchScreen() {
+  const shouldReduceMotion = useReducedMotion()
   const { id: matchId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -60,7 +61,7 @@ export function MatchScreen() {
       <Starfield density={180} />
       <div className="absolute inset-0 bg-gradient-to-b from-nebula-purple/20 via-transparent to-transparent" />
 
-      {Array.from({ length: 18 }).map((_, i) => (
+      {!shouldReduceMotion && Array.from({ length: 18 }).map((_, i) => (
         <motion.div
           key={i}
           className="pointer-events-none absolute text-gold"

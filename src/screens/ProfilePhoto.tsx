@@ -10,12 +10,13 @@ import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { uploadProfilePhoto } from '@/lib/media/mediaService'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
+import { getOnboardingStep } from '@/lib/onboardingFlow'
 
 export function ProfilePhoto() {
   const { profileLoaded } = useApp()
 
   return (
-    <OnboardingShell step={10} totalSteps={12}>
+    <OnboardingShell>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <ProfilePhotoForm />}
     </OnboardingShell>
   )
@@ -27,11 +28,20 @@ export function ProfilePhoto() {
 function ProfilePhotoForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { updateOnboarding, onboarding } = useApp()
+  const { isDesignPreview, saveOnboarding, onboarding, profileExtras, profileLoaded, onboardingComplete } = useApp()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(onboarding.profilePhotoThumbUrl || null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const photoComplete = isDesignPreview || getOnboardingStep('profilePhoto').isComplete({
+    onboarding,
+    profileExtras,
+    user,
+    profileLoaded,
+    onboardingComplete,
+    backendConfigured: firebaseConfigured,
+    localPreviewBypassEnabled: hasDevelopmentVerificationBypass(),
+  })
 
   const handleSelect = (files: FileList | null) => {
     const f = files?.[0]
@@ -46,14 +56,14 @@ function ProfilePhotoForm() {
     try {
       if (firebaseConfigured && user) {
         const { url, thumbUrl } = await uploadProfilePhoto(user.uid, blob)
+        await saveOnboarding({ profilePhotoUrl: url, profilePhotoThumbUrl: thumbUrl })
         setPreview(thumbUrl)
-        await updateOnboarding({ profilePhotoUrl: url, profilePhotoThumbUrl: thumbUrl })
       } else {
         // No backend configured — keep the real cropped/compressed bytes
         // in-memory for this session only (nothing to persist to).
         const dataUrl = await blobToDataUrl(blob)
+        await saveOnboarding({ profilePhotoUrl: dataUrl, profilePhotoThumbUrl: dataUrl })
         setPreview(dataUrl)
-        await updateOnboarding({ profilePhotoUrl: dataUrl, profilePhotoThumbUrl: dataUrl })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not upload your photo. Please try again.')
@@ -61,6 +71,15 @@ function ProfilePhotoForm() {
       setSaving(false)
       setFile(null)
     }
+  }
+
+  const handleContinue = () => {
+    if (
+      saving ||
+      !preview ||
+      !photoComplete
+    ) return
+    navigate(getOnboardingStep('profilePhoto').nextRoute!)
   }
 
   return (
@@ -72,7 +91,7 @@ function ProfilePhotoForm() {
         className="relative w-full max-w-2xl px-4 pb-6 text-center sm:px-8 sm:pb-10"
       >
         <OnboardingBackButton
-          to="/about-you"
+          to={getOnboardingStep('profilePhoto').previousRoute!}
           className="mb-5 w-full justify-start self-start sm:absolute sm:left-0 sm:top-0 sm:mb-0 sm:w-auto"
         />
 
@@ -83,17 +102,17 @@ function ProfilePhotoForm() {
           </p>
         </header>
 
-        <label className="group relative mx-auto mb-7 flex h-60 w-60 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gold/65 bg-midnight/10 shadow-[0_0_34px_rgba(224,183,94,0.10)] transition duration-300 hover:border-gold hover:shadow-[0_0_44px_rgba(224,183,94,0.20)] focus-within:border-gold focus-within:outline-none focus-within:ring-2 focus-within:ring-gold/55 focus-within:ring-offset-4 focus-within:ring-offset-midnight active:scale-[0.985] sm:h-[17rem] sm:w-[17rem]">
+        <label className="group relative mx-auto mb-7 flex h-60 w-60 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gold/65 bg-midnight/10 shadow-[0_0_34px_rgba(224,183,94,0.10)] transition duration-300 hover:border-gold hover:shadow-[0_0_44px_rgba(224,183,94,0.20)] focus-within:border-gold focus-within:outline-none focus-within:ring-2 focus-within:ring-gold/55 focus-within:ring-offset-4 focus-within:ring-offset-midnight active:scale-[0.985] motion-reduce:transform-none motion-reduce:transition-none sm:h-[17rem] sm:w-[17rem]">
           {preview ? (
             <>
               <img src={preview} alt="Your profile" className="h-full w-full object-cover" />
-              <span className="absolute inset-x-0 bottom-0 flex h-16 translate-y-full items-center justify-center gap-2 bg-midnight/75 text-xs font-medium text-champagne opacity-0 backdrop-blur-sm transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+              <span className="absolute inset-x-0 bottom-0 flex h-16 translate-y-full items-center justify-center gap-2 bg-midnight/75 text-xs font-medium text-champagne opacity-0 backdrop-blur-sm transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:translate-y-0 motion-reduce:transition-none">
                 <Camera className="h-4 w-4" aria-hidden="true" />
                 Change photo
               </span>
             </>
           ) : (
-            <div className="flex flex-col items-center gap-4 text-champagne transition-transform duration-300 group-hover:scale-105">
+            <div className="flex flex-col items-center gap-4 text-champagne transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none">
               <Camera className="h-11 w-11 stroke-[1.4]" aria-hidden="true" />
               <span className="text-sm tracking-wide sm:text-base">Select a photo</span>
             </div>
@@ -120,15 +139,11 @@ function ProfilePhotoForm() {
         </div>
 
         <OnboardingPrimaryButton
-          disabled={!preview}
+          disabled={!preview || !photoComplete}
           loading={saving}
           loadingLabel="Saving…"
           showArrow
-          onClick={() => navigate(
-            hasDevelopmentVerificationBypass() || (onboarding.verification.status === 'verified' && onboarding.verification.detailsConfirmedAt)
-              ? '/your-story'
-              : '/verify'
-          )}
+          onClick={handleContinue}
           className="mx-auto w-full max-w-xs"
         >
           Continue

@@ -1,10 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BadgeHelp, Ban, Bell, ChevronRight, CircleUserRound, CreditCard, Eye, Flag,
-  HeartHandshake, Images, LogOut, Loader2, Pencil, Shield, SlidersHorizontal, Sparkles,
+  Heart, HeartHandshake, Images, LogOut, Loader2, Pencil, Shield, SlidersHorizontal, Sparkles,
   Trash2, UserRoundX, VolumeX, WalletCards, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { cancelFoundingMembership, createBillingPortalSession } from '@/lib/foun
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
+import { useModalAccessibility } from '@/hooks/useModalAccessibility'
 
 function MenuAction({ icon: Icon, label, danger = false, onClick }: {
   icon: React.ElementType
@@ -44,19 +45,9 @@ function MenuGroup({ title, children }: { title: string; children: ReactNode }) 
 }
 
 function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; onClose: () => void; onBack?: () => void; title: string; children: ReactNode }) {
-  useEffect(() => {
-    if (!open) return
-    const previousOverflow = document.body.style.overflow
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [open, onClose])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const headingId = useId()
+  useModalAccessibility({ open, dialogRef, onClose })
 
   // Portaled straight to <body> — this overlay was getting rendered as a
   // descendant of AppShell's <main>, which sets its own `position:relative;
@@ -77,7 +68,9 @@ function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; 
           onClick={(event) => event.target === event.currentTarget && onClose()}
         >
           <motion.div
-            role="dialog" aria-modal="true" aria-label={title}
+            ref={dialogRef}
+            role="dialog" aria-modal="true" aria-labelledby={headingId} tabIndex={-1}
+            data-modal-surface
             initial={{ opacity: 0, y: -12, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: .98 }}
             className="max-h-[calc(100dvh-5rem)] w-full max-w-sm overscroll-contain overflow-y-auto rounded-[1.6rem] border border-blue-200/20 bg-[#07142b] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_0_45px_rgba(73,90,220,.22)]"
           >
@@ -88,9 +81,9 @@ function MenuFrame({ open, onClose, onBack, title, children }: { open: boolean; 
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                 )}
-                <h2 className="truncate font-serif-display text-2xl text-ivory">{title}</h2>
+                <h2 id={headingId} className="truncate font-serif-display text-2xl text-ivory">{title}</h2>
               </div>
-              <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-full p-2 text-white/45 hover:bg-white/5 hover:text-white">
+              <button type="button" data-modal-initial-focus onClick={onClose} aria-label={`Close ${title}`} className="rounded-full p-2 text-white/45 hover:bg-white/5 hover:text-white">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -391,7 +384,7 @@ export function MyProfileActionsMenu({
     <MenuFrame open={open} onClose={onClose} title="Profile Menu">
       <MenuGroup title="Profile">
         <MenuAction icon={Pencil} label="Edit Profile" onClick={() => { onClose(); onEditProfile() }} />
-        <MenuAction icon={Sparkles} label="Edit Interests" onClick={() => go('/interests')} />
+        <MenuAction icon={Heart} label="Edit Interests" onClick={() => go('/interests')} />
         <MenuAction icon={HeartHandshake} label="Edit Relationship Intention" onClick={() => go('/relationship-goals')} />
         <MenuAction icon={Images} label="Manage Photos & Videos" onClick={() => { onClose(); onManageMedia() }} />
         <MenuAction icon={SlidersHorizontal} label="Manage Highlights" onClick={() => { onClose(); onManageHighlights() }} />

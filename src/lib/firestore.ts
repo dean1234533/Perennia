@@ -61,6 +61,9 @@ export interface UserDoc {
   legalName: string
   /** Records completion even when all three optional About You answers are blank. */
   aboutYouCompletedAt: string
+  /** Records that the member explicitly reviewed and confirmed the complete
+   *  Birth Details form rather than merely having populated birth fields. */
+  birthDetailsConfirmedAt: string
   birthDate: string
   birthTime: string
   /** True when the member confirmed they don't know their birth time —
@@ -141,6 +144,7 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   onboardingComplete: false,
   legalName: '',
   aboutYouCompletedAt: '',
+  birthDetailsConfirmedAt: '',
   birthDate: '',
   birthTime: '',
   birthTimeUnknown: false,
@@ -296,11 +300,15 @@ export interface MatchDoc {
   createdAt: Timestamp | null
 }
 
-export function subscribeMyMatches(uid: string, cb: (matches: MatchDoc[]) => void) {
+export function subscribeMyMatches(
+  uid: string,
+  cb: (matches: MatchDoc[]) => void,
+  onError?: (error: Error) => void,
+) {
   const q = query(collection(db, 'matches'), where('users', 'array-contains', uid))
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map((d) => d.data() as MatchDoc))
-  })
+  }, onError)
 }
 
 export async function getMatch(matchId: string): Promise<MatchDoc | null> {
@@ -327,6 +335,11 @@ export interface ConversationDoc {
   lastMessageAt: Timestamp | null
   lastMessagePreview: string | null
   lastMessageSenderId: string | null
+}
+
+export async function getConversation(matchId: string): Promise<ConversationDoc | null> {
+  const snap = await getDoc(doc(db, 'conversations', matchId))
+  return snap.exists() ? (snap.data() as ConversationDoc) : null
 }
 
 export function subscribeConversation(matchId: string, cb: (conversation: ConversationDoc | null) => void) {

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Long-term relationship and marriage</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="18" cy="27" r="10" stroke="#EAF3FF" stroke-width="2.4"/>
+    <circle cx="30" cy="27" r="10" stroke="#69D5FF" stroke-width="2.4"/>
+    <path d="M14 15h8l-2.2-3h-3.6z" stroke="#EAF3FF" stroke-width="2"/>
+    <path d="M36 10v7M32.5 13.5h7" stroke="#E5B85C" stroke-width="2.2"/>
+  </g>
+</svg>

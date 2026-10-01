@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence, Reorder } from 'framer-motion'
+import { motion, AnimatePresence, MotionConfig, Reorder } from 'framer-motion'
 import {
   Check, Upload, Trash2, Star, X, Plus, Shield, ShieldCheck,
   GripVertical, Loader2, ImageIcon, VideoIcon, Feather, MoreHorizontal, Play,
-  Heart, Sparkles, BriefcaseBusiness, MapPinned, Pencil, Eye, Gift,
-  LockKeyhole, ArrowRight, ChevronDown, Ruler, GraduationCap, Languages,
-  Crown, UtensilsCrossed, Dumbbell, Music2, Plane, Palette, Leaf,
-  Film, Sprout, type LucideIcon,
+  Heart, BriefcaseBusiness, MapPinned, Pencil, Eye, Gift,
+  LockKeyhole, ArrowRight, ChevronDown,
+  Crown, type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
@@ -19,7 +18,14 @@ import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer
 import { MyProfileActionsMenu } from '@/components/shared/ProfileActionsMenu'
 import { CircularCropper } from '@/components/shared/CircularCropper'
 import { ProfileCosmicWheel } from '@/components/shared/ProfileCosmicWheel'
+import { ProfileAstrologyIdentity } from '@/components/shared/ProfileAstrologyIdentity'
+import { ProfileAboutFacts } from '@/components/shared/ProfileAboutFacts'
+import { hasProfileAboutValues } from '@/data/profileAbout'
+import { DESIGN_PREVIEW_PROFILE, DESIGN_PREVIEW_PROFILE_PHOTO_URL } from '@/data/designPreviewProfile'
+import { AVAILABLE_INTERESTS, MAX_ONBOARDING_INTERESTS } from '@/data/interests'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
+import { EDUCATION_OPTIONS, LANGUAGE_OPTIONS, LIFESTYLE_VIBE_DESCRIPTIONS, LIFESTYLE_VIBE_OPTIONS } from '@/data/onboardingOptions'
+import { LIFESTYLE_CATEGORIES, MARITAL_BACKGROUND_OPTIONS } from '@/data/lifestyleOptions'
 import { subscribeUserMedia, renameCategoryRemote, type MediaDoc } from '@/lib/firestore'
 import {
   uploadImageMedia, uploadVideoMedia, deleteMedia, reorderMedia,
@@ -31,29 +37,10 @@ import { toDisplayItem } from '@/lib/media/toDisplayItem'
 import type { DisplayMediaItem, DisplayCategory } from '@/types/media'
 import type { SelfProfile } from '@/data/selfProfile'
 import type { StoryPrompt } from '@/lib/firestore'
-import { editorial } from '@/data/editorial-images'
 import { calculateAge } from '@/lib/age'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
-
-const previewProfile: SelfProfile = {
-  about: "I value honesty, loyalty and deep connection. I’m ambitious, grounded and always growing. Looking for a partner to build something meaningful and timeless with.",
-  interests: ['Food & Cooking', 'Fitness', 'Music', 'Travel', 'Art & Creativity', 'Nature', 'Movies', 'Personal Growth', 'Wellness'],
-  lifestyleVibe: 'Active',
-  openToNewThings: true,
-  values: ['Outdoors', 'Social', 'Family-oriented', 'Wellness'],
-  music: ['Soul', 'Jazz'],
-  languages: ['English'],
-  favoritePlaces: ['London', 'Santorini'],
-  dreamDestinations: ['Japan', 'New Zealand'],
-  fitness: 'Hiking and strength training',
-  books: 'Biographies and philosophy',
-  movies: 'Character-driven dramas',
-  goals: 'A lasting relationship built on trust and shared adventure.',
-  profession: 'Creative Director',
-  education: 'Doctorate / PhD',
-  location: 'London, United Kingdom',
-}
+import { useModalAccessibility } from '@/hooks/useModalAccessibility'
 
 const previewStoryPrompts: StoryPrompt[] = [
   { question: 'My ideal Sunday looks like…', answer: 'A slow morning, a good book, and a long walk before dinner with people I love.' },
@@ -68,17 +55,17 @@ const previewCategories: DisplayCategory[] = [
 ]
 
 const previewMediaUrls = [
-  editorial.portraitMale,
-  editorial.cinematicSunset,
-  editorial.portraitMoody,
-  editorial.citySkyline,
-  editorial.coupleGoldenLight,
-  editorial.handsTouching,
-  editorial.portraitMale,
-  editorial.portraitMoody,
-  editorial.cinematicSunset,
-  editorial.citySkyline,
-  editorial.coupleGoldenLight,
+  DESIGN_PREVIEW_PROFILE_PHOTO_URL,
+  '/perennia-landing-landscape-v2.webp',
+  '/perennia-celestial-background.jpg',
+  '/founding-500-background-v2.png',
+  '/landingPage-Desktop1.JPG',
+  '/landingPage-Mobile1.JPG',
+  DESIGN_PREVIEW_PROFILE_PHOTO_URL,
+  '/perennia-landing-landscape-v2.webp',
+  '/perennia-celestial-background.jpg',
+  '/founding-500-background-v2.png',
+  '/landingPage-Desktop4.JPG',
 ]
 
 const previewMedia: MediaDoc[] = previewMediaUrls.map((url, index) => ({
@@ -97,7 +84,7 @@ const previewMedia: MediaDoc[] = previewMediaUrls.map((url, index) => ({
 export function MyProfile({ preview = false }: { preview?: boolean }) {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { onboarding, profileExtras, updateProfileExtras, profileLoaded } = useApp()
+  const { onboarding, profileExtras, updateOnboarding, updateProfileExtras, profileLoaded } = useApp()
 
   const [media, setMedia] = useState<MediaDoc[]>(preview ? previewMedia : [])
   const [editMode, setEditMode] = useState(false)
@@ -115,8 +102,9 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
-  const [draft, setDraft] = useState<SelfProfile>(preview ? previewProfile : profileExtras)
-  const [newInterest, setNewInterest] = useState('')
+  const [draft, setDraft] = useState<SelfProfile>(preview ? DESIGN_PREVIEW_PROFILE : profileExtras)
+  const [heightDraft, setHeightDraft] = useState<number | null>(onboarding.heightCm)
+  const [faithDraft, setFaithDraft] = useState(onboarding.religion)
   const [savedPulse, setSavedPulse] = useState(false)
   const [mediaMode, setMediaMode] = useState<'photos' | 'videos'>('photos')
   const [gridViewerIndex, setGridViewerIndex] = useState<number | null>(null)
@@ -130,6 +118,24 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const viewersDialogRef = useRef<HTMLDivElement>(null)
+  const uploadDialogRef = useRef<HTMLDivElement>(null)
+
+  const closeViewers = useCallback(() => setPremiumPanel(null), [])
+  const closeUpload = useCallback(() => {
+    if (!uploadBusy) setUploadOpen(false)
+  }, [uploadBusy])
+
+  useModalAccessibility({
+    open: premiumPanel === 'viewers',
+    dialogRef: viewersDialogRef,
+    onClose: closeViewers,
+  })
+  useModalAccessibility({
+    open: uploadOpen,
+    dialogRef: uploadDialogRef,
+    onClose: closeUpload,
+  })
 
   useEffect(() => {
     if (!preview && !profileLoaded) return
@@ -139,6 +145,12 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   useEffect(() => {
     if (!editMode && !preview) setDraft(profileExtras)
   }, [profileExtras, editMode, preview])
+
+  useEffect(() => {
+    if (editMode) return
+    setHeightDraft(onboarding.heightCm)
+    setFaithDraft(onboarding.religion)
+  }, [editMode, onboarding.heightCm, onboarding.religion])
 
   useEffect(() => {
     if (!user || preview) return
@@ -258,36 +270,50 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   }
 
   const saveExtras = useCallback(async () => {
-    await updateProfileExtras(draft)
+    await Promise.all([
+      updateProfileExtras(draft),
+      updateOnboarding({ heightCm: heightDraft, religion: faithDraft.trim() }),
+    ])
     setEditMode(false)
     setSavedPulse(true)
     setTimeout(() => setSavedPulse(false), 2000)
-  }, [draft, updateProfileExtras])
+  }, [draft, faithDraft, heightDraft, updateOnboarding, updateProfileExtras])
 
-  const addInterest = () => {
-    const val = newInterest.trim()
-    if (!val || draft.interests.includes(val)) return
-    setDraft((d) => ({ ...d, interests: [...d.interests, val] }))
-    setNewInterest('')
-  }
-
-  const photoUrl = preview ? editorial.portraitMale : onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
+  const photoUrl = preview ? DESIGN_PREVIEW_PROFILE_PHOTO_URL : onboarding.profilePhotoThumbUrl || onboarding.profilePhotoUrl || null
   const storyPrompts = preview ? previewStoryPrompts : onboarding.storyPrompts
   const visibleMedia = displayItems.filter((item) => (
     mediaMode === 'photos' ? item.type === 'image' : item.type === 'video'
   ) && item.processingStatus !== 'error')
   const photos = displayItems.filter((item) => item.type === 'image' && item.processingStatus !== 'error')
   const videos = displayItems.filter((item) => item.type === 'video' && item.processingStatus !== 'error')
-  const firstName = (onboarding.name || (preview ? 'Martallus' : 'Your Name')).split(' ')[0]
+  const firstName = (onboarding.name || (preview ? 'Sample Member' : 'Your Name')).split(' ')[0]
   const age = preview ? 42 : calculateAge(onboarding.birthDate)
   const isPremium = membership?.tier === 'premium'
   const location = draft.location || [onboarding.city, onboarding.country].filter(Boolean).join(', ')
   const relationshipGoal = onboarding.relationshipGoal || (preview ? 'Long-term relationship' : '')
   const sunSign = onboarding.sunSign || (preview ? 'Cancer' : '')
   const chineseAnimal = onboarding.chineseAnimal || (preview ? 'Dragon' : '')
+  const supportedInterests = new Set<string>(AVAILABLE_INTERESTS)
+  const displayedInterests = [...new Set(draft.interests.filter((interest) => supportedInterests.has(interest)))]
+    .slice(0, MAX_ONBOARDING_INTERESTS)
+  const selectedLifestyle = LIFESTYLE_VIBE_OPTIONS.find((option) => option === draft.lifestyleVibe)
+  const lifestyleDescription = selectedLifestyle ? LIFESTYLE_VIBE_DESCRIPTIONS[selectedLifestyle] : ''
+  const childrenOptions = LIFESTYLE_CATEGORIES.find((category) => category.label === 'Children')?.options ?? []
+  const wantsChildrenOptions = LIFESTYLE_CATEGORIES.find((category) => category.label === 'Wants Children')?.options ?? []
+  const hasAboutInformation = hasProfileAboutValues({
+    education: draft.education,
+    languages: draft.languages,
+    profession: draft.profession,
+    heightCm: onboarding.heightCm,
+    childrenStatus: draft.children,
+    wantsChildren: draft.wantsChildren,
+    faithOrBeliefs: onboarding.religion,
+    maritalBackground: draft.maritalBackground,
+  })
 
   return (
-    <div className="profile-page-shell profile-page profile-owner-page">
+    <MotionConfig reducedMotion="user">
+      <div className="profile-page-shell profile-page profile-owner-page">
       <section
         className={`profile-cosmic-hero ${heroExpanded ? 'is-expanded' : ''}`}
         onClick={() => setHeroExpanded((value) => !value)}
@@ -335,9 +361,8 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           </AnimatePresence>
           <div className="ml-auto flex items-center gap-2">
             <button
-              aria-label="Open private Safety Centre"
-              aria-haspopup="dialog"
-              onClick={() => { setProfileMenuPanel('safety'); setProfileMenuOpen(true) }}
+              aria-label="Open Safeguarding"
+              onClick={() => navigate('/safeguarding')}
               className="profile-safety-button"
             >
               <Shield className="h-5 w-5" />
@@ -377,14 +402,13 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
               <VerificationBadge status={preview ? 'verified' : onboarding.verification.status} />
             </div>
             <div className="profile-identity-facts">
-              {draft.profession && <p><BriefcaseBusiness /> {draft.profession}</p>}
               {location && <p><MapPinned /> {location}</p>}
               {relationshipGoal && <p><Heart /> {relationshipGoal}</p>}
             </div>
             <div className="profile-identity-footer">
               <div className="profile-public-astrology" aria-label="Public astrology">
-                {sunSign && <AstrologyIdentity symbol={zodiacGlyph(sunSign)} value={sunSign} label="Western Sign" />}
-                {chineseAnimal && <AstrologyIdentity symbol={chineseGlyph(chineseAnimal)} value={chineseAnimal} label="Chinese Animal" />}
+                {sunSign && <ProfileAstrologyIdentity kind="western" value={sunSign} label="Western Sign" />}
+                {chineseAnimal && <ProfileAstrologyIdentity kind="chinese" value={chineseAnimal} label="Chinese Animal" />}
               </div>
               <button type="button" className="profile-edit-link" onClick={() => setEditMode(true)}>
                 <Pencil /> Edit Profile
@@ -408,7 +432,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           <section className={`profile-premium-strip ${isPremium ? 'is-member' : ''}`} aria-label="Premium features">
             <div className="profile-premium-title"><Crown /><span>Premium<br />Features</span></div>
             <button type="button" onClick={() => navigate('/settings#privacy')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
-            <button type="button" onClick={() => isPremium ? setPremiumPanel('viewers') : navigate('/founding-500')}><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
+            <button type="button" aria-haspopup="dialog" onClick={() => isPremium ? setPremiumPanel('viewers') : navigate('/founding-500')}><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
             <button type="button" onClick={() => navigate(isPremium ? '/discovery' : '/founding-500')}><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
             {!isPremium && <button type="button" className="profile-premium-cta" onClick={() => navigate('/founding-500')}><span>Discover<br />Premium</span><ArrowRight /></button>}
           </section>
@@ -438,37 +462,78 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           </div>
 
           <div className="profile-detail-grid">
-            <section className="profile-neutral-card">
+            <section className="profile-neutral-card profile-neutral-card--wide">
               <h2 className="profile-neutral-heading">About Me</h2>
-              <div className="profile-about-content">
-                <div className="profile-about-facts">
-                  {(onboarding.heightCm || preview) && <ProfileFact icon={Ruler} label="Height" value={formatHeight(onboarding.heightCm || 185)} />}
-                  {draft.education && <ProfileFact icon={GraduationCap} label="Education" value={draft.education} />}
-                  {draft.languages[0] && <ProfileFact icon={Languages} label="First language" value={draft.languages[0]} />}
-                  {draft.languages.length > 0 && <ProfileFact icon={Languages} label="Languages" value={draft.languages.join(', ')} />}
-                  {draft.profession && <ProfileFact icon={BriefcaseBusiness} label="Job title" value={draft.profession} />}
-                </div>
-                {draft.about && <p className="profile-about-story">{draft.about}</p>}
-              </div>
-            </section>
-
-            <section className="profile-neutral-card">
-              <h2 className="profile-neutral-heading">Interests &amp; Lifestyle</h2>
-              <div className="profile-interests-content">
-                <strong>Interests</strong>
-                <div className="profile-neutral-chips">
-                  {draft.interests.map((interest) => {
-                    const InterestIcon = interestIcon(interest)
-                    return <span key={interest}>{InterestIcon && <InterestIcon />} {interest}</span>
-                  })}
-                  {!draft.interests.length && <small>Add interests from Edit Profile.</small>}
-                </div>
-                <strong>Lifestyle</strong>
-                <div className="profile-neutral-chips is-lifestyle">
-                  {draft.lifestyleVibe && <span>{draft.lifestyleVibe}</span>}
-                  {draft.values.slice(0, 5).map((value) => <span key={value}>{value}</span>)}
-                  {draft.openToNewThings && <span>Open to new things</span>}
-                </div>
+              <div className="profile-about-content profile-about-content--facts-only">
+                {editMode ? (
+                  <div className="profile-about-edit-fields">
+                    <label>
+                      <span>Education</span>
+                      <select value={draft.education} onChange={(event) => setDraft((current) => ({ ...current, education: event.target.value }))}>
+                        <option value="">Not specified</option>
+                        {EDUCATION_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Languages</span>
+                      <input
+                        value={draft.languages.join(', ')}
+                        onChange={(event) => setDraft((current) => ({ ...current, languages: event.target.value.split(',').map((value) => value.trim()).filter(Boolean) }))}
+                        placeholder="English, French"
+                        list="profile-language-options"
+                      />
+                    </label>
+                    <label>
+                      <span>Job title</span>
+                      <input value={draft.profession} onChange={(event) => setDraft((current) => ({ ...current, profession: event.target.value }))} />
+                    </label>
+                    <label>
+                      <span>Height (cm)</span>
+                      <input type="number" min="100" max="250" inputMode="numeric" value={heightDraft ?? ''} onChange={(event) => setHeightDraft(event.target.value ? Number(event.target.value) : null)} />
+                    </label>
+                    <label>
+                      <span>Children</span>
+                      <select value={draft.children} onChange={(event) => setDraft((current) => ({ ...current, children: event.target.value }))}>
+                        <option value="">Not specified</option>
+                        {childrenOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Wants children</span>
+                      <select value={draft.wantsChildren} onChange={(event) => setDraft((current) => ({ ...current, wantsChildren: event.target.value }))}>
+                        <option value="">Not specified</option>
+                        {wantsChildrenOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Faith or beliefs</span>
+                      <input value={faithDraft} onChange={(event) => setFaithDraft(event.target.value)} placeholder="Optional" />
+                    </label>
+                    <label>
+                      <span>Marital background</span>
+                      <select value={draft.maritalBackground} onChange={(event) => setDraft((current) => ({ ...current, maritalBackground: event.target.value }))}>
+                        <option value="">Not specified</option>
+                        {MARITAL_BACKGROUND_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <datalist id="profile-language-options">
+                      {LANGUAGE_OPTIONS.map((option) => <option key={option} value={option} />)}
+                    </datalist>
+                  </div>
+                ) : hasAboutInformation ? (
+                  <ProfileAboutFacts
+                    education={draft.education}
+                    languages={draft.languages}
+                    profession={draft.profession}
+                    heightCm={onboarding.heightCm}
+                    childrenStatus={draft.children}
+                    wantsChildren={draft.wantsChildren}
+                    faithOrBeliefs={onboarding.religion}
+                    maritalBackground={draft.maritalBackground}
+                  />
+                ) : (
+                  <p className="profile-about-empty">Add optional profile details through Edit Profile.</p>
+                )}
               </div>
             </section>
           </div>
@@ -556,14 +621,12 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
         )}
       </AnimatePresence>
 
-      {/* Interests */}
       {/* Four compact sections — everything here traces back to a real
           onboarding screen: Bio to Your Story's prompts, Interests to the
-          Interests step, Lifestyle to profession/education/languages from
-          About You, Travel to the favourite-places/dream-destinations
-          fields also collected there. */}
+          Interests step, Lifestyle to its saved profile fields, and Travel
+          to the favourite-places/dream-destinations fields. */}
       <div className="profile-edit-content mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <ProfileSection icon={Feather} title="Bio" open={editMode || openInfoSection === 'bio'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'bio' ? null : 'bio')}>
+        <ProfileSection icon={Feather} title="Bio" open={preview || editMode || openInfoSection === 'bio'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'bio' ? null : 'bio')}>
           {storyPrompts.length ? (
             <div className="flex flex-col gap-3">
               {storyPrompts.map((p) => (
@@ -578,75 +641,33 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           )}
         </ProfileSection>
 
-        <ProfileSection icon={Sparkles} title="Interests" open={editMode || openInfoSection === 'interests'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'interests' ? null : 'interests')}>
-          {editMode ? (
-            <>
-              <Reorder.Group axis="x" values={draft.interests} onReorder={(v) => setDraft((d) => ({ ...d, interests: v }))} className="mb-3 flex flex-wrap gap-2">
-                {draft.interests.map((interest) => (
-                  <Reorder.Item key={interest} value={interest} className="cursor-grab active:cursor-grabbing">
-                    <Badge variant="glass" className="flex items-center gap-1.5">
-                      {interest}
-                      <button onClick={() => setDraft((d) => ({ ...d, interests: d.interests.filter((i) => i !== interest) }))} className="cursor-pointer">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  </Reorder.Item>
-                ))}
-              </Reorder.Group>
-              <div className="flex gap-2">
-                <input
-                  value={newInterest}
-                  onChange={(e) => setNewInterest(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addInterest()}
-                  placeholder="Add an interest…"
-                  className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40"
-                />
-                <Button size="sm" variant="glass" onClick={addInterest}><Plus className="h-3.5 w-3.5" /></Button>
-              </div>
-            </>
-          ) : draft.interests.length ? (
+        <ProfileSection icon={Heart} title="Interests" open={preview || editMode || openInfoSection === 'interests'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'interests' ? null : 'interests')}>
+          {displayedInterests.length ? (
             <div className="flex flex-wrap gap-2">
-              {draft.interests.map((i) => <Badge key={i} variant="glass">{i}</Badge>)}
+              {displayedInterests.map((interest) => <Badge key={interest} variant="glass">{interest}</Badge>)}
             </div>
           ) : (
             <EmptyHint editMode={editMode} preview={preview} label="interests" onClick={() => navigate('/interests')} />
           )}
         </ProfileSection>
 
-        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle" open={editMode || openInfoSection === 'lifestyle'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'lifestyle' ? null : 'lifestyle')}>
-          {editMode ? (
-            <div className="flex flex-col gap-3">
-              {(['profession', 'education'] as const).map((field) => (
-                <div key={field}>
-                  <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">{field}</p>
-                  <input
-                    value={draft[field]}
-                    onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
-                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
-                  />
+        <ProfileSection icon={BriefcaseBusiness} title="Lifestyle" open={preview || editMode || openInfoSection === 'lifestyle'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'lifestyle' ? null : 'lifestyle')}>
+          {selectedLifestyle ? (
+            <div>
+              <Badge variant="glass">{selectedLifestyle}</Badge>
+              {lifestyleDescription && <p className="mt-2 text-sm text-white/65">{lifestyleDescription}</p>}
+              {draft.openToNewThings && (
+                <div className="mt-3">
+                  <Badge variant="glass">Open to New Things</Badge>
                 </div>
-              ))}
-              <div>
-                <p className="mb-1 text-[10px] uppercase tracking-widest text-white/40">languages (comma-separated)</p>
-                <input
-                  value={draft.languages.join(', ')}
-                  onChange={(e) => setDraft((d) => ({ ...d, languages: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40"
-                />
-              </div>
-            </div>
-          ) : draft.profession || draft.education || draft.languages.length ? (
-            <div className="flex flex-col gap-2 text-sm text-white/80">
-              {draft.profession && <p>{draft.profession}</p>}
-              {draft.education && <p>{draft.education}</p>}
-              {!!draft.languages.length && <p className="text-white/55">{draft.languages.join(', ')}</p>}
+              )}
             </div>
           ) : (
-            <EmptyHint editMode={editMode} preview={preview} label="lifestyle details" onClick={() => navigate('/about-you')} />
+            <EmptyHint editMode={editMode} preview={preview} label="lifestyle" onClick={() => navigate('/interests')} />
           )}
         </ProfileSection>
 
-        <ProfileSection icon={MapPinned} title="Travel" open={editMode || openInfoSection === 'travel'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'travel' ? null : 'travel')}>
+        <ProfileSection icon={MapPinned} title="Travel" open={preview || editMode || openInfoSection === 'travel'} collapsible={!editMode} onToggle={() => setOpenInfoSection((current) => current === 'travel' ? null : 'travel')}>
           {editMode ? (
             <div className="flex flex-col gap-3">
               {(['favoritePlaces', 'dreamDestinations'] as const).map((field) => (
@@ -692,19 +713,22 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
-            onClick={(event) => event.target === event.currentTarget && setPremiumPanel(null)}
+            onClick={(event) => event.target === event.currentTarget && closeViewers()}
           >
             <motion.div
+              ref={viewersDialogRef}
               role="dialog"
               aria-modal="true"
               aria-labelledby="profile-viewers-title"
+              data-modal-surface
+              tabIndex={-1}
               initial={{ scale: .95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="glass-strong w-full max-w-sm rounded-2xl p-6"
             >
               <div className="mb-5 flex items-center justify-between">
                 <h3 id="profile-viewers-title" className="font-serif-display text-xl text-champagne">Profile Viewers</h3>
-                <button type="button" onClick={() => setPremiumPanel(null)} aria-label="Close profile viewers" className="cursor-pointer text-white/45 hover:text-white">
+                <button type="button" data-modal-initial-focus onClick={closeViewers} aria-label="Close profile viewers" className="cursor-pointer text-white/45 hover:text-white">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -713,7 +737,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
                 <p className="mt-3 text-sm text-white/80">No viewer activity to show yet</p>
                 <p className="mt-1 text-xs leading-relaxed text-white/45">Profile viewer activity will appear here when it becomes available.</p>
               </div>
-              <Button variant="glass" className="mt-4 w-full" onClick={() => setPremiumPanel(null)}>Done</Button>
+              <Button variant="glass" className="mt-4 w-full" onClick={closeViewers}>Done</Button>
             </motion.div>
           </motion.div>
         )}
@@ -727,10 +751,21 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
-            onClick={(e) => e.target === e.currentTarget && !uploadBusy && setUploadOpen(false)}
+            onClick={(e) => e.target === e.currentTarget && closeUpload()}
           >
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-strong w-full max-w-md rounded-2xl p-6">
-              <h3 className="font-serif-display mb-4 text-xl text-champagne">Upload Media</h3>
+            <motion.div
+              ref={uploadDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-upload-title"
+              aria-busy={uploadBusy}
+              data-modal-surface
+              tabIndex={-1}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass-strong w-full max-w-md rounded-2xl p-6"
+            >
+              <h3 id="profile-upload-title" className="font-serif-display mb-4 text-xl text-champagne">Upload Media</h3>
               <div className="mb-4 flex flex-wrap gap-2">
                 {categories.map((c) => (
                   <button
@@ -751,6 +786,8 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
                 onChange={(e) => handleFiles(e.target.files)}
               />
               <button
+                type="button"
+                data-modal-initial-focus
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadBusy}
                 className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-white/15 py-10 text-white/50 hover:border-gold/30 hover:text-white/80 cursor-pointer disabled:cursor-wait"
@@ -762,7 +799,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
                 </span>
               </button>
               {uploadError && <p className="mt-3 text-xs text-rose">{uploadError}</p>}
-              <Button variant="glass" className="mt-4 w-full" onClick={() => setUploadOpen(false)} disabled={uploadBusy}>
+              <Button variant="glass" className="mt-4 w-full" onClick={closeUpload} disabled={uploadBusy}>
                 Done
               </Button>
             </motion.div>
@@ -805,34 +842,8 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }}
       />
-    </div>
-  )
-}
-
-const WESTERN_GLYPHS: Record<string, string> = {
-  aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋', leo: '♌', virgo: '♍',
-  libra: '♎', scorpio: '♏', sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓',
-}
-
-const CHINESE_GLYPHS: Record<string, string> = {
-  rat: '鼠', ox: '牛', tiger: '虎', rabbit: '兔', dragon: '龍', snake: '蛇',
-  horse: '馬', goat: '羊', sheep: '羊', monkey: '猴', rooster: '雞', dog: '狗', pig: '豬',
-}
-
-function zodiacGlyph(value: string) {
-  return WESTERN_GLYPHS[value.trim().toLowerCase()] ?? '✦'
-}
-
-function chineseGlyph(value: string) {
-  return CHINESE_GLYPHS[value.trim().toLowerCase()] ?? '✦'
-}
-
-function AstrologyIdentity({ symbol, value, label }: { symbol: string; value: string; label: string }) {
-  return (
-    <span className="profile-astrology-identity">
-      <b aria-hidden="true">{symbol}</b>
-      <span><strong>{value}</strong><small>{label}</small></span>
-    </span>
+      </div>
+    </MotionConfig>
   )
 }
 
@@ -847,24 +858,6 @@ function VerificationBadge({ status }: { status: 'unverified' | 'pending' | 'ver
       {verified ? <ShieldCheck /> : <Shield />} {verified ? 'Verified' : 'Pending verification'}
     </span>
   )
-}
-
-function formatHeight(heightCm: number) {
-  const totalInches = Math.round(heightCm / 2.54)
-  return `${Math.floor(totalInches / 12)}'${totalInches % 12}" (${heightCm} cm)`
-}
-
-function interestIcon(interest: string): LucideIcon | null {
-  const value = interest.toLowerCase()
-  if (value.includes('food') || value.includes('cook')) return UtensilsCrossed
-  if (value.includes('fitness')) return Dumbbell
-  if (value.includes('music')) return Music2
-  if (value.includes('travel')) return Plane
-  if (value.includes('art') || value.includes('creativ')) return Palette
-  if (value.includes('nature')) return Leaf
-  if (value.includes('movie') || value.includes('film')) return Film
-  if (value.includes('growth') || value.includes('wellness')) return Sprout
-  return Sparkles
 }
 
 function ProfileMediaRow({
@@ -908,10 +901,6 @@ function ProfileMediaRow({
       </div>
     </div>
   )
-}
-
-function ProfileFact({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
-  return <p><Icon /><span>{label}</span><strong>{value}</strong></p>
 }
 
 function ProfileSection({ icon: Icon, title, open, collapsible, onToggle, children }: { icon: LucideIcon; title: string; open: boolean; collapsible: boolean; onToggle: () => void; children: ReactNode }) {

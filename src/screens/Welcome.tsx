@@ -1,8 +1,9 @@
 import { motion, MotionConfig } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Heart, Shield, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, Heart, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
+import { ConnectionHeartsIcon } from '@/components/shared/ConnectionHeartsIcon'
 
 const HERO_CTA = 'perennia-glass-button perennia-glass-button--primary group h-14 w-full rounded-full text-ivory sm:text-base'
 const SECONDARY_CTA = 'perennia-glass-button perennia-glass-button--secondary h-14 w-full rounded-full text-white/95 sm:text-base'
@@ -92,23 +93,31 @@ export function Welcome() {
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-4xl flex-col items-center justify-center px-5 py-8 text-center sm:px-10 sm:py-10"
         >
-          <div className="perennia-approved-wordmark w-[min(92vw,60rem)]" aria-label="Perennia">
-            <img
-              src="/perennia-logo-transparent-v2.png"
-              alt=""
-              width="1254"
-              height="1254"
-              fetchPriority="high"
-              className="perennia-approved-wordmark__heart"
-            />
-            <span className="perennia-approved-wordmark__crescent" aria-hidden="true">☾</span>
-            <h1 className="perennia-approved-wordmark__name">Perennia</h1>
-            <span className="perennia-approved-wordmark__ornament" aria-hidden="true">
-              <i />
-              <span className="perennia-approved-wordmark__flourish"><span /><span /><span /></span>
-              <b><span>✦</span></b>
-              <span className="perennia-approved-wordmark__flourish perennia-approved-wordmark__flourish--right"><span /><span /><span /></span>
-              <i />
+          <div className="perennia-approved-wordmark" role="img" aria-label="Perennia">
+            <span className="perennia-approved-wordmark__piece perennia-approved-wordmark__piece--heart" aria-hidden="true">
+              <img
+                src="/perennia-constellation-heart.png"
+                alt=""
+                width="1312"
+                height="1199"
+                fetchPriority="high"
+              />
+            </span>
+            <span className="perennia-approved-wordmark__piece perennia-approved-wordmark__piece--crescent" aria-hidden="true">
+              <img
+                src="/perennia-crescent.png"
+                alt=""
+                width="1113"
+                height="1159"
+              />
+            </span>
+            <span className="perennia-approved-wordmark__piece perennia-approved-wordmark__piece--name" aria-hidden="true">
+              <img
+                src="/perennia-wordmark-ornament-approved.png"
+                alt=""
+                width="1536"
+                height="1024"
+              />
             </span>
           </div>
 
@@ -227,12 +236,7 @@ export function Welcome() {
 
           <FadeUp delay={0.12} className="mx-auto mt-12 grid w-full max-w-6xl grid-cols-1 overflow-hidden rounded-[1.75rem] border border-champagne/25 bg-white/[.025] shadow-[0_18px_70px_rgba(2,7,25,.2),inset_0_1px_rgba(255,255,255,.05)] backdrop-blur-[3px] sm:mt-16 sm:grid-cols-3 sm:rounded-[2rem]">
             <AlignmentCard
-              icon={
-                <span className="relative inline-flex">
-                  <Heart className="h-10 w-10" strokeWidth={1.25} />
-                  <Sparkles className="absolute -right-2 -top-2 h-4 w-4 text-gold" strokeWidth={1.4} />
-                </span>
-              }
+              icon={<ConnectionHeartsIcon className="h-12 w-12 object-contain opacity-75 drop-shadow-[0_0_8px_rgba(167,104,255,.2)]" />}
               heading={<>Meaningful<br />Connections</>}
             >
               We focus on genuine compatibility to help you find lasting bonds.
@@ -254,12 +258,7 @@ export function Welcome() {
 
             <AlignmentCard
               divided
-              icon={
-                <span className="relative inline-flex">
-                  <Shield className="h-11 w-11" strokeWidth={1.2} />
-                  <Sparkles className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-gold" strokeWidth={1.5} />
-                </span>
-              }
+              icon={<ShieldCheck className="h-11 w-11" strokeWidth={1.2} />}
               heading={<>Safe by<br />Design</>}
             >
               A trusted space for everyone serious about building a future.
@@ -287,7 +286,7 @@ export function Welcome() {
             <IntentionFeature icon={<Heart className="h-7 w-7" strokeWidth={1.35} />} heading="80%+ Compatibility" delay={0.12}>
               Perennia only introduces you to profiles that meet your compatibility threshold.
             </IntentionFeature>
-            <IntentionFeature icon={<Sparkles className="h-7 w-7" strokeWidth={1.35} />} heading="A Deeper Match" delay={0.19}>
+            <IntentionFeature icon={<ConnectionHeartsIcon className="h-10 w-10 object-contain opacity-75 drop-shadow-[0_0_8px_rgba(167,104,255,.2)]" />} heading="A Deeper Match" delay={0.19}>
               Compatibility goes beyond first impressions. Perennia is designed to help you discover connections with the potential to grow into something meaningful and lasting.
             </IntentionFeature>
           </div>

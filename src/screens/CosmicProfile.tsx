@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, ChevronRight, Info } from 'lucide-react'
+import { motion, MotionConfig } from 'framer-motion'
+import { ArrowLeft, ChevronRight, Info } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
 import { AppShell } from '@/components/layout/AppShell'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { Button } from '@/components/ui/button'
+import { OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { CosmicZodiacWheel } from './CosmicZodiacWheel'
 import { useApp } from '@/context/AppContext'
-import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
+import { useAuth } from '@/context/AuthContext'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
 import { firebaseConfigured } from '@/lib/firebase'
+import { calculateOnboardingProgress, getOnboardingStep } from '@/lib/onboardingFlow'
 import { computeNatalChart, type NatalChartResult } from '@/lib/natalChart'
 import { computeChineseYearProfile } from '@/lib/chineseAstrology'
+import { getChineseAstrologyRows, type ChineseAstrologyRow } from '@/data/chineseAstrologyPresentation'
 import './CosmicProfile.css'
 
 type WesternPlacementKey =
@@ -31,47 +34,46 @@ type WesternPlacementKey =
 interface WesternPlacement {
   key: WesternPlacementKey
   label: string
-  symbol: string
+  symbolAsset: string
   accent: string
 }
 
 interface ChineseProfileDisplay {
   animal: string | null
-  animalCharacter: string | null
   heavenlyStem: string | null
-  heavenlyStemCharacter: string | null
   stemElement: string | null
   earthlyBranch: string | null
-  earthlyBranchCharacter: string | null
   polarity: string | null
 }
 
 const WESTERN_PLACEMENTS: WesternPlacement[] = [
-  { key: 'sunSign', label: 'Sun', symbol: '☉', accent: 'gold' },
-  { key: 'moonSign', label: 'Moon', symbol: '☾', accent: 'moon' },
-  { key: 'risingSign', label: 'Rising / Ascendant', symbol: '↑', accent: 'earth' },
-  { key: 'mercurySign', label: 'Mercury', symbol: '☿', accent: 'coral' },
-  { key: 'venusSign', label: 'Venus', symbol: '♀', accent: 'cyan' },
-  { key: 'marsSign', label: 'Mars', symbol: '♂', accent: 'pink' },
-  { key: 'jupiterSign', label: 'Jupiter', symbol: '♃', accent: 'amber' },
-  { key: 'saturnSign', label: 'Saturn', symbol: '♄', accent: 'gold' },
-  { key: 'uranusSign', label: 'Uranus', symbol: '♅', accent: 'blue' },
-  { key: 'neptuneSign', label: 'Neptune', symbol: '♆', accent: 'cyan' },
-  { key: 'plutoSign', label: 'Pluto', symbol: '♇', accent: 'violet' },
+  { key: 'sunSign', label: 'Sun', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/sun.png', accent: 'gold' },
+  { key: 'moonSign', label: 'Moon', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/moon.png', accent: 'moon' },
+  { key: 'risingSign', label: 'Rising / Ascendant', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/rising-ascendant.png', accent: 'earth' },
+  { key: 'mercurySign', label: 'Mercury', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/mercury.png', accent: 'coral' },
+  { key: 'venusSign', label: 'Venus', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/venus.png', accent: 'cyan' },
+  { key: 'marsSign', label: 'Mars', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/mars.png', accent: 'pink' },
+  { key: 'jupiterSign', label: 'Jupiter', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/jupiter.png', accent: 'amber' },
+  { key: 'saturnSign', label: 'Saturn', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/saturn.png', accent: 'gold' },
+  { key: 'uranusSign', label: 'Uranus', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/uranus.png', accent: 'blue' },
+  { key: 'neptuneSign', label: 'Neptune', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/neptune.png', accent: 'cyan' },
+  { key: 'plutoSign', label: 'Pluto', symbolAsset: '/approved-symbol-cards-v4/western-placements-dark/pluto.png', accent: 'violet' },
 ]
 
-const SIGN_SYMBOLS: Record<string, string> = {
-  Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋', Leo: '♌', Virgo: '♍',
-  Libra: '♎', Scorpio: '♏', Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
+const SIGN_ASSETS: Record<string, string> = {
+  Aries: '/approved-symbol-cards-v4/zodiac-white/aries.png',
+  Taurus: '/approved-symbol-cards-v4/zodiac-white/taurus.png',
+  Gemini: '/approved-symbol-cards-v4/zodiac-white/gemini.png',
+  Cancer: '/approved-symbol-cards-v4/zodiac-white/cancer.png',
+  Leo: '/approved-symbol-cards-v4/zodiac-white/leo.png',
+  Virgo: '/approved-symbol-cards-v4/zodiac-white/virgo.png',
+  Libra: '/approved-symbol-cards-v4/zodiac-white/libra.png',
+  Scorpio: '/approved-symbol-cards-v4/zodiac-white/scorpio.png',
+  Sagittarius: '/approved-symbol-cards-v4/zodiac-white/sagittarius.png',
+  Capricorn: '/approved-symbol-cards-v4/zodiac-white/capricorn.png',
+  Aquarius: '/approved-symbol-cards-v4/zodiac-white/aquarius.png',
+  Pisces: '/approved-symbol-cards-v4/zodiac-white/pisces.png',
 }
-
-const CHINESE_ITEMS = [
-  { key: 'animal', label: 'Chinese Zodiac Animal', symbol: '生肖', accent: 'gold' },
-  { key: 'heavenlyStem', label: 'Heavenly Stem', symbol: '天', accent: 'amber' },
-  { key: 'earthlyBranch', label: 'Earthly Branch', symbol: '地', accent: 'blue' },
-  { key: 'stemElement', label: 'Stem Element', symbol: '五', accent: 'green' },
-  { key: 'polarity', label: 'Yin / Yang', symbol: '☯', accent: 'gold' },
-] as const
 
 function valueOrUnavailable(value: string | null | undefined) {
   return value?.trim() || 'Not available'
@@ -91,17 +93,25 @@ function CosmicHeaderMark() {
   return <CelestialHeart className="mb-5 h-16 w-16 sm:h-20 sm:w-20" />
 }
 
+function CosmicArtworkPlate({ src, className = '' }: { src: string; className?: string }) {
+  return (
+    <span className={`cosmic-icon-plate ${className}`} aria-hidden="true">
+      <img className="cosmic-icon-artwork" src={src} alt="" />
+    </span>
+  )
+}
+
 function WesternCard({ placement, value }: { placement: WesternPlacement; value?: string }) {
   const displayValue = valueOrUnavailable(value)
-  const signSymbol = value ? SIGN_SYMBOLS[value] : null
+  const signAsset = value ? SIGN_ASSETS[value] : null
 
   return (
     <article className={`cosmic-placement-card cosmic-accent-${placement.accent}`}>
-      <span className="cosmic-planet-symbol" aria-hidden="true">{placement.symbol}</span>
+      <CosmicArtworkPlate src={placement.symbolAsset} className="cosmic-placement-icon-plate" />
       <div className="cosmic-placement-copy">
         <h3>{placement.label}</h3>
         <p className={value ? '' : 'cosmic-unavailable'}>
-          {signSymbol && <span aria-hidden="true">{signSymbol}</span>}
+          {signAsset && <CosmicArtworkPlate src={signAsset} />}
           {displayValue}
         </p>
       </div>
@@ -110,34 +120,51 @@ function WesternCard({ placement, value }: { placement: WesternPlacement; value?
   )
 }
 
-function ChineseCard({
-  item,
-  value,
-  character,
-}: {
-  item: (typeof CHINESE_ITEMS)[number]
-  value: string | null
-  character?: string | null
-}) {
-  const animalSymbols: Record<string, string> = { Rat: '鼠', Ox: '牛', Tiger: '虎', Rabbit: '兔', Dragon: '龍', Snake: '蛇', Horse: '馬', Sheep: '羊', Monkey: '猴', Rooster: '雞', Dog: '狗', Pig: '豬' }
-  const symbol = character ?? (item.key === 'animal' && value ? animalSymbols[value] ?? item.symbol : item.symbol)
+function ChineseCard({ row }: { row: ChineseAstrologyRow }) {
   return (
-    <article className={`cosmic-chinese-card cosmic-accent-${item.accent}`}>
-      <span className="cosmic-chinese-symbol" aria-hidden="true">{symbol}</span>
-      <div>
-        <h3>{item.label}</h3>
-        <p className={value ? '' : 'cosmic-unavailable'}>{valueOrUnavailable(value)}</p>
+    <article className={`cosmic-chinese-card cosmic-accent-${row.accent}`}>
+      <span className="cosmic-chinese-visual" aria-hidden="true">
+        <span className="cosmic-chinese-category-symbol" lang="zh-Hant">
+          {row.leftCharacter ?? '—'}
+        </span>
+      </span>
+      <h3>{row.label}</h3>
+      <div className="cosmic-chinese-outcome">
+        <span className="cosmic-chinese-character" lang="zh-Hant" aria-hidden="true">
+          {row.rightArtwork ? (
+            <img className="cosmic-chinese-result-artwork" src={row.rightArtwork} alt="" />
+          ) : (
+            row.rightCharacter ?? '—'
+          )}
+        </span>
+        <div className="cosmic-chinese-result">
+          <p className={`cosmic-chinese-value ${row.value ? '' : 'cosmic-unavailable'}`}>
+            {valueOrUnavailable(row.value)}
+          </p>
+          {row.explanation && <p className="cosmic-chinese-explanation">{row.explanation}</p>}
+        </div>
       </div>
       <ChevronRight className="cosmic-card-chevron" aria-hidden="true" />
     </article>
   )
 }
 
-function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
+function CosmicProfileContent({
+  isOnboarding,
+  previewWesternValues,
+  previewChineseProfile,
+}: {
+  isOnboarding: boolean
+  previewWesternValues?: Partial<Record<WesternPlacementKey, string>>
+  previewChineseProfile?: Partial<ChineseProfileDisplay>
+}) {
   const navigate = useNavigate()
-  const { onboarding, profileExtras, completeOnboarding } = useApp()
+  const { user } = useAuth()
+  const { onboarding, profileExtras, completeOnboarding, onboardingComplete, profileLoaded } = useApp()
   const [extendedChart, setExtendedChart] = useState<NatalChartResult | null>(null)
   const [loadingPlacements, setLoadingPlacements] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [completionError, setCompletionError] = useState('')
 
   useEffect(() => {
     if (!firebaseConfigured || !onboarding.birthDate || !onboarding.birthPlace) return
@@ -165,18 +192,18 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
   }, [onboarding.birthDate, onboarding.birthPlace, onboarding.birthTime, onboarding.birthTimeUnknown])
 
   const westernValues = useMemo<Partial<Record<WesternPlacementKey, string>>>(() => ({
-    sunSign: onboarding.sunSign || extendedChart?.sunSign,
-    moonSign: onboarding.moonSign || extendedChart?.moonSign,
-    risingSign: onboarding.risingSign || extendedChart?.risingSign,
-    mercurySign: extendedChart?.mercurySign,
-    venusSign: extendedChart?.venusSign,
-    marsSign: extendedChart?.marsSign,
-    jupiterSign: extendedChart?.jupiterSign,
-    saturnSign: extendedChart?.saturnSign,
-    uranusSign: extendedChart?.uranusSign,
-    neptuneSign: extendedChart?.neptuneSign,
-    plutoSign: extendedChart?.plutoSign,
-  }), [extendedChart, onboarding.moonSign, onboarding.risingSign, onboarding.sunSign])
+    sunSign: previewWesternValues?.sunSign ?? (onboarding.sunSign || extendedChart?.sunSign),
+    moonSign: previewWesternValues?.moonSign ?? (onboarding.moonSign || extendedChart?.moonSign),
+    risingSign: previewWesternValues?.risingSign ?? (onboarding.risingSign || extendedChart?.risingSign),
+    mercurySign: previewWesternValues?.mercurySign ?? extendedChart?.mercurySign,
+    venusSign: previewWesternValues?.venusSign ?? extendedChart?.venusSign,
+    marsSign: previewWesternValues?.marsSign ?? extendedChart?.marsSign,
+    jupiterSign: previewWesternValues?.jupiterSign ?? extendedChart?.jupiterSign,
+    saturnSign: previewWesternValues?.saturnSign ?? extendedChart?.saturnSign,
+    uranusSign: previewWesternValues?.uranusSign ?? extendedChart?.uranusSign,
+    neptuneSign: previewWesternValues?.neptuneSign ?? extendedChart?.neptuneSign,
+    plutoSign: previewWesternValues?.plutoSign ?? extendedChart?.plutoSign,
+  }), [extendedChart, onboarding.moonSign, onboarding.risingSign, onboarding.sunSign, previewWesternValues])
 
   const chineseYear = useMemo(
     () => computeChineseYearProfile(onboarding.birthDate),
@@ -184,58 +211,52 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
   )
 
   const chineseProfile: ChineseProfileDisplay = {
-    animal: onboarding.chineseAnimal || chineseYear?.animal || null,
-    animalCharacter: chineseYear?.animalCharacter || null,
-    heavenlyStem: chineseYear?.heavenlyStem || null,
-    heavenlyStemCharacter: chineseYear?.heavenlyStemCharacter || null,
-    stemElement: onboarding.chineseElement || chineseYear?.element || null,
-    earthlyBranch: chineseYear?.earthlyBranch || null,
-    earthlyBranchCharacter: chineseYear?.earthlyBranchCharacter || null,
-    polarity: onboarding.yinYang || chineseYear?.polarity || null,
+    animal: previewChineseProfile?.animal ?? (onboarding.chineseAnimal || chineseYear?.animal || null),
+    heavenlyStem: previewChineseProfile?.heavenlyStem ?? (chineseYear?.heavenlyStem || null),
+    stemElement: previewChineseProfile?.stemElement ?? (onboarding.chineseElement || chineseYear?.element || null),
+    earthlyBranch: previewChineseProfile?.earthlyBranch ?? (chineseYear?.earthlyBranch || null),
+    polarity: previewChineseProfile?.polarity ?? (onboarding.yinYang || chineseYear?.polarity || null),
   }
+  const chineseRows = getChineseAstrologyRows(chineseProfile)
 
   const visibleWesternPlacements = WESTERN_PLACEMENTS
 
   const finish = async () => {
-    if (!hasDevelopmentVerificationBypass() && (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt)) {
-      navigate('/verify')
+    if (completing) return
+    const progress = calculateOnboardingProgress({
+      onboarding,
+      profileExtras,
+      user,
+      profileLoaded,
+      onboardingComplete,
+      backendConfigured: firebaseConfigured,
+      localPreviewBypassEnabled: hasDevelopmentVerificationBypass(),
+    })
+    if (!progress.allPrerequisiteStepsComplete) {
+      navigate(progress.earliestIncompleteStep?.route ?? getOnboardingStep('signup').route)
       return
     }
-    if (!onboarding.birthCity || !onboarding.country || !onboarding.city) {
-      navigate('/birth-details')
-      return
+
+    setCompleting(true)
+    setCompletionError('')
+    try {
+      await completeOnboarding()
+      navigate('/founding-500?next=' + encodeURIComponent('/discovery'))
+    } catch {
+      setCompletionError('Could not complete onboarding. Please try again.')
+    } finally {
+      setCompleting(false)
     }
-    if (!onboarding.gender) {
-      navigate('/preferences')
-      return
-    }
-    if (!onboarding.relationshipGoal) {
-      navigate('/relationship-goals')
-      return
-    }
-    if (profileExtras.interests.length < MIN_ONBOARDING_INTERESTS || !profileExtras.lifestyleVibe) {
-      navigate('/interests')
-      return
-    }
-    if (!onboarding.aboutYouCompletedAt) {
-      navigate('/about-you')
-      return
-    }
-    if (!onboarding.profilePhotoUrl) {
-      navigate('/profile-photo')
-      return
-    }
-    await completeOnboarding()
-    navigate('/founding-500?next=' + encodeURIComponent('/discovery'))
   }
 
   return (
-    <motion.main
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="cosmic-profile"
-    >
+    <MotionConfig reducedMotion="user">
+      <motion.main
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="cosmic-profile"
+      >
       {isOnboarding && <CosmicProfileBackButton compact={false} />}
       <header className="cosmic-profile-header">
         <p className="cosmic-eyebrow">Your Astrological Foundation</p>
@@ -264,19 +285,8 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       <section className="cosmic-chinese-section" aria-labelledby="chinese-astrology-heading">
         <CosmicSectionHeading id="chinese-astrology-heading">Chinese Astrology</CosmicSectionHeading>
         <div className="cosmic-chinese-grid">
-          {CHINESE_ITEMS.map((item) => (
-            <ChineseCard
-              key={item.key}
-              item={item}
-              value={chineseProfile[item.key]}
-              character={item.key === 'animal'
-                ? chineseProfile.animalCharacter
-                : item.key === 'heavenlyStem'
-                  ? chineseProfile.heavenlyStemCharacter
-                  : item.key === 'earthlyBranch'
-                    ? chineseProfile.earthlyBranchCharacter
-                    : null}
-            />
+          {chineseRows.map((row) => (
+            <ChineseCard key={row.key} row={row} />
           ))}
         </div>
       </section>
@@ -287,21 +297,40 @@ function CosmicProfileContent({ isOnboarding }: { isOnboarding: boolean }) {
       </p>
 
       {isOnboarding && (
-        <Button size="lg" className="cosmic-enter-button" onClick={finish}>
-          Enter Perennia <ArrowRight aria-hidden="true" />
-        </Button>
+        <>
+          {completionError && <p role="alert" className="cosmic-profile-note text-rose-300">{completionError}</p>}
+          <OnboardingPrimaryButton
+            className="mx-auto mt-4 w-full max-w-[390px]"
+            onClick={finish}
+            disabled={completing}
+            loading={completing}
+            loadingLabel="Entering Perennia…"
+            showArrow
+          >
+            Enter Perennia
+          </OnboardingPrimaryButton>
+        </>
       )}
-    </motion.main>
+      </motion.main>
+    </MotionConfig>
   )
 }
 
 function CosmicProfileBackButton({ compact = true }: { compact?: boolean }) {
   const navigate = useNavigate()
+  const handleBack = () => {
+    if (compact) {
+      navigate(-1)
+      return
+    }
+    navigate(getOnboardingStep('cosmicProfile').previousRoute!)
+  }
+
   return (
     <Button
       variant={compact ? 'glass' : 'link'}
       size={compact ? 'icon' : 'sm'}
-      onClick={() => navigate(-1)}
+      onClick={handleBack}
       className={compact ? 'fixed left-4 top-4 z-30 md:left-8 md:top-8 lg:left-28 xl:left-72' : 'cosmic-back-button'}
       aria-label="Go back"
     >
@@ -311,7 +340,13 @@ function CosmicProfileBackButton({ compact = true }: { compact?: boolean }) {
   )
 }
 
-export function CosmicProfile() {
+export function CosmicProfile({
+  previewWesternValues,
+  previewChineseProfile,
+}: {
+  previewWesternValues?: Partial<Record<WesternPlacementKey, string>>
+  previewChineseProfile?: Partial<ChineseProfileDisplay>
+} = {}) {
   const { onboardingComplete } = useApp()
 
   if (onboardingComplete) {
@@ -319,7 +354,11 @@ export function CosmicProfile() {
       <AppShell>
         <CosmicProfileBackButton />
         <div className="cosmic-app-shell-wrap">
-          <CosmicProfileContent isOnboarding={false} />
+          <CosmicProfileContent
+            isOnboarding={false}
+            previewWesternValues={previewWesternValues}
+            previewChineseProfile={previewChineseProfile}
+          />
         </div>
       </AppShell>
     )
@@ -327,12 +366,14 @@ export function CosmicProfile() {
 
   return (
     <OnboardingShell
-      step={12}
-      totalSteps={12}
       headerMark={<CosmicHeaderMark />}
       progressVariant="nodes"
     >
-      <CosmicProfileContent isOnboarding />
+      <CosmicProfileContent
+        isOnboarding
+        previewWesternValues={previewWesternValues}
+        previewChineseProfile={previewChineseProfile}
+      />
     </OnboardingShell>
   )
 }

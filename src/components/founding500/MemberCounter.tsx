@@ -1,7 +1,8 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { Founding500Config } from '@/types/founding500'
 
 export function MemberCounter({ config }: { config: Founding500Config }) {
+  const shouldReduceMotion = useReducedMotion()
   const pct = Math.min(100, (config.currentMemberCount / config.memberLimit) * 100)
   const remaining = Math.max(config.memberLimit - config.currentMemberCount, 0)
 
@@ -13,9 +14,9 @@ export function MemberCounter({ config }: { config: Founding500Config }) {
       </p>
       <div className="relative mb-3 h-[3px] w-full overflow-hidden rounded-full bg-white/15 shadow-[0_0_14px_rgba(229,192,123,.12)]">
         <motion.div
-          initial={{ width: 0 }}
+          initial={shouldReduceMotion ? false : { width: 0 }}
           animate={{ width: `${pct}%` }}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
           className="h-full rounded-full bg-gradient-to-r from-gold to-champagne shadow-[0_0_12px_rgba(229,192,123,.8)]"
         />
       </div>

@@ -17,7 +17,11 @@ import {
   identityVerificationConfigured,
   VerificationNotConfiguredError,
 } from '@/lib/identityVerification'
-import { enableDevelopmentVerificationBypass } from '@/lib/developmentVerification'
+import {
+  enableDevelopmentVerificationBypass,
+  isDevelopmentVerificationBypassAvailable,
+} from '@/lib/developmentVerification'
+import { getOnboardingStep, resolveOnboardingDestination } from '@/lib/onboardingFlow'
 
 type LocalStage = 'idle' | 'launching' | 'pending' | 'confirming' | 'error'
 
@@ -57,7 +61,10 @@ function VerificationProgress({ active }: { active: number }) {
 export function Verify() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const continueDestination = searchParams.get('next') || '/birth-details'
+  const continueDestination = resolveOnboardingDestination(
+    searchParams.get('next'),
+    getOnboardingStep('verification').nextRoute!,
+  )
   const previewPending = import.meta.env.DEV && searchParams.get('preview') === 'pending'
   const { user } = useAuth()
   const { onboarding, updateOnboarding } = useApp()
@@ -69,6 +76,7 @@ export function Verify() {
 
   const verification = onboarding.verification
   const configured = identityVerificationConfigured && firebaseConfigured
+  const developmentBypassAvailable = isDevelopmentVerificationBypassAvailable()
   // Stripe confirming the document + face match is what actually matters —
   // legalName/birthDate are a bonus extraction that not every document type
   // or region returns. Requiring them to proceed used to strand verified
@@ -163,18 +171,18 @@ export function Verify() {
     // Dev-only convenience for a local build with no completed Stripe
     // session. Deployed Stripe test mode is handled independently by the
     // backend using Stripe's trusted `livemode` flag.
-    if (import.meta.env.DEV) {
-      enableDevelopmentVerificationBypass()
-      // Finish persisting the fallback before Birth Details reads it.
-      if (!onboarding.birthDate) await updateOnboarding({ birthDate: '1995-06-15' })
-    }
+    if (!developmentBypassAvailable) return
+    enableDevelopmentVerificationBypass()
+    // Availability requires a backend-free localhost preview, so this date
+    // can exist only in the disposable browser session and never in Firebase.
+    if (!onboarding.birthDate) await updateOnboarding({ birthDate: '1995-06-15' })
     navigate(continueDestination)
   }
 
   const activeStep = detailsConfirmed ? 4 : isVerified ? 3 : stage === 'pending' ? 2 : stage === 'launching' ? 1 : 0
 
   return (
-    <OnboardingShell step={2} totalSteps={12} className="verification-onboarding-shell">
+    <OnboardingShell className="verification-onboarding-shell">
       <div className="verification-heading mb-5 text-center">
         <h1 className="font-serif-display text-4xl sm:text-5xl">Verify Your Identity</h1>
         <p className="mt-2 text-sm text-white/55">Keep our community safe with verified profiles</p>
@@ -250,7 +258,7 @@ export function Verify() {
                   </Button>
                 </div>
               )}
-              {import.meta.env.DEV && (
+              {developmentBypassAvailable && (
                 <div className="mx-auto mt-7 max-w-md border-t border-white/10 pt-6">
                   <Button type="button" variant="outline" className="w-full" onClick={skipForTesting}>
                     Skip identity check for testing <ArrowRight className="h-4 w-4" />
@@ -265,7 +273,7 @@ export function Verify() {
               <h2 className="font-serif-display text-3xl">Verification Setup Required</h2>
               <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/55">Stripe Identity keys must be configured before anyone can continue. Verification cannot be skipped or simulated.</p>
               <p className="mx-auto mt-5 max-w-lg rounded-xl border border-white/10 bg-white/[.03] p-4 text-xs text-white/45">Configure <code className="text-champagne">STRIPE_SECRET_KEY</code>, <code className="text-champagne">STRIPE_WEBHOOK_SECRET</code>, and <code className="text-champagne">VITE_STRIPE_PUBLISHABLE_KEY</code>.</p>
-              {import.meta.env.DEV && (
+              {developmentBypassAvailable && (
                 <Button type="button" variant="outline" className="mt-6 w-full max-w-md" onClick={skipForTesting}>
                   Skip identity check for testing <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -286,7 +294,7 @@ export function Verify() {
                 </button>
               </div>
               <p className="verification-security-line mt-7 flex items-center justify-center gap-2 text-sm text-white/90"><ShieldCheck className="h-4 w-4" /> Secure document, liveness and face-match verification by Stripe</p>
-              {import.meta.env.DEV && (
+              {developmentBypassAvailable && (
                 <div className="mt-6 border-t border-white/10 pt-5">
                   <Button type="button" variant="outline" className="w-full" onClick={skipForTesting}>
                     Skip identity check for testing <ArrowRight className="h-4 w-4" />

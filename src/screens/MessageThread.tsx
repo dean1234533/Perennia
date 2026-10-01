@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, Mic, Send, Check, CheckCheck, Smile, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
@@ -11,6 +11,7 @@ interface ThreadLocationState {
 }
 
 export function MessageThread() {
+  const shouldReduceMotion = useReducedMotion()
   const { id: matchId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -54,8 +55,8 @@ export function MessageThread() {
   }, [matchId, user, messages])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    bottomRef.current?.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth' })
+  }, [messages, shouldReduceMotion])
 
   if (!matchId) {
     return (

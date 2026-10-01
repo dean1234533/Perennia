@@ -32,6 +32,7 @@ export interface OnboardingData {
   verification: VerificationState
   legalName: string
   aboutYouCompletedAt: string
+  birthDetailsConfirmedAt: string
   birthDate: string
   birthTime: string
   birthTimeUnknown: boolean
@@ -69,8 +70,10 @@ export interface OnboardingData {
 }
 
 interface AppContextValue {
+  isDesignPreview: boolean
   onboarding: OnboardingData
   updateOnboarding: (data: Partial<OnboardingData>) => Promise<void>
+  saveOnboarding: (data: Partial<OnboardingData>) => Promise<void>
   likedIds: string[]
   passedIds: string[]
   matchedIds: string[]
@@ -93,6 +96,7 @@ interface AppContextValue {
   clearLastMatch: () => void
   profileExtras: SelfProfile
   updateProfileExtras: (extras: SelfProfile) => Promise<void>
+  saveProfileExtras: (extras: SelfProfile) => Promise<void>
   updatePreferences: (preferences: MatchingPreferences) => Promise<void>
   /** True once the real Firestore user doc has been fetched at least once
    *  (or immediately, in local-demo mode). Onboarding screens that seed
@@ -118,6 +122,7 @@ const defaultOnboarding: OnboardingData = {
   verification: { status: 'unverified', provider: null, verificationReference: null, verifiedAt: null, detailsConfirmedAt: null },
   legalName: '',
   aboutYouCompletedAt: '',
+  birthDetailsConfirmedAt: '',
   birthDate: '',
   birthTime: '',
   birthTimeUnknown: false,
@@ -156,9 +161,22 @@ const defaultOnboarding: OnboardingData = {
 
 const AppContext = createContext<AppContextValue | null>(null)
 
-export function AppProvider({ children }: { children: ReactNode }) {
+export function AppProvider({
+  children,
+  initialOnboarding,
+  initialProfileExtras,
+  designPreview = false,
+}: {
+  children: ReactNode
+  initialOnboarding?: Partial<OnboardingData>
+  initialProfileExtras?: Partial<SelfProfile>
+  designPreview?: boolean
+}) {
   const { user } = useAuth()
-  const [onboarding, setOnboarding] = useState<OnboardingData>(defaultOnboarding)
+  const [onboarding, setOnboarding] = useState<OnboardingData>(() => ({
+    ...defaultOnboarding,
+    ...initialOnboarding,
+  }))
   const [likedIds, setLikedIds] = useState<string[]>([])
   const [passedIds, setPassedIds] = useState<string[]>([])
   const [blockedIds, setBlockedIds] = useState<string[]>([])
@@ -168,7 +186,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [localAuthenticated, setLocalAuthenticated] = useState(false)
   const [remoteOnboardingComplete, setRemoteOnboardingComplete] = useState(false)
   const [lastMatchId, setLastMatchId] = useState<string | null>(null)
-  const [profileExtras, setProfileExtras] = useState<SelfProfile>(emptySelfProfile)
+  const [profileExtras, setProfileExtras] = useState<SelfProfile>(() => ({
+    ...emptySelfProfile,
+    ...initialProfileExtras,
+  }))
   const [hideBottomNav, setHideBottomNav] = useState(false)
   const [profileLoadedUid, setProfileLoadedUid] = useState<string | null>(null)
   const reconciledLikes = useRef(new Set<string>())
@@ -207,6 +228,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         verification: data.verification ?? prev.verification,
         legalName: data.legalName ?? '',
         aboutYouCompletedAt: data.aboutYouCompletedAt ?? '',
+        birthDetailsConfirmedAt: data.birthDetailsConfirmedAt ?? '',
         birthDate: data.birthDate,
         birthTime: data.birthTime,
         birthTimeUnknown: data.birthTimeUnknown ?? false,
@@ -295,6 +317,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [user]
   )
 
+  // Onboarding navigation uses this stricter save path: remote persistence
+  // must succeed before local state is advanced, so a failed write cannot make
+  // the route guard believe a step completed only inside this browser tab.
+  const saveProfileExtras = useCallback(
+    async (extras: SelfProfile) => {
+      if (firebaseConfigured) {
+        if (!user) throw new Error('You must be signed in to save onboarding progress.')
+        await updateProfileExtrasRemote(user.uid, extras)
+      }
+      setProfileExtras(extras)
+    },
+    [user]
+  )
+
   const updatePreferences = useCallback(
     async (preferences: MatchingPreferences) => {
       setOnboarding((prev) => ({ ...prev, preferences }))
@@ -316,6 +352,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
           })
         }
       }
+    },
+    [user]
+  )
+
+  const saveOnboarding = useCallback(
+    async (data: Partial<OnboardingData>) => {
+      const { password: _password, ...remote } = data
+      if (firebaseConfigured) {
+        if (!user) throw new Error('You must be signed in to save onboarding progress.')
+        if (Object.keys(remote).length > 0) await updateUserDoc(user.uid, remote)
+      }
+      setOnboarding((prev) => ({ ...prev, ...data }))
     },
     [user]
   )
@@ -402,8 +450,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        isDesignPreview: designPreview,
         onboarding,
         updateOnboarding,
+        saveOnboarding,
         likedIds,
         passedIds,
         matchedIds,
@@ -425,6 +475,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearLastMatch,
         profileExtras,
         updateProfileExtras,
+        saveProfileExtras,
         updatePreferences,
         profileLoaded,
         hideBottomNav,

@@ -1,8 +1,9 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const symbols = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
 
 export function ZodiacWheel({ size = 220 }: { size?: number }) {
+  const shouldReduceMotion = useReducedMotion()
   const compact = size < 140
   const symbolSize = compact ? Math.max(12, Math.round(size * 0.15)) : 24
   const symbolFontSize = compact ? Math.max(10, Math.round(size * 0.12)) : 16
@@ -17,8 +18,8 @@ export function ZodiacWheel({ size = 220 }: { size?: number }) {
         width={size}
         height={size}
         className="absolute inset-0"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 120, repeat: Infinity, ease: 'linear' }}
+        animate={{ rotate: shouldReduceMotion ? 0 : 360 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 120, repeat: Infinity, ease: 'linear' }}
       >
         <circle cx={center} cy={center} r={size / 2 - 2} fill="none" stroke="rgba(212,175,106,0.25)" strokeWidth="1" />
         <circle cx={center} cy={center} r={size / 2 - 10} fill="none" stroke="rgba(212,175,106,0.12)" strokeWidth="1" />
