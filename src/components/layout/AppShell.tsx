@@ -58,11 +58,12 @@ export function AppShell({
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          'app-desktop-sidebar glass-strong fixed left-0 top-0 z-40 hidden h-full w-[11.5rem] flex-col items-stretch gap-5 border-r border-white/5 px-5 py-7 xl:flex',
+          'app-desktop-sidebar fixed left-0 top-0 z-40 hidden h-full w-[11.5rem] flex-col items-stretch gap-5 border-r px-5 py-7 xl:flex',
           // Over the light profile page the translucent glass reads grey, so
-          // use the solid equivalent of the dark sidebar.
-          isProfilePage && 'bg-[#0d0c1f] [background-image:none]'
+          // use an opaque dark surface there instead.
+          isProfilePage ? 'border-white/10' : 'glass-strong border-white/5'
         )}
+        style={isProfilePage ? { background: '#0d0c1f' } : undefined}
       >
         <button
           onClick={() => setBrandOpen((value) => !value)}
