@@ -31,7 +31,8 @@ const CHINESE_ANIMAL_ASSETS: Record<string, string> = {
   pig: '/chinese-astrology-v1/animals/pig.png',
 }
 
-export function profileAstrologyAsset(kind: ProfileAstrologyKind, value: string) {
+export function profileAstrologyAsset(kind: ProfileAstrologyKind, value: string | null | undefined) {
+  if (!value) return undefined
   const normalizedValue = value.trim().toLowerCase()
   return kind === 'western'
     ? WESTERN_CARD_ASSETS[normalizedValue]

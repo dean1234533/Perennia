@@ -762,9 +762,10 @@ function DiscoveryAstrologyRailItem({
   descriptor,
 }: {
   kind: 'western' | 'chinese'
-  value: string
+  value?: string | null
   descriptor: string
 }) {
+  if (!value) return null
   const imageSrc = profileAstrologyAsset(kind, value)
   return (
     <div className="discovery-rail-item" aria-label={`${value}, ${descriptor}`}>
