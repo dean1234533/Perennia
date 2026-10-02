@@ -61,7 +61,7 @@ function App() {
       <Suspense fallback={<div className="min-h-[100svh] bg-midnight" aria-label="Loading" />}>
         <Routes>
           <Route path="/" element={<Welcome />} />
-          <Route path="/dev/design-preview" element={<DesignPreview />} />
+          {import.meta.env.DEV && <Route path="/dev/design-preview" element={<DesignPreview />} />}
 
           <Route element={<AppProviders />}>
             <Route path="/founding-500" element={<Founding500 />} />

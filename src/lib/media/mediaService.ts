@@ -11,7 +11,7 @@ import {
 } from '@/lib/firestore'
 
 export const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
-export const MAX_VIDEO_BYTES = 500 * 1024 * 1024 // 500MB raw upload cap
+export const MAX_VIDEO_BYTES = 200 * 1024 * 1024 // 200MB raw upload cap — must match storage.rules
 export const MAX_VIDEO_DURATION_SECONDS = 15
 
 export class VideoValidationError extends Error {}
@@ -21,7 +21,7 @@ export function validateVideoFile(file: File) {
     throw new VideoValidationError(`Unsupported video type "${file.type || 'unknown'}". Use MP4, MOV, or WebM.`)
   }
   if (file.size > MAX_VIDEO_BYTES) {
-    throw new VideoValidationError(`Video is too large (${Math.round(file.size / 1024 / 1024)}MB). Max is 500MB.`)
+    throw new VideoValidationError(`Video is too large (${Math.round(file.size / 1024 / 1024)}MB). Max is 200MB.`)
   }
 }
 

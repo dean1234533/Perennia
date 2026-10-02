@@ -30,14 +30,16 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
     try {
       await cancelFoundingSubscription(foundingRecord.stripeSubscriptionId, stripeSecretKey)
     } catch (err) {
-      // Don't block account deletion on a billing-system hiccup — log
-      // loudly for a human to reconcile, same pattern as the webhook's
-      // full/disabled handling in founding500.service.ts.
+      // Stop here rather than delete the account: once the member's record
+      // and Auth account are gone there is no way to find or cancel the
+      // subscription, and they would keep being billed. The member can
+      // simply retry; nothing has been deleted yet.
       log.error('delete_account_subscription_cancel_failed', {
         uid,
         subscriptionId: foundingRecord.stripeSubscriptionId,
         message: err instanceof Error ? err.message : String(err),
       })
+      throw new Error('Could not cancel your subscription, so your account was not deleted. Please try again in a moment.')
     }
   }
 
@@ -55,7 +57,15 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
     db.collection('reports').where('reporterUid', '==', uid).get(),
   ])
 
-  const cleanupBatch = db.batch()
+  // Firestore caps a batch at 500 writes, so operations are queued and
+  // committed in chunks (an account with many matches/messages would
+  // otherwise fail partway through deletion).
+  type Op = (batch: FirebaseFirestore.WriteBatch) => void
+  const queued: Op[] = []
+  const cleanupBatch = {
+    delete: (ref: FirebaseFirestore.DocumentReference) => { queued.push((b) => b.delete(ref)) },
+    update: (ref: FirebaseFirestore.DocumentReference, data: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>) => { queued.push((b) => b.update(ref, data)) },
+  }
   let ops = 0
 
   for (const doc of likesAsLiker.docs) {
@@ -104,24 +114,28 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
     ops++
   }
 
-  // A single batch caps at 500 writes — plenty at this app's current scale
-  // (would need 200+ real matches from one member to exceed it). If that
-  // ever changes, this should become a chunked/paginated job; for now
-  // Firestore throws a clear error rather than silently dropping writes.
-  if (ops > 0) {
-    await cleanupBatch.commit()
+  for (let i = 0; i < queued.length; i += 400) {
+    const batch = db.batch()
+    for (const op of queued.slice(i, i + 400)) op(batch)
+    await batch.commit()
   }
 
   // 3. The member's own records.
   const mediaSnap = await db.collection('media').where('userId', '==', uid).get()
   const userRef = db.collection('users').doc(uid)
   const privateSnap = await userRef.collection('private').get()
-  const ownBatch = db.batch()
-  for (const doc of mediaSnap.docs) ownBatch.delete(doc.ref)
-  for (const doc of privateSnap.docs) ownBatch.delete(doc.ref)
-  ownBatch.delete(userRef)
-  ownBatch.delete(db.collection('foundingMembers').doc(uid))
-  await ownBatch.commit()
+  const ownRefs: FirebaseFirestore.DocumentReference[] = [
+    ...mediaSnap.docs.map((d) => d.ref),
+    ...privateSnap.docs.map((d) => d.ref),
+  ]
+  // The member's own doc and membership record go last so a failure partway
+  // through leaves a retryable account rather than orphaned media.
+  ownRefs.push(userRef, db.collection('foundingMembers').doc(uid))
+  for (let i = 0; i < ownRefs.length; i += 400) {
+    const batch = db.batch()
+    for (const ref of ownRefs.slice(i, i + 400)) batch.delete(ref)
+    await batch.commit()
+  }
 
   // 4. Real Storage files.
   try {

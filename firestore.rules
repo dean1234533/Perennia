@@ -34,7 +34,16 @@ service cloud.firestore {
     // change" and that has to be real, not just a claim in the copy.
     match /users/{uid} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == uid;
+      // A new account doc can only be created in its pristine state: not
+      // onboarded, not verified, and with no likes/matches/blocks. Without
+      // this a member could create their own doc pre-marked as verified.
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.get('onboardingComplete', false) == false
+        && request.resource.data.get('verification', {}).get('status', 'unverified') == 'unverified'
+        && request.resource.data.get('likedIds', []).size() == 0
+        && request.resource.data.get('matchedIds', []).size() == 0
+        && request.resource.data.get('blockedIds', []).size() == 0
+        && request.resource.data.get('mutedIds', []).size() == 0;
       allow update: if request.auth != null && request.auth.uid == uid
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds', 'blockedIds', 'mutedIds', 'safeMode'])
         && (
@@ -44,6 +53,18 @@ service cloud.firestore {
             'sunSign', 'moonSign', 'risingSign', 'chineseAnimal', 'chineseElement', 'yinYang'
           ])
           || !('birthCity' in resource.data) || resource.data.birthCity == ''
+        )
+        // Onboarding can only be marked complete once identity has been
+        // verified (by the server) and birth details have been confirmed,
+        // and can never be un-set by the client. Stops a member skipping the
+        // flow by writing `onboardingComplete: true` from the console.
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['onboardingComplete'])
+          || (
+            request.resource.data.onboardingComplete == true
+            && resource.data.get('verification', {}).get('status', '') == 'verified'
+            && resource.data.get('birthCity', '') != ''
+          )
         );
       allow delete: if false; // only the deleteAccount Cloud Function (Admin SDK)
     }
@@ -107,7 +128,13 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
       allow create: if request.auth != null
         && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
-        && request.resource.data.senderId == request.auth.uid;
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['id', 'senderId', 'text', 'createdAt', 'read'])
+        && request.resource.data.id == messageId
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.read == false;
       // Real read receipts: only the RECIPIENT (never the sender) can mark a
       // message read, and only that one field — they can't edit its content.
       allow update: if request.auth != null
@@ -125,7 +152,11 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null
         && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
+      // userId is immutable so an item can never be re-assigned to someone else.
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if request.auth != null
         && resource.data.userId == request.auth.uid;
     }
 
