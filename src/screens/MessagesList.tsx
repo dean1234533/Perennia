@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import {
   subscribeMyConnections,
   subscribeConversation,
-  getUserDoc,
+  getPublicProfile,
   type ConnectionDoc,
   type ConversationDoc,
   type DiscoveryCandidate,
@@ -30,7 +30,7 @@ export function MessagesList() {
       .map((m) => m.users.find((u) => u !== user.uid))
       .filter((uid): uid is string => !!uid && !profiles[uid])
     if (missing.length === 0) return
-    Promise.all(missing.map((uid) => getUserDoc(uid).then((doc) => (doc ? { uid, ...doc } : null)))).then((results) => {
+    Promise.all(missing.map((uid) => getPublicProfile(uid))).then((results) => {
       const next: Record<string, DiscoveryCandidate> = {}
       for (const r of results) if (r) next[r.uid] = r
       setProfiles((prev) => ({ ...prev, ...next }))
@@ -94,7 +94,7 @@ export function MessagesList() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1">
                     <p className="font-medium text-white">{p.name}</p>
-                    {p.verification?.status === 'verified' && <BadgeCheck className="h-3.5 w-3.5 text-gold" />}
+                    {p.verified && <BadgeCheck className="h-3.5 w-3.5 text-gold" />}
                   </div>
                   <p className={`truncate text-sm ${unread ? 'text-white/90 font-medium' : 'text-white/45'}`}>
                     {conversation?.lastMessagePreview ?? 'Say hello to start the conversation'}

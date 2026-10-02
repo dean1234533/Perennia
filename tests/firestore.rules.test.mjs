@@ -5,7 +5,7 @@
 // Run them before deploying the rules.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing'
 import { readFileSync } from 'fs'
-import { doc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 
 const env = await initializeTestEnvironment({
   projectId: 'demo-perennia',
@@ -46,6 +46,20 @@ await env.withSecurityRulesDisabled(async (ctx) => {
 await t('complete when verified + birth city', assertSucceeds(updateDoc(doc(as('v'), 'users/v'), { onboardingComplete: true })))
 await t('cannot un-complete', assertFails(updateDoc(doc(as('v'), 'users/v'), { onboardingComplete: false })))
 await t('complete without birth city blocked', assertFails(updateDoc(doc(as('nv'), 'users/nv'), { onboardingComplete: true })))
+
+// --- public profiles / private user docs ---
+await env.withSecurityRulesDisabled(async (ctx) => {
+  const fs = ctx.firestore()
+  await setDoc(doc(fs, 'users/migrated'), { ...base, email: 'm@x.com' })
+  await setDoc(doc(fs, 'publicProfiles/migrated'), { name: 'M', age: 30 })
+  await setDoc(doc(fs, 'users/legacy'), { ...base, email: 'l@x.com' })
+})
+await t('read own private doc', assertSucceeds(getDoc(doc(as('migrated'), 'users/migrated'))))
+await t('others cannot read migrated private doc', assertFails(getDoc(doc(as('a'), 'users/migrated'))))
+await t('others can read unmigrated doc (transitional)', assertSucceeds(getDoc(doc(as('a'), 'users/legacy'))))
+await t('others can read public profile', assertSucceeds(getDoc(doc(as('a'), 'publicProfiles/migrated'))))
+await t('client cannot write public profile', assertFails(setDoc(doc(as('migrated'), 'publicProfiles/migrated'), { name: 'Hacked' })))
+await t('signed-out cannot read public profile', assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'publicProfiles/migrated'))))
 
 // --- messages ---
 const msg = { id: 'x1', senderId: 'a', text: 'hi', createdAt: new Date(), read: false }

@@ -14,10 +14,9 @@ import { ProfileAstrologyIdentity } from '@/components/shared/ProfileAstrologyId
 import { ProfileAboutFacts } from '@/components/shared/ProfileAboutFacts'
 import { hasProfileAboutValues } from '@/data/profileAbout'
 import { toDisplayItem } from '@/lib/media/toDisplayItem'
-import { getConversation, getUserDoc, subscribeUserMedia, type DiscoveryCandidate, type MediaDoc } from '@/lib/firestore'
+import { getConversation, getPublicProfile, subscribeUserMedia, type DiscoveryCandidate, type MediaDoc } from '@/lib/firestore'
 import { emptySelfProfile } from '@/data/selfProfile'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
-import { calculateAge } from '@/lib/age'
 import { DEFAULT_MEDIA_CATEGORIES } from '@/data/mediaCategories'
 import type { DisplayCategory, DisplayMediaItem } from '@/types/media'
 import { subscribeFriendState, sendFriendRequest, respondToFriendRequest, unfriend, type FriendState } from '@/lib/friendsApi'
@@ -61,8 +60,7 @@ export function ProfileDetail({ previewData }: { previewData?: ProfileDetailPrev
     // `.length` read below assumes these arrays exist; this is what
     // makes that assumption actually true instead of a real accounts
     // white-screening the viewer.
-    getUserDoc(id).then((doc) => setProfile(doc ? {
-      uid: id,
+    getPublicProfile(id).then((doc) => setProfile(doc ? {
       ...doc,
       storyPrompts: doc.storyPrompts ?? [],
       profileExtras: doc.profileExtras ? { ...emptySelfProfile, ...doc.profileExtras } : null,
@@ -252,8 +250,8 @@ export function ProfileDetail({ previewData }: { previewData?: ProfileDetailPrev
             <ProfileOrbit
               photoUrl={profile.profilePhotoUrl || null}
               name={profile.name.split(' ')[0]}
-              age={calculateAge(profile.birthDate) ?? undefined}
-              verificationStatus={profile.verification?.status ?? 'unverified'}
+              age={profile.age ?? undefined}
+              verificationStatus={profile.verified ? 'verified' : 'unverified'}
               categories={orbitCategories}
               onCategorySelect={handleOrbitSelect}
               compatibility={result?.compatibility}
@@ -262,12 +260,12 @@ export function ProfileDetail({ previewData }: { previewData?: ProfileDetailPrev
             />
           </div>
           <div className="profile-hero-identity" onClick={(event) => event.stopPropagation()}>
-            <h1>{profile.name.split(' ')[0]}{calculateAge(profile.birthDate) !== null ? ` · ${calculateAge(profile.birthDate)}` : ''}</h1>
+            <h1>{profile.name.split(' ')[0]}{profile.age !== null && profile.age !== undefined ? ` · ${profile.age}` : ''}</h1>
             <div className="profile-status-badges" aria-label="Profile status">
               {isFoundingMember && <span className="profile-founding-member-badge"><Crown /> Founding Member</span>}
-              <span className={`profile-verification-badge ${profile.verification?.status === 'verified' ? 'is-verified' : 'is-pending'}`}>
-                {profile.verification?.status === 'verified' ? <ShieldCheck /> : <Shield />}
-                {profile.verification?.status === 'verified' ? 'Verified' : 'Pending verification'}
+              <span className={`profile-verification-badge ${profile.verified ? 'is-verified' : 'is-pending'}`}>
+                {profile.verified ? <ShieldCheck /> : <Shield />}
+                {profile.verified ? 'Verified' : 'Pending verification'}
               </span>
             </div>
             <div className="profile-identity-facts">

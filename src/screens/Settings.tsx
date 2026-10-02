@@ -14,7 +14,7 @@ import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
-import { getUserDoc } from '@/lib/firestore'
+import { getPublicProfile } from '@/lib/firestore'
 import type { FoundingMemberRecord } from '@/types/founding500'
 
 function Row({
@@ -109,7 +109,7 @@ export function Settings() {
     setBlockedOpen(true)
     if (!firebaseConfigured || blockedIds.length === 0) return
     setBlockedLoading(true)
-    const docs = await Promise.all(blockedIds.map((uid) => getUserDoc(uid)))
+    const docs = await Promise.all(blockedIds.map((uid) => getPublicProfile(uid)))
     setBlockedProfiles(
       docs
         .map((doc, i) => (doc ? { uid: blockedIds[i], name: doc.name || 'Unknown', photoUrl: doc.profilePhotoThumbUrl || doc.profilePhotoUrl } : null))

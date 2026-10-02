@@ -130,7 +130,7 @@ export async function deleteAccount(uid: string, stripeSecretKey: string): Promi
   ]
   // The member's own doc and membership record go last so a failure partway
   // through leaves a retryable account rather than orphaned media.
-  ownRefs.push(userRef, db.collection('foundingMembers').doc(uid))
+  ownRefs.push(userRef, db.collection('publicProfiles').doc(uid), db.collection('foundingMembers').doc(uid))
   for (let i = 0; i < ownRefs.length; i += 400) {
     const batch = db.batch()
     for (const ref of ownRefs.slice(i, i + 400)) batch.delete(ref)

@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Starfield } from '@/components/shared/Starfield'
 import { SelfAvatar } from '@/components/shared/SelfAvatar'
-import { getMatch, getUserDoc, type DiscoveryCandidate } from '@/lib/firestore'
+import { getMatch, getPublicProfile, type DiscoveryCandidate } from '@/lib/firestore'
 
 interface MatchLocationState {
   otherUid?: string
@@ -33,8 +33,8 @@ export function MatchScreen() {
         if (!cancelled) setProfile(null)
         return
       }
-      const doc = await getUserDoc(otherUid)
-      if (!cancelled) setProfile(doc ? { uid: otherUid, ...doc } : null)
+      const doc = await getPublicProfile(otherUid)
+      if (!cancelled) setProfile(doc)
     }
 
     resolve()

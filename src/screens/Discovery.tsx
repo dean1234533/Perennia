@@ -37,7 +37,6 @@ import {
   type ResolveDiscoveryArea,
   type SearchDiscoveryArea,
 } from '@/lib/discoveryAreaSearch'
-import { calculateAge } from '@/lib/age'
 import { milesBetween } from '@/lib/distance'
 import { useModalAccessibility } from '@/hooks/useModalAccessibility'
 import './Discovery.css'
@@ -127,7 +126,7 @@ export function Discovery({ previewData }: { previewData?: DiscoveryPreviewData 
     if (passedIds.includes(c.uid) || blockedIds.includes(c.uid)) return false
     if (c.incognito) return false
     if (interestedIn && c.gender !== interestedIn) return false
-    const age = calculateAge(c.birthDate)
+    const age = c.age
     if (age !== null && (age < ageMin || age > ageMax)) return false
     if (maxDistanceMiles !== null) {
       const distance = distanceTo(c)
@@ -787,7 +786,7 @@ function Identity({
   compatibilityPending: boolean
   onOpenProfile: () => void
 }) {
-  const age = calculateAge(candidate.birthDate)
+  const age = candidate.age
   const location = candidate.profileExtras?.location || [candidate.city, candidate.country].filter(Boolean).join(', ')
   return (
     <div className="discovery-identity">
@@ -797,7 +796,7 @@ function Identity({
             {candidate.name.split(' ')[0]}{age !== null ? `, ${age}` : ''}
           </button>
         </h1>
-        {candidate.verification?.status === 'verified' && <BadgeCheck aria-label="Verified profile" />}
+        {candidate.verified && <BadgeCheck aria-label="Verified profile" />}
       </div>
       {location && <p><MapPin /> {location}</p>}
       <div className="discovery-match-summary">

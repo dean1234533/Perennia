@@ -13,6 +13,7 @@ import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
+import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { onObjectFinalized } from 'firebase-functions/v2/storage'
 
 import {
@@ -45,6 +46,7 @@ import { resolveCompatibility, syncCompatibilityFromSheet } from './services/com
 import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
 import { assertEligibleMember } from './services/eligibility.service'
+import { syncPublicProfile, backfillPublicProfiles, refreshPublicProfileAges, toPublicProfile } from './services/publicProfile.service'
 import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent, refreshVerificationStatus } from './services/identity.service'
 import { sendOtp as sendBirthDetailsOtpService, verifyOtp as verifyBirthDetailsOtpService, updateBirthDetails as updateBirthDetailsService } from './services/birthDetailsReverification.service'
 import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, handleFoundingSubscriptionEnded, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
@@ -636,5 +638,39 @@ export const processVideoUpload = onObjectFinalized(
     const filePath = event.data.name
     if (!filePath.includes('/incoming.')) return
     await processUploadedVideo(filePath, event.data.bucket)
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Public profiles — `users/{uid}` is private to its owner; other members only
+// ever read `publicProfiles/{uid}`, an allow-listed projection kept in sync
+// here. See services/publicProfile.service.ts.
+// ---------------------------------------------------------------------------
+export const syncPublicProfileOnWrite = onDocumentWritten('users/{uid}', async (event) => {
+  const before = event.data?.before
+  const after = event.data?.after
+  // Most writes to a member's doc (push tokens, likes, preferences…) don't
+  // change anything public — skip those to avoid pointless writes.
+  if (before?.exists && after?.exists &&
+      JSON.stringify(toPublicProfile(before.data() ?? {})) === JSON.stringify(toPublicProfile(after.data() ?? {}))) return
+  await syncPublicProfile(event.params.uid, after?.exists ? after.data() : undefined)
+})
+
+// Admin-only, one-off: builds a public profile for every existing member.
+export const backfillPublicProfilesManual = onCall({ timeoutSeconds: 540 }, async (request) => {
+  if (!request.auth) throw unauthenticated()
+  if (request.auth.token.admin !== true) throw permissionDenied('Admin access required.')
+  try {
+    return await backfillPublicProfiles()
+  } catch (err) {
+    throw internal('Backfill failed', err)
+  }
+})
+
+// Ages roll over on birthdays with no write to the member's own document.
+export const refreshPublicProfileAgesScheduled = onSchedule(
+  { schedule: 'every day 03:00', timeoutSeconds: 540 },
+  async () => {
+    await refreshPublicProfileAges()
   }
 )

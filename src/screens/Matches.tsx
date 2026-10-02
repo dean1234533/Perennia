@@ -7,7 +7,7 @@ import { useApp } from '@/context/AppContext'
 import { CompatibilityWhyDialog } from '@/components/shared/CompatibilityWhyDialog'
 import { ConnectionHeartsIcon } from '@/components/shared/ConnectionHeartsIcon'
 import { InterestHeartsIcon } from '@/components/shared/InterestHeartsIcon'
-import { subscribeMyMatches, getUserDoc, type MatchDoc, type DiscoveryCandidate } from '@/lib/firestore'
+import { subscribeMyMatches, getPublicProfile, type MatchDoc, type DiscoveryCandidate } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
@@ -127,9 +127,9 @@ export function Matches({ previewData }: { previewData?: MatchesPreviewData } = 
     let active = true
     setProfilesPending(true)
     Promise.allSettled(missing.map(async (uid) => {
-      const profile = await getUserDoc(uid)
+      const profile = await getPublicProfile(uid)
       if (!profile) throw new Error(`Profile ${uid} is unavailable.`)
-      return { uid, profile: { uid, ...profile } as DiscoveryCandidate }
+      return { uid, profile }
     })).then((results) => {
       if (!active) return
       const nextProfiles: Record<string, DiscoveryCandidate> = {}
@@ -341,7 +341,7 @@ export function Matches({ previewData }: { previewData?: MatchesPreviewData } = 
                   <div className="absolute bottom-3 left-3 right-3">
                     <div className="flex items-center gap-1">
                       <p className="font-serif-display text-lg text-white">{p.name.split(' ')[0]}</p>
-                      {p.verification?.status === 'verified' && <BadgeCheck className="h-3.5 w-3.5 text-gold" />}
+                      {p.verified && <BadgeCheck className="h-3.5 w-3.5 text-gold" />}
                     </div>
                   </div>
                 </div>

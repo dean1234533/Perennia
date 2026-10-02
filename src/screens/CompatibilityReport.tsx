@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, LockKeyhole, Sparkles, AlertTriangle, Loader2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import { getUserDoc, type DiscoveryCandidate } from '@/lib/firestore'
+import { getPublicProfile, type DiscoveryCandidate } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { CHINESE_ANIMALS, CHINESE_ELEMENTS, CHINESE_POLARITIES } from '@/data/chineseAstrologyPresentation'
 import { ConnectionHeartsIcon } from '@/components/shared/ConnectionHeartsIcon'
@@ -91,8 +91,8 @@ export function CompatibilityReport({ previewData }: { previewData?: Compatibili
 
   useEffect(() => {
     if (previewData || !id) return
-    getUserDoc(id)
-      .then((doc) => setProfile(doc ? { uid: id, ...doc } : null))
+    getPublicProfile(id)
+      .then((doc) => setProfile(doc))
       .catch(() => setProfile(null))
   }, [id, previewData])
 

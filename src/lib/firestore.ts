@@ -195,15 +195,87 @@ export async function ensureUserDoc(uid: string, data: { name: string; email: st
   }
 }
 
+/** The viewer's OWN full document. Never use this for another member — their
+ *  `users` doc is private (email, phone, exact location, …); use
+ *  getPublicProfile instead. */
 export async function getUserDoc(uid: string): Promise<UserDoc | null> {
   const snap = await getDoc(doc(db, 'users', uid))
   return snap.exists() ? (snap.data() as UserDoc) : null
 }
 
-/** A real member's doc plus their uid — the shape used everywhere a screen
- *  shows someone OTHER than the signed-in member (Discovery, Matches,
- *  ProfileDetail, compatibility). Never fabricated client-side. */
-export type DiscoveryCandidate = UserDoc & { uid: string }
+/** What other members may see of someone: an allow-listed copy of their
+ *  `users` doc that the server keeps in `publicProfiles/{uid}` (see
+ *  functions/src/services/publicProfile.service.ts). No email, phone, legal
+ *  name, birth date, exact location, push tokens or like/block lists. */
+export type PublicProfileDoc = Pick<
+  UserDoc,
+  | 'name' | 'onboardingComplete' | 'sunSign' | 'moonSign' | 'risingSign'
+  | 'chineseAnimal' | 'chineseElement' | 'yinYang' | 'gender' | 'heightCm'
+  | 'country' | 'city' | 'religion' | 'relationshipGoal' | 'storyPrompts'
+  | 'incognito' | 'showDistance' | 'profilePhotoUrl' | 'profilePhotoThumbUrl'
+  | 'categories' | 'profileExtras'
+> & {
+  /** Whole years, computed server-side from the private birth date. */
+  age: number | null
+  verified: boolean
+  /** Rounded to ~11 km — not the member's real coordinates. */
+  currentLocationLat: number | null
+  currentLocationLon: number | null
+}
+
+/** A real member's public profile plus their uid — the shape used everywhere
+ *  a screen shows someone OTHER than the signed-in member (Discovery,
+ *  Matches, ProfileDetail, compatibility). Never fabricated client-side. */
+export type DiscoveryCandidate = PublicProfileDoc & { uid: string }
+
+function coarse(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value * 10) / 10 : null
+}
+
+function ageOf(birthDate: string | undefined): number | null {
+  if (!birthDate) return null
+  const dob = new Date(birthDate)
+  if (Number.isNaN(dob.getTime())) return null
+  const now = new Date()
+  let age = now.getUTCFullYear() - dob.getUTCFullYear()
+  const monthDiff = now.getUTCMonth() - dob.getUTCMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && now.getUTCDate() < dob.getUTCDate())) age--
+  return age
+}
+
+/** Transitional fallback for members whose `publicProfiles` doc hasn't been
+ *  created yet (before the one-off backfill has run). Builds the same shape
+ *  from a full `users` doc, dropping everything private. Once every member
+ *  has a public doc and the rules lock `users`, this is never reached. */
+function publicProfileFromUserDoc(d: Partial<UserDoc>): PublicProfileDoc {
+  return {
+    name: d.name ?? '',
+    onboardingComplete: d.onboardingComplete ?? false,
+    sunSign: d.sunSign ?? '', moonSign: d.moonSign ?? '', risingSign: d.risingSign ?? '',
+    chineseAnimal: d.chineseAnimal ?? '', chineseElement: d.chineseElement ?? '', yinYang: d.yinYang ?? '',
+    gender: d.gender ?? '', heightCm: d.heightCm ?? null,
+    country: d.country ?? '', city: d.city ?? '', religion: d.religion ?? '',
+    relationshipGoal: d.relationshipGoal ?? '', storyPrompts: d.storyPrompts ?? [],
+    incognito: d.incognito ?? false, showDistance: d.showDistance ?? true,
+    profilePhotoUrl: d.profilePhotoUrl ?? '', profilePhotoThumbUrl: d.profilePhotoThumbUrl ?? '',
+    categories: d.categories ?? [], profileExtras: d.profileExtras ?? null,
+    age: ageOf(d.birthDate), verified: d.verification?.status === 'verified',
+    currentLocationLat: coarse(d.currentLocationLat), currentLocationLon: coarse(d.currentLocationLon),
+  }
+}
+
+export async function getPublicProfile(uid: string): Promise<DiscoveryCandidate | null> {
+  const snap = await getDoc(doc(db, 'publicProfiles', uid))
+  if (snap.exists()) return { uid, ...(snap.data() as PublicProfileDoc) }
+  // Not backfilled yet — fall back to the old document (readable only until
+  // the rules lock it), reduced to the public shape.
+  try {
+    const legacy = await getDoc(doc(db, 'users', uid))
+    return legacy.exists() ? { uid, ...publicProfileFromUserDoc(legacy.data() as UserDoc) } : null
+  } catch {
+    return null
+  }
+}
 
 export function subscribeUserDoc(uid: string, cb: (data: UserDoc | null) => void) {
   return onSnapshot(doc(db, 'users', uid), (snap) => {
@@ -281,16 +353,28 @@ export async function savePushTokenRemote(uid: string, token: string) {
  *  that client-side against its own state, since Firestore can't
  *  express "not in this array" as a query. */
 export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCandidate[]> {
-  const q = query(
+  const publicSnap = await getDocs(query(
+    collection(db, 'publicProfiles'),
+    where('onboardingComplete', '==', true),
+    where('profilePhotoUrl', '!=', ''),
+    limit(50)
+  ))
+  if (!publicSnap.empty) {
+    return publicSnap.docs
+      .filter((d) => d.id !== uid)
+      .map((d) => ({ uid: d.id, ...(d.data() as PublicProfileDoc) }))
+  }
+  // No public profiles exist yet (backfill hasn't run): old behaviour,
+  // reduced to the public shape so nothing private reaches the screens.
+  const legacySnap = await getDocs(query(
     collection(db, 'users'),
     where('onboardingComplete', '==', true),
     where('profilePhotoUrl', '!=', ''),
     limit(50)
-  )
-  const snap = await getDocs(q)
-  return snap.docs
+  )).catch(() => null)
+  return (legacySnap?.docs ?? [])
     .filter((d) => d.id !== uid)
-    .map((d) => ({ uid: d.id, ...(d.data() as UserDoc) }))
+    .map((d) => ({ uid: d.id, ...publicProfileFromUserDoc(d.data() as UserDoc) }))
 }
 
 export interface MatchDoc {
