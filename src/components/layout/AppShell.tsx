@@ -146,7 +146,7 @@ export function AppShell({
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
           'app-mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 grid-cols-4 items-center border-t px-2 py-2',
-          isProfilePage ? 'border-black/10 bg-white shadow-[0_-4px_18px_rgba(20,28,48,.08)]' : 'glass-strong border-white/10'
+          isProfilePage ? 'border-white/10 bg-[#0d0c1f]' : 'glass-strong border-white/10'
         )}
         style={{
           pointerEvents: hideBottomNav ? 'none' : 'auto',
@@ -165,7 +165,7 @@ export function AppShell({
                 const isCurrent = activeNavPath ? isPreviewActive : isActive
                 return cn(
                   'relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 transition-colors',
-                  isProfilePage ? 'app-mobile-bottom-nav__item--profile' : 'text-white/55',
+                  'text-white/55',
                   isCurrent && 'app-mobile-bottom-nav__item--active drop-shadow-[0_0_8px_rgba(91,157,255,.72)]'
                 )
               }}

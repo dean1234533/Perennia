@@ -1018,10 +1018,6 @@ body {
   padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
-.app-mobile-bottom-nav__item--profile {
-  color: #334155;
-}
-
 .app-mobile-bottom-nav__item--active {
   color: #5b9dff;
 }
