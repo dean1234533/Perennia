@@ -254,3 +254,18 @@ export async function createBillingPortalSession(uid: string, secretKey: string,
     throw internal(`Failed to open billing portal: ${err instanceof Error ? err.message : String(err)}`, err)
   }
 }
+
+/** Stripe says a subscription has ended (cancelled outside the app, or after
+ *  repeated failed payments). Marks the matching member's record canceled so
+ *  RequireFoundingMembership revokes access, the same end state as in-app
+ *  cancellation. No-op if no member has that subscription or it's already
+ *  marked canceled. */
+export async function handleFoundingSubscriptionEnded(subscriptionId: string): Promise<void> {
+  const db = getFirestore()
+  const snap = await db.collection('foundingMembers').where('stripeSubscriptionId', '==', subscriptionId).get()
+  for (const doc of snap.docs) {
+    if ((doc.data() as { canceledAt?: string | null }).canceledAt) continue
+    await doc.ref.update({ canceledAt: new Date().toISOString() })
+    log.info('founding500_membership_ended_by_stripe', { uid: doc.id, subscriptionId })
+  }
+}

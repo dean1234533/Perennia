@@ -10,6 +10,7 @@
  * intentionally thin: auth checks, input validation, and wiring only.
  */
 import { initializeApp } from 'firebase-admin/app'
+import { getFirestore } from 'firebase-admin/firestore'
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { onObjectFinalized } from 'firebase-functions/v2/storage'
@@ -43,9 +44,10 @@ import { verifyBirthDetailsOtpInputSchema, updateBirthDetailsInputSchema } from 
 import { resolveCompatibility, syncCompatibilityFromSheet } from './services/compatibility.service'
 import { recordLike } from './repositories/matching.repository'
 import { assertWithinRateLimit } from './services/rateLimit.service'
+import { assertEligibleMember } from './services/eligibility.service'
 import { createVerificationSession, confirmVerificationDetails, constructWebhookEvent, handleVerificationWebhookEvent, refreshVerificationStatus } from './services/identity.service'
 import { sendOtp as sendBirthDetailsOtpService, verifyOtp as verifyBirthDetailsOtpService, updateBirthDetails as updateBirthDetailsService } from './services/birthDetailsReverification.service'
-import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
+import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, handleFoundingCheckoutCompleted, handleFoundingSubscriptionEnded, cancelMembership, createBillingPortalSession as createBillingPortalSessionService } from './services/founding500.service'
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc, getMemberRecord } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { deleteAccount as deleteAccountService } from './services/account.service'
@@ -101,6 +103,8 @@ export const getCompatibility = onCall(
     if (!request.auth) {
       throw unauthenticated('Sign in to check compatibility.')
     }
+
+    await assertEligibleMember(request.auth.uid)
 
     await assertWithinRateLimit(
       request.auth.uid,
@@ -303,6 +307,16 @@ export const stripeIdentityWebhook = onRequest(
         webhookSecret: stripeWebhookSecret.value(),
       })
 
+      // Stripe retries and can deliver events twice or out of order; skip any
+      // event we've already finished processing so a retry can't, say,
+      // confirm a membership twice. Recorded only AFTER success so a failed
+      // attempt is still retried.
+      const processedRef = getFirestore().collection('stripeEvents').doc(event.id)
+      if ((await processedRef.get()).exists) {
+        response.status(200).send('already processed')
+        return
+      }
+
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as { metadata?: Record<string, string> }
         if (session.metadata?.founding500 === 'true') {
@@ -311,10 +325,19 @@ export const stripeIdentityWebhook = onRequest(
             stripeSecretKey.value()
           )
         }
+      } else if (event.type === 'customer.subscription.deleted') {
+        // Cancelled in the Stripe dashboard/portal or after failed payments:
+        // revoke membership here too, not just on in-app cancellation.
+        await handleFoundingSubscriptionEnded((event.data.object as { id: string }).id)
+      } else if (event.type === 'invoice.payment_failed' || event.type === 'charge.dispute.created' || event.type === 'charge.refunded') {
+        // Needs a product decision (grace period / refund policy) before it
+        // changes access; flag loudly for a human to reconcile for now.
+        log.error('stripe_billing_event_needs_review', { type: event.type, eventId: event.id })
       } else {
         await handleVerificationWebhookEvent(event, stripeSecretKey.value())
       }
 
+      await processedRef.set({ type: event.type, processedAt: new Date().toISOString() })
       response.status(200).send('ok')
     } catch (err) {
       log.error('stripe_webhook_failed', { message: err instanceof Error ? err.message : String(err) })
@@ -424,6 +447,8 @@ export const likeUser = onCall({ cors: true }, async (request) => {
     throw invalidArgument('You cannot like yourself.')
   }
 
+  await assertEligibleMember(request.auth.uid)
+
   await assertWithinRateLimit(
     request.auth.uid,
     Number(likeRateLimitMaxRequests.value()),
@@ -466,6 +491,9 @@ export const reportUser = onCall({ cors: true }, async (request) => {
   if (!request.auth) throw unauthenticated('Sign in required.')
   const parsed = likeUserInputSchema.safeParse(request.data)
   if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  // Reporting must always stay available, so no eligibility gate — but cap
+  // it so it can't be used to flood the moderation queue.
+  await assertWithinRateLimit(request.auth.uid, 10, 3600, 'report')
   await reportUserService(request.auth.uid, parsed.data.targetUid)
   return { reported: true as const }
 })
@@ -474,6 +502,7 @@ export const sendFriendRequest = onCall({ cors: true }, async (request) => {
   if (!request.auth) throw unauthenticated('Sign in required.')
   const parsed = likeUserInputSchema.safeParse(request.data)
   if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await assertEligibleMember(request.auth.uid)
   await sendFriendRequestService(request.auth.uid, parsed.data.targetUid)
   return { sent: true as const }
 })

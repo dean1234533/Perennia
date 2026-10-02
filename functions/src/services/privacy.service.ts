@@ -60,6 +60,15 @@ export async function unblockUser(uid: string, targetUid: string): Promise<void>
 }
 
 export async function reportUser(reporterUid: string, targetUid: string): Promise<void> {
+  // One open report per reporter/target pair — repeat taps shouldn't create
+  // duplicate moderation work.
+  const existing = await getFirestore().collection('reports')
+    .where('reporterUid', '==', reporterUid)
+    .where('targetUid', '==', targetUid)
+    .where('status', '==', 'submitted')
+    .limit(1)
+    .get()
+  if (!existing.empty) return
   await getFirestore().collection('reports').add({
     reporterUid,
     targetUid,

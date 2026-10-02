@@ -121,7 +121,15 @@ service cloud.firestore {
     // shared messages, and only ever as themselves as sender.
     match /conversations/{conversationId} {
       allow read: if request.auth != null && request.auth.uid in resource.data.participants;
-      allow write: if false;
+      // A participant may only refresh the inbox preview (last message
+      // time/text/sender) after sending, and only as themselves.
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt', 'lastMessagePreview', 'lastMessageSenderId'])
+        && request.resource.data.lastMessageSenderId == request.auth.uid
+        && (request.resource.data.lastMessagePreview == null
+            || (request.resource.data.lastMessagePreview is string && request.resource.data.lastMessagePreview.size() <= 140));
+      allow create, delete: if false;
     }
     match /conversations/{conversationId}/messages/{messageId} {
       allow read: if request.auth != null
@@ -150,12 +158,18 @@ service cloud.firestore {
     // variants via the Admin SDK, which bypasses these rules entirely.
     match /media/{mediaId} {
       allow read: if request.auth != null;
+      // A new video must start as 'processing' with no variants — only the
+      // processing function (Admin SDK) can mark it ready, so a member can't
+      // publish an unprocessed upload by writing `processingStatus: 'ready'`.
       allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      // userId is immutable so an item can never be re-assigned to someone else.
+        && request.resource.data.userId == request.auth.uid
+        && (request.resource.data.type != 'video'
+            || (request.resource.data.processingStatus == 'processing' && !('video' in request.resource.data)));
+      // Owners may only edit the caption, category and order of an item;
+      // ownership, type, URLs and processing state are immutable to them.
       allow update: if request.auth != null
         && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == resource.data.userId;
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['caption', 'category', 'order']);
       allow delete: if request.auth != null
         && resource.data.userId == request.auth.uid;
     }
