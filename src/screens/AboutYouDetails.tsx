@@ -1,38 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, BriefcaseBusiness, ChevronDown, GraduationCap, Languages, Loader2, Search, X } from 'lucide-react'
+import { BriefcaseBusiness, ChevronDown, GraduationCap, Languages, Loader2, Search, X } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Select } from '@/components/ui/select'
 import { useApp } from '@/context/AppContext'
-
-const EDUCATION_OPTIONS = [
-  'Secondary School',
-  'College / Sixth Form',
-  'Apprenticeship / Vocational',
-  'Undergraduate Degree',
-  'Postgraduate Degree',
-  'Doctorate / PhD',
-  'Other',
-  'Prefer not to say',
-]
-
-const LANGUAGE_OPTIONS = [
-  'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Dutch',
-  'Polish', 'Romanian', 'Greek', 'Russian', 'Ukrainian', 'Arabic', 'Hebrew',
-  'Turkish', 'Persian', 'Hindi', 'Urdu', 'Bengali', 'Punjabi', 'Mandarin Chinese',
-  'Cantonese', 'Japanese', 'Korean', 'Vietnamese', 'Thai', 'Indonesian',
-  'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Irish', 'Welsh', 'Swahili',
-  'British Sign Language', 'American Sign Language',
-]
+import { EDUCATION_OPTIONS, LANGUAGE_OPTIONS } from '@/data/onboardingOptions'
+import { getOnboardingStep } from '@/lib/onboardingFlow'
 
 export function AboutYouDetails() {
   const { profileLoaded } = useApp()
   return (
-    <OnboardingShell step={8} totalSteps={12}>
+    <OnboardingShell>
       {!profileLoaded ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <AboutYouForm />}
     </OnboardingShell>
   )
@@ -40,25 +22,46 @@ export function AboutYouDetails() {
 
 function AboutYouForm() {
   const navigate = useNavigate()
-  const { onboarding, updateOnboarding, profileExtras, updateProfileExtras } = useApp()
+  const { onboarding, saveOnboarding, profileExtras, saveProfileExtras } = useApp()
   const [profession, setProfession] = useState(profileExtras.profession)
   const [hideProfession, setHideProfession] = useState(profileExtras.profession === 'Prefer not to say')
   const [education, setEducation] = useState(profileExtras.education)
   const [languages, setLanguages] = useState(profileExtras.languages)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const professionComplete = hideProfession || profession.trim().length > 0
+  const educationComplete = EDUCATION_OPTIONS.some((option) => option === education)
+  const languagesComplete = languages.length > 0 &&
+    new Set(languages).size === languages.length &&
+    languages.every((language) => LANGUAGE_OPTIONS.some((option) => option === language))
+  const canContinue = professionComplete && educationComplete && languagesComplete
+  const continueLabel = !professionComplete
+    ? 'Complete your profession'
+    : !educationComplete
+      ? 'Choose your education'
+      : !languagesComplete
+        ? 'Choose at least one language'
+        : 'Continue'
 
   const handleContinue = async () => {
+    if (!canContinue) return
     setSaving(true)
-    await updateProfileExtras({
-      ...profileExtras,
-      profession: hideProfession ? 'Prefer not to say' : profession.trim(),
-      education,
-      languages,
-      location: profileExtras.location || [onboarding.city, onboarding.country].filter(Boolean).join(', '),
-    })
-    updateOnboarding({ aboutYouCompletedAt: new Date().toISOString() })
-    setSaving(false)
-    navigate('/profile-photo')
+    setError('')
+    try {
+      await saveProfileExtras({
+        ...profileExtras,
+        profession: hideProfession ? 'Prefer not to say' : profession.trim(),
+        education,
+        languages,
+        location: profileExtras.location || [onboarding.city, onboarding.country].filter(Boolean).join(', '),
+      })
+      await saveOnboarding({ aboutYouCompletedAt: new Date().toISOString() })
+      navigate(getOnboardingStep('aboutYou').nextRoute!)
+    } catch {
+      setError('Could not save your profile details. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -67,6 +70,8 @@ function AboutYouForm() {
       transition={{ duration: .55, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-xl pb-4"
     >
+      <OnboardingBackButton to={getOnboardingStep('aboutYou').previousRoute!} className="mb-5" />
+
       <header className="mb-7 text-center">
         <h1 className="font-serif-display bg-gradient-to-r from-blue-200 via-white to-violet-200 bg-clip-text text-4xl text-transparent sm:text-5xl">About You</h1>
         <p className="mt-2 text-sm text-white/75 sm:text-base">Tell us a little more about your everyday life.</p>
@@ -119,9 +124,18 @@ function AboutYouForm() {
           </section>
         </div>
 
-        <Button size="lg" className="about-you-continue-button mt-9 w-full" onClick={handleContinue} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continue <ArrowRight className="h-4 w-4" /></>}
-        </Button>
+        {error && <p role="alert" className="mt-6 text-center text-sm text-rose-300">{error}</p>}
+
+        <OnboardingPrimaryButton
+          className="mt-9 w-full"
+          disabled={!canContinue || saving}
+          loading={saving}
+          loadingLabel="Saving…"
+          showArrow={canContinue}
+          onClick={handleContinue}
+        >
+          {continueLabel}
+        </OnboardingPrimaryButton>
         <p className="mt-4 text-center text-xs text-white/35">You can update this information later from your profile.</p>
       </div>
     </motion.main>

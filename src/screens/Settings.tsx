@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   User, Bell, Shield, Sparkles, LogOut, ChevronRight, Eye, MapPin, Heart, X, Check, Crown,
   SlidersHorizontal, Images, KeyRound, Trash2, AlertTriangle, Loader2, UserRoundX, Ban, Flag, BadgeHelp,
@@ -59,6 +59,7 @@ function Row({
 }
 
 export function Settings() {
+  const shouldReduceMotion = useReducedMotion()
   const navigate = useNavigate()
   const location = useLocation()
   const { setAuthenticated, onboarding, updateOnboarding, blockedIds, unblockProfile } = useApp()
@@ -101,8 +102,8 @@ export function Settings() {
       setSafetyOpen(true)
       return
     }
-    window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
-  }, [location.hash])
+    window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth', block: 'center' }), 0)
+  }, [location.hash, shouldReduceMotion])
 
   const openBlockedUsers = async () => {
     setBlockedOpen(true)

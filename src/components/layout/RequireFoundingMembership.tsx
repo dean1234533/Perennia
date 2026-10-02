@@ -6,25 +6,12 @@ import { useApp } from '@/context/AppContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { subscribeFoundingMembership } from '@/lib/founding500'
 import type { FoundingMemberRecord } from '@/types/founding500'
-import { MIN_ONBOARDING_INTERESTS } from '@/data/interests'
-import { isNotSureGoalExpired, NOT_SURE_GOAL } from '@/data/relationshipGoals'
+import { calculateOnboardingProgress } from '@/lib/onboardingFlow'
 
 interface MembershipState {
   uid: string
   record: FoundingMemberRecord | null
 }
-
-const RESUMABLE_ONBOARDING_PATHS = new Set([
-  '/verify',
-  '/birth-details',
-  '/preferences',
-  '/relationship-goals',
-  '/interests',
-  '/about-you',
-  '/profile-photo',
-  '/your-story',
-  '/cosmic-profile',
-])
 
 /** Perennia is a paid, Founding-500-gated app: every real screen behind
  *  this guard requires (1) a real signed-in account and (2) a real
@@ -89,37 +76,16 @@ export function RequireFoundingMembership({ children }: { children: ReactNode })
   // could pay (or merely reach the payment page), skip straight to
   // /discovery by URL, and never confirm birth details, profile info, etc.
   if (!onboardingComplete) {
-    // Required prerequisites take priority over a saved route, protecting
-    // against stale/tampered progress while still allowing exact resumption
-    // once everything before that saved screen is valid.
-    if (onboarding.verification.status !== 'verified' || !onboarding.verification.detailsConfirmedAt) {
-      return <Navigate to="/verify" replace />
-    }
-    if (!onboarding.birthCity || !onboarding.country || !onboarding.city) {
-      return <Navigate to="/birth-details" replace />
-    }
-    if (!onboarding.gender) {
-      return <Navigate to="/preferences" replace />
-    }
-    if (
-      !onboarding.relationshipGoal ||
-      (onboarding.relationshipGoal === NOT_SURE_GOAL && isNotSureGoalExpired(onboarding.relationshipGoalSelectedAt))
-    ) {
-      return <Navigate to="/relationship-goals" replace />
-    }
-    if ((profileExtras.interests ?? []).length < MIN_ONBOARDING_INTERESTS || !profileExtras.lifestyleVibe) {
-      return <Navigate to="/interests" replace />
-    }
-    if (!onboarding.aboutYouCompletedAt) {
-      return <Navigate to="/about-you" replace />
-    }
-    if (!onboarding.profilePhotoUrl) {
-      return <Navigate to="/profile-photo" replace />
-    }
-    if (RESUMABLE_ONBOARDING_PATHS.has(onboarding.onboardingResumePath)) {
-      return <Navigate to={onboarding.onboardingResumePath} replace />
-    }
-    return <Navigate to="/cosmic-profile" replace />
+    const progress = calculateOnboardingProgress({
+      onboarding,
+      profileExtras,
+      user,
+      profileLoaded,
+      onboardingComplete,
+      backendConfigured: true,
+      localPreviewBypassEnabled: false,
+    })
+    return <Navigate to={progress.earliestIncompleteStep?.route ?? '/cosmic-profile'} replace />
   }
 
   if (!membershipState || membershipState.uid !== user.uid) {

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Open to exploring</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="23" cy="25" r="17" stroke="#69D5FF" stroke-width="2.3"/>
+    <path d="m28.8 18.2-3.2 8.4-8.4 3.2 3.2-8.4z" stroke="#EAF3FF" stroke-width="2.3"/>
+    <circle cx="23" cy="24" r="1.4" fill="#E5B85C" stroke="none"/>
+    <path d="M39 6v7M35.5 9.5h7" stroke="#E5B85C" stroke-width="2.1"/>
+  </g>
+</svg>

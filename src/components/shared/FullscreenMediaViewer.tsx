@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react'
-import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { motion, AnimatePresence, useMotionValue, useReducedMotion } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import type { DisplayMediaItem } from '@/types/media'
 import { cn } from '@/lib/utils'
 import { useApp } from '@/context/AppContext'
+import { useModalAccessibility } from '@/hooks/useModalAccessibility'
 
 interface FullscreenMediaViewerProps {
   items: DisplayMediaItem[]
@@ -24,41 +25,26 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
   // that mobile browsers' shifting toolbar can push off-screen.
   const [controlsVisible, setControlsVisible] = useState(false)
   const dragX = useMotionValue(0)
+  const shouldReduceMotion = useReducedMotion()
   const { setHideBottomNav } = useApp()
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const item = items[index]
 
   const goNext = useCallback(() => {
+    if (items.length <= 1) return
     setZoomed(false)
     setIndex((i) => (i + 1) % items.length)
   }, [items.length])
 
   const goPrev = useCallback(() => {
+    if (items.length <= 1) return
     setZoomed(false)
     setIndex((i) => (i - 1 + items.length) % items.length)
   }, [items.length])
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') goNext()
-      if (e.key === 'ArrowLeft') goPrev()
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose, goNext, goPrev])
-
-  // Lock background scroll while the viewer is open — otherwise scrolling
-  // the page behind it toggles the mobile browser's collapsible toolbar,
-  // which keeps changing the real visible viewport height and made the
-  // bottom action bar (delete button) flicker in and out of view.
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prevOverflow
-    }
-  }, [])
+  useModalAccessibility({ open: Boolean(item), dialogRef, onClose })
 
   // Hide the app's bottom nav while this overlay is open, restore it when
   // the viewer closes (unmounts).
@@ -77,6 +63,17 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
     if (index >= items.length) setIndex(items.length - 1)
   }, [items.length, index, onClose])
 
+  useEffect(() => {
+    if (item?.type !== 'video') return
+    const video = videoRef.current
+    if (!video) return
+    if (shouldReduceMotion) {
+      video.pause()
+      return
+    }
+    void video.play().catch(() => undefined)
+  }, [item?.id, item?.type, shouldReduceMotion])
+
   if (!item) return null
 
   const handleDelete = () => {
@@ -86,19 +83,35 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
 
   return (
     <motion.div
+      ref={dialogRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex h-[100dvh] flex-col bg-black/90 backdrop-blur-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Full-screen media viewer"
+      data-modal-surface
+      tabIndex={-1}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowRight') goNext()
+        if (event.key === 'ArrowLeft') goPrev()
+      }}
     >
       {/* Top bar — normal flow, always gets its own space */}
       <div className="z-10 flex shrink-0 items-center justify-between p-5">
-        <span className="glass-strong rounded-full px-3.5 py-1.5 text-xs text-white/80">
+        <span aria-hidden="true" className="glass-strong rounded-full px-3.5 py-1.5 text-xs text-white/80">
           {index + 1} / {items.length}
         </span>
+        <span className="sr-only" aria-live="polite">
+          {item.type === 'video' ? 'Video' : 'Image'} {index + 1} of {items.length}
+        </span>
         <button
+          type="button"
+          data-modal-initial-focus
           onClick={onClose}
           className="glass-strong flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition-colors hover:text-white cursor-pointer"
+          aria-label="Close media viewer"
         >
           <X className="h-4.5 w-4.5" />
         </button>
@@ -110,14 +123,20 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
       <div className="relative min-h-0 flex-1">
         {/* Prev / next arrows (desktop) */}
         <button
+          type="button"
           onClick={(e) => { e.stopPropagation(); goPrev() }}
-          className="glass-strong absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer"
+          disabled={items.length <= 1}
+          aria-label="Previous media"
+          className="glass-strong absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer disabled:cursor-not-allowed disabled:opacity-35"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
         <button
+          type="button"
           onClick={(e) => { e.stopPropagation(); goNext() }}
-          className="glass-strong absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer"
+          disabled={items.length <= 1}
+          aria-label="Next media"
+          className="glass-strong absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/70 hover:text-white md:flex cursor-pointer disabled:cursor-not-allowed disabled:opacity-35"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -144,10 +163,11 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
           >
             {item.type === 'video' ? (
               <video
+                ref={videoRef}
                 src={item.url}
                 poster={item.thumbnailUrl}
                 controls
-                autoPlay
+                autoPlay={!shouldReduceMotion}
                 muted
                 playsInline
                 className="h-full max-w-full rounded-2xl object-contain shadow-2xl"
@@ -228,6 +248,7 @@ export function FullscreenMediaViewer({ items, initialIndex, onClose, onDelete }
                       whileTap={{ scale: 0.85 }}
                       onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true) }}
                       className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white/60 hover:text-rose-300 cursor-pointer"
+                      aria-label="Delete current media"
                     >
                       <Trash2 className="h-4 w-4" />
                     </motion.button>

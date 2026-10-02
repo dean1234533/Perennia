@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { MapPin, Loader2, Check, ChevronDown } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ function distanceLabel(miles: number | null) {
  *  filter drawer and Profile > Matching Preferences in Settings so there's
  *  one real source of truth, not two out-of-sync copies. */
 export function MatchingPreferencesPanel({ onSaved, actionButtonClassName }: { onSaved?: () => void; actionButtonClassName?: string }) {
+  const shouldReduceMotion = useReducedMotion()
   const { user } = useAuth()
   const { onboarding, updatePreferences } = useApp()
   const [ageMin, setAgeMin] = useState(onboarding.preferences.ageMin)
@@ -129,7 +130,12 @@ export function MatchingPreferencesPanel({ onSaved, actionButtonClassName }: { o
           <ChevronDown className={`h-4 w-4 transition-transform ${moreFiltersOpen ? 'rotate-180' : ''}`} />
         </button>
         {moreFiltersOpen && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 flex flex-col gap-4 overflow-hidden">
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            transition={shouldReduceMotion ? { duration: 0 } : undefined}
+            className="mt-4 flex flex-col gap-4 overflow-hidden"
+          >
             <div className="flex flex-col gap-2">
               <Label>Relationship Goal</Label>
               <div className="flex flex-wrap gap-2">

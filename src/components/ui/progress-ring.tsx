@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 interface ProgressRingProps {
   value: number
@@ -17,6 +17,7 @@ export function ProgressRing({
   sublabel,
   color = '#d4af6a',
 }: ProgressRingProps) {
+  const shouldReduceMotion = useReducedMotion()
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const offset = circumference - (value / 100) * circumference
@@ -48,9 +49,9 @@ export function ProgressRing({
           fill="none"
           strokeLinecap="round"
           strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
+          initial={shouldReduceMotion ? false : { strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">

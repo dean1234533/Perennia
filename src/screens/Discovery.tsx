@@ -1,100 +1,99 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-motion'
 import {
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
   BadgeCheck,
-  Droplets,
-  Flame,
-  Gem,
-  Heart,
-  Leaf,
+  Check,
+  Crown,
+  LockKeyhole,
   Loader2,
   MapPin,
-  Mountain,
+  Pause,
+  Play,
   SlidersHorizontal,
   Sparkles,
+  UserRound,
   X,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { MatchingPreferencesPanel } from '@/components/shared/MatchingPreferencesPanel'
+import { InterestHeartsIcon, type InterestHeartState } from '@/components/shared/InterestHeartsIcon'
+import { Switch } from '@/components/ui/switch'
+import { profileAstrologyAsset } from '@/data/profileAstrologyAssets'
 import { fetchDiscoveryCandidates, getPrivateLifestyle, type DiscoveryCandidate, type PrivateLifestyle } from '@/lib/firestore'
 import { getCompatibility, type CompatibilityResult, type PersonBirthProfile } from '@/lib/compatibilityApi'
 import { subscribeFoundingMembership } from '@/lib/founding500'
-import { firebaseConfigured } from '@/lib/firebase'
+import type { FoundingMemberRecord } from '@/types/founding500'
+import { geocodeLocation } from '@/lib/geocodeApi'
+import {
+  DISCOVERY_SEARCH_RADII,
+  DiscoveryAreaSearchUnavailableError,
+  searchDiscoveryAreaCandidates,
+  type DiscoveryAreaSearchItem,
+  type DiscoverySearchRadiusMiles,
+  type ResolvedDiscoveryArea,
+  type ResolveDiscoveryArea,
+  type SearchDiscoveryArea,
+} from '@/lib/discoveryAreaSearch'
 import { calculateAge } from '@/lib/age'
 import { milesBetween } from '@/lib/distance'
+import { useModalAccessibility } from '@/hooks/useModalAccessibility'
 import './Discovery.css'
 
-const MINIMUM_COMPATIBILITY = 80
-
-const zodiacGlyphs: Record<string, string> = {
-  aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋', leo: '♌', virgo: '♍',
-  libra: '♎', scorpio: '♏', sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓',
+export interface DiscoveryPreviewData {
+  candidates: DiscoveryCandidate[]
+  scores: Record<string, CompatibilityResult>
+  lifestyles?: Record<string, PrivateLifestyle | null>
+  mediaByCandidate?: Record<string, DiscoveryFeedMedia>
+  interestStates?: Record<string, InterestHeartState>
+  isPremium?: boolean
+  resolveArea?: ResolveDiscoveryArea
+  searchArea?: SearchDiscoveryArea
+  initialAreaDialogOpen?: boolean
+  onPremiumUpgrade?: (path: string) => void
+  onViewProfile?: (profile: DiscoveryCandidate) => void
 }
 
-const chineseAnimalGlyphs: Record<string, string> = {
-  rat: '🐀', ox: '🐂', tiger: '🐅', rabbit: '🐇', dragon: '🐉', snake: '🐍',
-  horse: '🐎', goat: '🐐', sheep: '🐑', monkey: '🐒', rooster: '🐓', dog: '🐕', pig: '🐖',
+export interface DiscoveryFeedMedia {
+  type: 'image' | 'video'
+  url: string
+  poster?: string
 }
 
-function AstrologyChip({ icon, value, label, tone = 'violet' }: { icon: ReactNode; value: string; label: string; tone?: 'blue' | 'gold' | 'violet' | 'silver' }) {
-  return (
-    <div className={`discovery-astro-chip discovery-astro-chip--${tone}`}>
-      <span className="discovery-astro-icon" aria-hidden="true">{icon}</span>
-      <span className="discovery-astro-copy">
-        <strong>{value}</strong>
-        <small>{label}</small>
-      </span>
-    </div>
-  )
-}
-
-function WesternChip({ sign, label, tone }: { sign: string; label: string; tone: 'blue' | 'gold' | 'violet' }) {
-  const glyph = zodiacGlyphs[sign.trim().toLowerCase()] ?? '✦'
-  return <AstrologyChip icon={glyph} value={sign} label={label} tone={tone} />
-}
-
-function ElementIcon({ element }: { element: string }) {
-  const key = element.trim().toLowerCase()
-  if (key === 'wood') return <Leaf />
-  if (key === 'fire') return <Flame />
-  if (key === 'earth') return <Mountain />
-  if (key === 'metal') return <Gem />
-  return <Droplets />
-}
-
-function PolarityIcon() {
-  return <span className="discovery-yinyang">◐</span>
-}
-
-export function Discovery() {
+export function Discovery({ previewData }: { previewData?: DiscoveryPreviewData } = {}) {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { passedIds, likedIds, matchedIds, blockedIds, onboarding, likeProfile, passProfile } = useApp()
-  const [filter, setFilter] = useState<'all' | 'nearby'>('all')
+  const { passedIds, likedIds, matchedIds, blockedIds, onboarding, likeProfile } = useApp()
+  const [discoveryMode, setDiscoveryMode] = useState<'all' | 'area'>('all')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
-  const [loadingCandidates, setLoadingCandidates] = useState(true)
-  const [scores, setScores] = useState<Record<string, CompatibilityResult>>({})
+  const [areaDialogOpen, setAreaDialogOpen] = useState(previewData?.initialAreaDialogOpen ?? false)
+  const [areaQuery, setAreaQuery] = useState('')
+  const [resolvedArea, setResolvedArea] = useState<ResolvedDiscoveryArea | null>(null)
+  const [activeArea, setActiveArea] = useState<ResolvedDiscoveryArea | null>(null)
+  const [radiusMiles, setRadiusMiles] = useState<DiscoverySearchRadiusMiles>(25)
+  const [highCompatibilityOnly, setHighCompatibilityOnly] = useState(false)
+  const [areaItems, setAreaItems] = useState<DiscoveryAreaSearchItem[]>([])
+  const [areaStatus, setAreaStatus] = useState<'idle' | 'resolving' | 'searching' | 'error'>('idle')
+  const [areaError, setAreaError] = useState('')
+  const [candidates, setCandidates] = useState<DiscoveryCandidate[]>(previewData?.candidates ?? [])
+  const [loadingCandidates, setLoadingCandidates] = useState(!previewData)
+  const [scores, setScores] = useState<Record<string, CompatibilityResult>>(previewData?.scores ?? {})
   const [failedUids, setFailedUids] = useState<Set<string>>(new Set())
-  const [lifestyles, setLifestyles] = useState<Record<string, PrivateLifestyle | null>>({})
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [direction, setDirection] = useState<1 | -1>(1)
-  const [actionPending, setActionPending] = useState(false)
-  const [isPremium, setIsPremium] = useState(false)
-  const touchStartY = useRef<number | null>(null)
-  const wheelLockedUntil = useRef(0)
+  const [lifestyles, setLifestyles] = useState<Record<string, PrivateLifestyle | null>>(previewData?.lifestyles ?? {})
+  const [actionPendingUid, setActionPendingUid] = useState<string | null>(null)
+  const [previewInterestStates, setPreviewInterestStates] = useState<Record<string, InterestHeartState>>(previewData?.interestStates ?? {})
+  const [membership, setMembership] = useState<FoundingMemberRecord | null>(null)
 
   useEffect(() => {
-    if (!firebaseConfigured || !user) return
-    return subscribeFoundingMembership(user.uid, (record) => setIsPremium(record?.tier === 'premium'))
-  }, [user])
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [])
 
   useEffect(() => {
+    if (previewData) return
     if (!user) return
     let cancelled = false
     fetchDiscoveryCandidates(user.uid)
@@ -106,7 +105,12 @@ export function Discovery() {
         if (!cancelled) setLoadingCandidates(false)
       })
     return () => { cancelled = true }
-  }, [user])
+  }, [previewData, user])
+
+  useEffect(() => {
+    if (previewData || !user) return
+    return subscribeFoundingMembership(user.uid, setMembership)
+  }, [previewData, user])
 
   const interestedIn = onboarding.gender === 'male' ? 'female' : onboarding.gender === 'female' ? 'male' : null
   const { ageMin, ageMax, maxDistanceMiles, relationshipGoal, wantsChildren, religion } = onboarding.preferences
@@ -120,7 +124,7 @@ export function Discovery() {
   }
 
   const eligible = candidates.filter((c) => {
-    if (passedIds.includes(c.uid) || likedIds.includes(c.uid) || matchedIds.includes(c.uid) || blockedIds.includes(c.uid)) return false
+    if (passedIds.includes(c.uid) || blockedIds.includes(c.uid)) return false
     if (c.incognito) return false
     if (interestedIn && c.gender !== interestedIn) return false
     const age = calculateAge(c.birthDate)
@@ -139,6 +143,7 @@ export function Discovery() {
   })
 
   useEffect(() => {
+    if (previewData) return
     if (!wantsChildren) return
     const toFetch = eligible.filter((c) => !(c.uid in lifestyles)).slice(0, 30)
     if (toFetch.length === 0) return
@@ -148,7 +153,7 @@ export function Discovery() {
     })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wantsChildren, eligible.map((c) => c.uid).join(',')])
+  }, [previewData, wantsChildren, eligible.map((c) => c.uid).join(',')])
 
   const selfChartComplete = Boolean(
     onboarding.sunSign && onboarding.moonSign && onboarding.risingSign &&
@@ -157,8 +162,12 @@ export function Discovery() {
 
   const hasCompleteChart = (c: DiscoveryCandidate) =>
     !!(c.sunSign && c.moonSign && c.risingSign && c.chineseAnimal && c.chineseElement && c.yinYang)
+  const scoreResolutionKey = eligible
+    .map((candidate) => `${candidate.uid}:${scores[candidate.uid] ? 'ready' : failedUids.has(candidate.uid) ? 'failed' : 'pending'}`)
+    .join('|')
 
   useEffect(() => {
+    if (previewData) return
     if (!selfChartComplete) return
     const toFetch = eligible.filter((c) => hasCompleteChart(c) && !(c.uid in scores) && !failedUids.has(c.uid)).slice(0, 20)
     if (toFetch.length === 0) return
@@ -200,186 +209,292 @@ export function Discovery() {
     })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligible.map((c) => c.uid).join(','), selfChartComplete, onboarding.sunSign, onboarding.moonSign, onboarding.risingSign, onboarding.chineseAnimal, onboarding.chineseElement, onboarding.yinYang])
+  }, [previewData, scoreResolutionKey, selfChartComplete, onboarding.sunSign, onboarding.moonSign, onboarding.risingSign, onboarding.chineseAnimal, onboarding.chineseElement, onboarding.yinYang])
 
-  const visible = eligible
-    .filter((c) => scores[c.uid]?.compatibility >= MINIMUM_COMPATIBILITY)
-    .map((c) => ({ ...c, compatibility: scores[c.uid].compatibility, distance: distanceTo(c) }))
+  const allVisible = eligible
+    .map((c) => ({ ...c, compatibility: scores[c.uid]?.compatibility ?? null, distance: distanceTo(c) }))
     .sort((a, b) => {
-      if (filter === 'nearby' && a.distance !== null && b.distance !== null) return a.distance - b.distance
-      return b.compatibility - a.compatibility
+      if (a.distance === null && b.distance === null) return 0
+      if (a.distance === null) return 1
+      if (b.distance === null) return -1
+      return a.distance - b.distance
     })
 
-  const loading = loadingCandidates || (
-    eligible.length > 0 && selfChartComplete && visible.length === 0 &&
-    eligible.some((c) => hasCompleteChart(c) && !failedUids.has(c.uid) && !scores[c.uid])
-  )
+  const areaVisible = areaItems
+    .map((item) => ({
+      ...item.candidate,
+      compatibility: item.compatibility?.compatibility ?? null,
+      distance: item.distanceMiles,
+    }))
+    .sort((a, b) => highCompatibilityOnly
+      ? (b.compatibility ?? -1) - (a.compatibility ?? -1) || (a.distance ?? Number.POSITIVE_INFINITY) - (b.distance ?? Number.POSITIVE_INFINITY)
+      : (a.distance ?? Number.POSITIVE_INFINITY) - (b.distance ?? Number.POSITIVE_INFINITY))
 
-  useEffect(() => {
-    setActiveIndex((current) => Math.min(current, Math.max(visible.length - 1, 0)))
-  }, [visible.length])
+  const visible = discoveryMode === 'area' ? areaVisible : allVisible
+  const isPremium = previewData?.isPremium ?? (membership?.tier === 'premium' && !membership.canceledAt)
 
-  const goToProfile = useCallback((step: 1 | -1) => {
-    setDirection(step)
-    setActiveIndex((current) => Math.max(0, Math.min(visible.length - 1, current + step)))
-  }, [visible.length])
+  const loading = loadingCandidates
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (filterOpen || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return
-      if (event.key === 'ArrowDown' || event.key === 'PageDown') {
-        event.preventDefault()
-        goToProfile(1)
-      }
-      if (event.key === 'ArrowUp' || event.key === 'PageUp') {
-        event.preventDefault()
-        goToProfile(-1)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [filterOpen, goToProfile])
-
-  const active = visible[activeIndex]
-
-  function onWheel(event: React.WheelEvent) {
-    if (window.innerWidth < 768 || Math.abs(event.deltaY) < 28 || Date.now() < wheelLockedUntil.current) return
-    wheelLockedUntil.current = Date.now() + 650
-    goToProfile(event.deltaY > 0 ? 1 : -1)
-  }
-
-  function onTouchEnd(event: React.TouchEvent) {
-    if (touchStartY.current === null) return
-    const distance = touchStartY.current - event.changedTouches[0].clientY
-    touchStartY.current = null
-    if (Math.abs(distance) >= 72) goToProfile(distance > 0 ? 1 : -1)
-  }
-
-  async function handlePass() {
-    if (!active || actionPending) return
-    setActionPending(true)
-    setDirection(1)
+  async function resolveAreaInput() {
+    const query = areaQuery.trim()
+    if (!query) return
+    setAreaStatus('resolving')
+    setAreaError('')
+    setResolvedArea(null)
     try {
-      await passProfile(active.uid)
-    } catch (err) {
-      console.warn('[Perennia] Failed to pass profile:', err)
-    } finally {
-      setActionPending(false)
+      const area = previewData?.resolveArea
+        ? await previewData.resolveArea(query)
+        : await resolveProductionDiscoveryArea(query)
+      setResolvedArea(area)
+      setAreaQuery(area.label)
+      setAreaStatus('idle')
+    } catch (error) {
+      setAreaStatus('error')
+      setAreaError(error instanceof Error ? error.message : 'We could not find that UK town, city or postcode.')
     }
   }
 
-  async function handleLike() {
-    if (!active || actionPending) return
-    setActionPending(true)
-    setDirection(1)
+  async function runAreaSearch({
+    area = resolvedArea,
+    radius = radiusMiles,
+    highOnly = highCompatibilityOnly,
+    closeDialog = true,
+  }: {
+    area?: ResolvedDiscoveryArea | null
+    radius?: DiscoverySearchRadiusMiles
+    highOnly?: boolean
+    closeDialog?: boolean
+  } = {}) {
+    if (!area) return
+    setAreaStatus('searching')
+    setAreaError('')
     try {
-      const { matchId, conversationId } = await likeProfile(active.uid)
-      if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: active.uid, compatibility: active.compatibility } })
-      else if (conversationId) navigate(`/messages/${conversationId}`, { state: { otherUid: active.uid } })
+      const result = await (previewData?.searchArea ?? searchDiscoveryAreaCandidates)({
+        area,
+        radiusMiles: radius,
+        highCompatibilityOnly: highOnly,
+      })
+      const resolvedScores = result.items.flatMap((item) => item.compatibility ? [[item.candidate.uid, item.compatibility] as const] : [])
+      if (resolvedScores.length) setScores((previous) => ({ ...previous, ...Object.fromEntries(resolvedScores) }))
+      setAreaItems(result.items)
+      setActiveArea(result.area)
+      setResolvedArea(result.area)
+      setAreaQuery(result.area.label)
+      setRadiusMiles(result.radiusMiles)
+      setHighCompatibilityOnly(highOnly)
+      setDiscoveryMode('area')
+      setAreaStatus('idle')
+      if (closeDialog) setAreaDialogOpen(false)
+    } catch (error) {
+      setAreaStatus('error')
+      setAreaError(error instanceof DiscoveryAreaSearchUnavailableError
+        ? error.message
+        : error instanceof Error ? error.message : 'Search Area is unavailable right now.')
+      setAreaDialogOpen(true)
+    }
+  }
+
+  function clearAreaSearch() {
+    setDiscoveryMode('all')
+    setAreaItems([])
+    setActiveArea(null)
+    setResolvedArea(null)
+    setAreaQuery('')
+    setRadiusMiles(25)
+    setHighCompatibilityOnly(false)
+    setAreaStatus('idle')
+    setAreaError('')
+    setAreaDialogOpen(false)
+  }
+
+  function requestPremiumUpgrade() {
+    const path = '/founding-500?next=%2Fdiscovery'
+    if (previewData?.onPremiumUpgrade) previewData.onPremiumUpgrade(path)
+    else navigate(path)
+  }
+
+  function openAreaEditor() {
+    setAreaError('')
+    setAreaStatus('idle')
+    setAreaDialogOpen(true)
+  }
+
+  function increaseAreaRadius() {
+    const index = DISCOVERY_SEARCH_RADII.indexOf(radiusMiles)
+    const nextRadius = DISCOVERY_SEARCH_RADII[index + 1]
+    if (nextRadius && activeArea) void runAreaSearch({ area: activeArea, radius: nextRadius, closeDialog: false })
+  }
+
+  async function handleLike(profile: DiscoveryCandidate & { compatibility: number | null }) {
+    if (actionPendingUid || interestStateFor(profile.uid) !== 'neutral') return
+    if (previewData) {
+      setPreviewInterestStates((previous) => ({ ...previous, [profile.uid]: 'interested' }))
+      return
+    }
+    setActionPendingUid(profile.uid)
+    try {
+      const { matchId, conversationId } = await likeProfile(profile.uid)
+      if (matchId) navigate(`/match/${matchId}`, { state: { otherUid: profile.uid, compatibility: profile.compatibility } })
+      else if (conversationId) navigate(`/messages/${conversationId}`, { state: { otherUid: profile.uid } })
     } catch (err) {
       console.warn('[Perennia] Failed to like profile:', err)
     } finally {
-      setActionPending(false)
+      setActionPendingUid(null)
     }
   }
 
+  function interestStateFor(uid: string): InterestHeartState {
+    if (previewData) return previewInterestStates[uid] ?? 'neutral'
+    if (matchedIds.includes(uid)) return 'matched'
+    if (likedIds.includes(uid)) return 'interested'
+    return 'neutral'
+  }
+
+  function openProfile(profile: DiscoveryCandidate) {
+    if (previewData?.onViewProfile) previewData.onViewProfile(profile)
+    else navigate(`/profile/${profile.uid}`)
+  }
+
   return (
-    <div className="discovery-page" onWheel={onWheel}>
+    <MotionConfig reducedMotion="user">
+      <div className="discovery-page">
       <header className="discovery-toolbar" aria-label="Discovery controls">
-        <div className="discovery-segmented" role="group" aria-label="Sort profiles">
-          <button className={filter === 'all' ? 'is-active' : ''} onClick={() => { setFilter('all'); setActiveIndex(0) }}>All Matches</button>
-          <button className={filter === 'nearby' ? 'is-active' : ''} onClick={() => { setFilter('nearby'); setActiveIndex(0) }}>Nearby</button>
+        <div className="discovery-segmented" role="group" aria-label="Choose Explore area">
+          <button
+            className={discoveryMode === 'all' ? 'is-active' : ''}
+            onClick={clearAreaSearch}
+            aria-pressed={discoveryMode === 'all'}
+          >
+            All Matches
+          </button>
+          <button
+            className={discoveryMode === 'area' ? 'is-active' : ''}
+            onClick={openAreaEditor}
+            aria-pressed={discoveryMode === 'area'}
+          >
+            Search Area
+          </button>
         </div>
         <button className="discovery-filter-button" onClick={() => setFilterOpen(true)} aria-label="Open discovery filters">
           <SlidersHorizontal />
         </button>
       </header>
 
+      {discoveryMode === 'area' && activeArea && (
+        <div className="discovery-area-summary" aria-label={`Search Area: ${activeArea.label}, within ${radiusMiles} miles${highCompatibilityOnly ? ', High Compatibility Only' : ''}`}>
+          <MapPin aria-hidden="true" />
+          <span>
+            <strong>{activeArea.label}</strong>
+            <small>Within {radiusMiles} miles{highCompatibilityOnly ? ' · High Compatibility Only' : ''}</small>
+          </span>
+          <button type="button" onClick={openAreaEditor}>Edit</button>
+          <button type="button" onClick={clearAreaSearch}>Clear</button>
+        </div>
+      )}
+
       {!selfChartComplete ? (
         <DiscoveryState icon={<Sparkles />} title="Complete Your Cosmic Profile" body="Add your birth date, time, and place so Perennia can calculate real compatibility." action={<button onClick={() => navigate('/birth-details')}>Add Birth Details</button>} />
-      ) : loading ? (
+      ) : discoveryMode === 'area' && areaStatus === 'searching' ? (
+        <div className="discovery-loading" role="status" aria-label="Searching selected area"><Loader2 /></div>
+      ) : loading && discoveryMode === 'all' ? (
         <div className="discovery-loading" role="status" aria-label="Loading compatible profiles"><Loader2 /></div>
-      ) : candidates.length === 0 ? (
+      ) : discoveryMode === 'all' && candidates.length === 0 ? (
         <DiscoveryState title="No eligible profiles are available" body="There are no Discovery profiles available for your account right now." />
+      ) : discoveryMode === 'area' && activeArea && visible.length === 0 ? (
+        <DiscoveryAreaEmptyState
+          area={activeArea}
+          radiusMiles={radiusMiles}
+          highCompatibilityOnly={highCompatibilityOnly}
+          canIncreaseRadius={radiusMiles < 50}
+          onShowEveryone={() => void runAreaSearch({ area: activeArea, highOnly: false, closeDialog: false })}
+          onIncreaseRadius={increaseAreaRadius}
+          onChooseAnotherArea={openAreaEditor}
+          onReturnToAll={clearAreaSearch}
+        />
       ) : visible.length === 0 ? (
-        <DiscoveryState title="No compatible profiles found" body="No profiles currently meet your preferences and compatibility threshold." />
-      ) : active ? (
-        <div className="discovery-stage">
-          <AnimatePresence mode="wait" initial={false} custom={direction}>
-            <motion.article
-              key={active.uid}
-              custom={direction}
-              initial={{ opacity: 0, y: direction > 0 ? 34 : -34 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: direction > 0 ? -28 : 28 }}
-              transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-              className="discovery-card"
-              onTouchStart={(event) => { touchStartY.current = event.touches[0].clientY }}
-              onTouchEnd={onTouchEnd}
-            >
-              <div className="discovery-photo-panel">
-                <img src={active.profilePhotoUrl} alt={`Portrait of ${active.name}`} />
-                <div className="discovery-photo-shade" />
-                <div className="discovery-mobile-identity">
-                  <Identity candidate={active} />
+        <DiscoveryState title="No profiles match your preferences" body="No profiles currently meet your discovery preferences." />
+      ) : visible.length > 0 ? (
+        <div className="discovery-stage" aria-label="Explore member feed">
+          {visible.map((candidate, index) => {
+            const interestState = interestStateFor(candidate.uid)
+            const areaResult = discoveryMode === 'area' ? areaItems.find((item) => item.candidate.uid === candidate.uid) : undefined
+            const compatibilityResult = areaResult?.compatibility ?? scores[candidate.uid]
+            const media = previewData?.mediaByCandidate?.[candidate.uid] ?? {
+              type: 'image' as const,
+              url: candidate.profilePhotoUrl,
+            }
+            return (
+              <motion.article
+                key={candidate.uid}
+                initial={{ opacity: index === 0 ? 1 : 0.7 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ amount: 0.65 }}
+                transition={{ duration: 0.3 }}
+                className="discovery-card"
+              >
+                <div className="discovery-photo-panel">
+                  <DiscoveryMedia media={media} memberName={candidate.name} />
+                  <div className="discovery-photo-shade" />
+                  <div className="discovery-card-identity">
+                    <Identity
+                      candidate={candidate}
+                      result={compatibilityResult}
+                      compatibilityPending={discoveryMode === 'all' && selfChartComplete && hasCompleteChart(candidate) && !failedUids.has(candidate.uid) && !scores[candidate.uid]}
+                      onOpenProfile={() => openProfile(candidate)}
+                    />
+                  </div>
+                  <aside className="discovery-action-rail" aria-label={`Actions and astrology for ${candidate.name}`}>
+                    <button
+                      type="button"
+                      className="discovery-rail-item discovery-rail-button"
+                      onClick={() => openProfile(candidate)}
+                      aria-label="View profile"
+                    >
+                      <span className="discovery-rail-icon discovery-rail-icon--profile" aria-hidden="true"><UserRound /></span>
+                    </button>
+                    <DiscoveryInterestRailItem
+                      state={interestState}
+                      pending={actionPendingUid === candidate.uid}
+                      onInterest={() => void handleLike(candidate)}
+                    />
+                    <DiscoveryAstrologyRailItem kind="western" value={candidate.sunSign} descriptor="Western Sun sign" />
+                    <DiscoveryAstrologyRailItem kind="chinese" value={candidate.chineseAnimal} descriptor="Chinese zodiac" />
+                  </aside>
                 </div>
-              </div>
-
-              <div className="discovery-profile-panel">
-                <div className="discovery-desktop-identity">
-                  <Identity candidate={active} />
-                </div>
-
-                <div
-                  className="discovery-score"
-                  style={{ '--score': `${active.compatibility * 3.6}deg` } as CSSProperties}
-                  aria-label={`${active.compatibility}% compatible`}
-                >
-                  <div><strong>{active.compatibility}<span>%</span></strong><small>Compatible</small></div>
-                </div>
-
-                <section className="discovery-astrology" aria-label={`${active.name}'s astrology snapshot`}>
-                  <WesternChip sign={active.sunSign} label="Sun" tone="blue" />
-                  <WesternChip sign={active.moonSign} label="Moon" tone="gold" />
-                  <WesternChip sign={active.risingSign} label="Rising" tone="violet" />
-                  {isPremium && (
-                    <>
-                      <AstrologyChip icon={chineseAnimalGlyphs[active.chineseAnimal.trim().toLowerCase()] ?? '✦'} value={active.chineseAnimal} label="Chinese Sign" tone="gold" />
-                      <AstrologyChip icon={<ElementIcon element={active.chineseElement} />} value={active.chineseElement} label="Element" tone="blue" />
-                      <AstrologyChip icon={<PolarityIcon />} value={active.yinYang} label="Polarity" tone="silver" />
-                    </>
-                  )}
-                </section>
-
-                <div className="discovery-actions">
-                  <button className="discovery-action discovery-action--pass" onClick={handlePass} disabled={actionPending} aria-label={`Pass on ${active.name}`}>
-                    <X />
-                  </button>
-                  <button className="discovery-action discovery-action--like" onClick={handleLike} disabled={actionPending} aria-label={`Like ${active.name}`}>
-                    {actionPending ? <Loader2 className="discovery-action-spinner" /> : <Heart />}
-                  </button>
-                  <button className="discovery-view-profile" onClick={() => navigate(`/profile/${active.uid}`)}>
-                    View Profile <ArrowRight />
-                  </button>
-                </div>
-              </div>
-            </motion.article>
-          </AnimatePresence>
-
-          <div className="discovery-vertical-nav" aria-label="Browse profiles vertically">
-            <button onClick={() => goToProfile(-1)} disabled={activeIndex === 0} aria-label="Previous profile"><ArrowUp /></button>
-            <div className="discovery-vertical-line"><span /></div>
-            <p><span>{activeIndex + 1}</span> / {visible.length}</p>
-            <button onClick={() => goToProfile(1)} disabled={activeIndex === visible.length - 1} aria-label="Next profile"><ArrowDown /></button>
-          </div>
-
-          <p className="discovery-swipe-hint"><ArrowUp /> Swipe vertically to discover <ArrowDown /></p>
+              </motion.article>
+            )
+          })}
         </div>
       ) : null}
 
       <AnimatePresence>
+        {areaDialogOpen && (
+          <DiscoveryAreaDialog
+            query={areaQuery}
+            resolvedArea={resolvedArea}
+            radiusMiles={radiusMiles}
+            highCompatibilityOnly={highCompatibilityOnly}
+            isPremium={isPremium}
+            status={areaStatus}
+            error={areaError}
+            hasActiveArea={activeArea !== null}
+            onQueryChange={(value) => {
+              setAreaQuery(value)
+              setResolvedArea(value === activeArea?.label ? activeArea : null)
+              setAreaError('')
+              setAreaStatus('idle')
+            }}
+            onResolve={() => void resolveAreaInput()}
+            onRadiusChange={setRadiusMiles}
+            onHighCompatibilityChange={setHighCompatibilityOnly}
+            onLockedPremium={requestPremiumUpgrade}
+            onApply={() => void runAreaSearch()}
+            onClear={clearAreaSearch}
+            onClose={() => setAreaDialogOpen(false)}
+          />
+        )}
         {filterOpen && (
-          <motion.div className="discovery-filter-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => e.target === e.currentTarget && setFilterOpen(false)}>
+          <motion.div key="discovery-filters" className="discovery-filter-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => e.target === e.currentTarget && setFilterOpen(false)}>
             <motion.div className="discovery-filter-panel" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} role="dialog" aria-modal="true" aria-label="Discovery filters">
               <div className="discovery-filter-heading">
                 <h2>Discovery Filters</h2>
@@ -393,20 +508,302 @@ export function Discovery() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
+    </MotionConfig>
+  )
+}
+
+function DiscoveryAreaDialog({
+  query,
+  resolvedArea,
+  radiusMiles,
+  highCompatibilityOnly,
+  isPremium,
+  status,
+  error,
+  hasActiveArea,
+  onQueryChange,
+  onResolve,
+  onRadiusChange,
+  onHighCompatibilityChange,
+  onLockedPremium,
+  onApply,
+  onClear,
+  onClose,
+}: {
+  query: string
+  resolvedArea: ResolvedDiscoveryArea | null
+  radiusMiles: DiscoverySearchRadiusMiles
+  highCompatibilityOnly: boolean
+  isPremium: boolean
+  status: 'idle' | 'resolving' | 'searching' | 'error'
+  error: string
+  hasActiveArea: boolean
+  onQueryChange: (value: string) => void
+  onResolve: () => void
+  onRadiusChange: (value: DiscoverySearchRadiusMiles) => void
+  onHighCompatibilityChange: (value: boolean) => void
+  onLockedPremium: () => void
+  onApply: () => void
+  onClear: () => void
+  onClose: () => void
+}) {
+  const dialogRef = useRef<HTMLElement>(null)
+  useModalAccessibility({ open: true, dialogRef, onClose })
+  const busy = status === 'resolving' || status === 'searching'
+
+  return createPortal(
+    <motion.div
+      className="discovery-area-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <motion.section
+        ref={dialogRef}
+        className="discovery-area-panel"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="discovery-area-title"
+        tabIndex={-1}
+        data-modal-surface
+      >
+        <div className="discovery-area-heading">
+          <span>
+            <p>Explore somewhere specific</p>
+            <h2 id="discovery-area-title">Search Area</h2>
+          </span>
+          <button type="button" data-modal-initial-focus onClick={onClose} aria-label="Close Search Area"><X /></button>
+        </div>
+
+        <div className="discovery-area-field">
+          <label htmlFor="discovery-area-input">Town, city or postcode</label>
+          <div>
+            <span><MapPin aria-hidden="true" /></span>
+            <input
+              id="discovery-area-input"
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && query.trim() && !busy) {
+                  event.preventDefault()
+                  onResolve()
+                }
+              }}
+              placeholder="For example, London or SW1A 1AA"
+              autoComplete="postal-code"
+              aria-describedby={error ? 'discovery-area-error' : resolvedArea ? 'discovery-area-resolved' : undefined}
+            />
+            <button type="button" onClick={onResolve} disabled={!query.trim() || busy}>
+              {status === 'resolving' ? <><Loader2 aria-hidden="true" /> Finding…</> : 'Find area'}
+            </button>
+          </div>
+          {resolvedArea && (
+            <p id="discovery-area-resolved" className="discovery-area-resolved" role="status"><Check aria-hidden="true" /> Selected: {resolvedArea.label}</p>
+          )}
+          {error && <p id="discovery-area-error" className="discovery-area-error" role="alert">{error}</p>}
+        </div>
+
+        <fieldset className="discovery-area-radius">
+          <legend>Search radius</legend>
+          <div role="radiogroup" aria-label="Search radius in miles">
+            {DISCOVERY_SEARCH_RADII.map((radius) => (
+              <button
+                key={radius}
+                type="button"
+                role="radio"
+                aria-checked={radiusMiles === radius}
+                className={radiusMiles === radius ? 'is-active' : ''}
+                onClick={() => onRadiusChange(radius)}
+              >
+                {radius} miles
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className={`discovery-area-premium ${highCompatibilityOnly ? 'is-active' : ''}`}>
+          {isPremium ? (
+            <label htmlFor="discovery-high-compatibility">
+              <span><Crown aria-hidden="true" /></span>
+              <span><strong>High Compatibility Only</strong><small>Show profiles already classified as high compatibility.</small></span>
+              <Switch
+                id="discovery-high-compatibility"
+                checked={highCompatibilityOnly}
+                onCheckedChange={onHighCompatibilityChange}
+                aria-label="High Compatibility Only"
+              />
+            </label>
+          ) : (
+            <button type="button" onClick={onLockedPremium} aria-label="High Compatibility Only, Premium locked">
+              <span><LockKeyhole aria-hidden="true" /></span>
+              <span><strong>High Compatibility Only</strong><small>Premium · Upgrade to activate this filter.</small></span>
+              <Crown aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        <p className="discovery-area-privacy">Searches use a broad area only. Other members’ exact coordinates, addresses and postcodes are never shown.</p>
+
+        <div className="discovery-area-actions">
+          {hasActiveArea && <button type="button" className="is-secondary" onClick={onClear}>Remove area</button>}
+          <button type="button" className="is-primary" onClick={onApply} disabled={!resolvedArea || busy}>
+            {status === 'searching' ? <><Loader2 aria-hidden="true" /> Searching…</> : 'Apply Search'}
+          </button>
+        </div>
+      </motion.section>
+    </motion.div>,
+    document.body,
+  )
+}
+
+function DiscoveryInterestRailItem({
+  state,
+  pending,
+  onInterest,
+}: {
+  state: InterestHeartState
+  pending: boolean
+  onInterest: () => void
+}) {
+  const accessibleLabel = state === 'matched'
+    ? 'Mutual match'
+    : state === 'interested'
+      ? 'Romantic interest sent'
+      : 'Express romantic interest'
+
+  if (state !== 'neutral') {
+    return (
+      <div className={`discovery-rail-item discovery-interest-state is-${state}`} role="status" aria-label={accessibleLabel}>
+        <span className="discovery-rail-icon discovery-rail-icon--interested" aria-hidden="true">
+          <InterestHeartsIcon state={state} className="discovery-interest-hearts" />
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className="discovery-rail-item discovery-rail-button"
+      onClick={onInterest}
+      disabled={pending}
+      aria-label={pending ? 'Recording romantic interest' : accessibleLabel}
+    >
+      <span className="discovery-rail-icon discovery-rail-icon--interested" aria-hidden="true">
+        {pending ? <Loader2 className="discovery-action-spinner" /> : <InterestHeartsIcon state="neutral" className="discovery-interest-hearts" />}
+      </span>
+    </button>
+  )
+}
+
+function DiscoveryMedia({ media, memberName }: { media: DiscoveryFeedMedia; memberName: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const shouldReduceMotion = useReducedMotion()
+  const [playing, setPlaying] = useState(media.type === 'video' && !shouldReduceMotion)
+
+  useEffect(() => {
+    if (media.type !== 'video') return
+    const video = videoRef.current
+    if (!video) return
+    if (shouldReduceMotion) {
+      video.pause()
+      setPlaying(false)
+      return
+    }
+    void video.play().catch(() => setPlaying(false))
+  }, [media.type, shouldReduceMotion])
+
+  if (media.type === 'image') {
+    return <img className="discovery-media" src={media.url} alt={`Public media from ${memberName}`} />
+  }
+
+  async function togglePlayback() {
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) await video.play()
+    else video.pause()
+  }
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        className="discovery-media"
+        src={media.url}
+        poster={media.poster}
+        autoPlay={!shouldReduceMotion}
+        muted
+        loop
+        playsInline
+        aria-label={`Public video from ${memberName}`}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
+      <button
+        type="button"
+        className="discovery-media-control"
+        onClick={() => void togglePlayback()}
+        aria-label={`${playing ? 'Pause' : 'Play'} ${memberName}'s video`}
+      >
+        {playing ? <Pause /> : <Play />}
+      </button>
+    </>
+  )
+}
+
+function DiscoveryAstrologyRailItem({
+  kind,
+  value,
+  descriptor,
+}: {
+  kind: 'western' | 'chinese'
+  value: string
+  descriptor: string
+}) {
+  const imageSrc = profileAstrologyAsset(kind, value)
+  return (
+    <div className="discovery-rail-item" aria-label={`${value}, ${descriptor}`}>
+      <span className={`discovery-rail-art discovery-rail-art--${kind}`} aria-hidden="true">
+        {imageSrc ? <img src={imageSrc} alt="" draggable={false} /> : <span className="discovery-rail-fallback">✦</span>}
+      </span>
     </div>
   )
 }
 
-function Identity({ candidate }: { candidate: DiscoveryCandidate & { compatibility: number; distance: number | null } }) {
+function Identity({
+  candidate,
+  result,
+  compatibilityPending,
+  onOpenProfile,
+}: {
+  candidate: DiscoveryCandidate & { compatibility: number | null; distance: number | null }
+  result?: CompatibilityResult
+  compatibilityPending: boolean
+  onOpenProfile: () => void
+}) {
   const age = calculateAge(candidate.birthDate)
   const location = candidate.profileExtras?.location || [candidate.city, candidate.country].filter(Boolean).join(', ')
   return (
     <div className="discovery-identity">
       <div className="discovery-name-row">
-        <h1>{candidate.name.split(' ')[0]}{age !== null ? `, ${age}` : ''}</h1>
+        <h1>
+          <button type="button" className="discovery-name-link" onClick={onOpenProfile} aria-label={`View ${candidate.name}'s profile`}>
+            {candidate.name.split(' ')[0]}{age !== null ? `, ${age}` : ''}
+          </button>
+        </h1>
         {candidate.verification?.status === 'verified' && <BadgeCheck aria-label="Verified profile" />}
       </div>
       {location && <p><MapPin /> {location}</p>}
+      <div className="discovery-match-summary">
+        <span className="discovery-compatibility-score">
+          {result ? `${result.compatibility}% compatible` : compatibilityPending ? 'Calculating compatibility…' : 'Compatibility unavailable'}
+        </span>
+      </div>
     </div>
   )
 }
@@ -420,4 +817,51 @@ function DiscoveryState({ icon, title, body, action }: { icon?: ReactNode; title
       {action}
     </motion.div>
   )
+}
+
+function DiscoveryAreaEmptyState({
+  area,
+  radiusMiles,
+  highCompatibilityOnly,
+  canIncreaseRadius,
+  onShowEveryone,
+  onIncreaseRadius,
+  onChooseAnotherArea,
+  onReturnToAll,
+}: {
+  area: ResolvedDiscoveryArea
+  radiusMiles: DiscoverySearchRadiusMiles
+  highCompatibilityOnly: boolean
+  canIncreaseRadius: boolean
+  onShowEveryone: () => void
+  onIncreaseRadius: () => void
+  onChooseAnotherArea: () => void
+  onReturnToAll: () => void
+}) {
+  return (
+    <DiscoveryState
+      title={highCompatibilityOnly ? 'No high-compatibility profiles in this area yet' : 'No profiles in this area yet'}
+      body={`${area.label} · within ${radiusMiles} miles. ${highCompatibilityOnly ? 'Try everyone in this area or broaden your search.' : 'Try a wider radius or choose another area.'}`}
+      action={(
+        <div className="discovery-area-empty-actions">
+          {highCompatibilityOnly && <button type="button" onClick={onShowEveryone}>Show everyone in this area</button>}
+          {canIncreaseRadius && <button type="button" onClick={onIncreaseRadius}>Increase the radius</button>}
+          <button type="button" onClick={onChooseAnotherArea}>Choose another area</button>
+          <button type="button" onClick={onReturnToAll}>Return to All Matches</button>
+        </div>
+      )}
+    />
+  )
+}
+
+async function resolveProductionDiscoveryArea(query: string): Promise<ResolvedDiscoveryArea> {
+  const result = await geocodeLocation(query)
+  const country = result.matchedCountry.trim().toLowerCase()
+  const isUnitedKingdom = country === 'gb' || country === 'uk' || country === 'united kingdom'
+  if (!isUnitedKingdom) throw new Error('Search Area currently accepts UK towns, cities and postcodes only.')
+  return {
+    label: `${result.matchedCity}, United Kingdom`,
+    lat: result.lat,
+    lon: result.lon,
+  }
 }

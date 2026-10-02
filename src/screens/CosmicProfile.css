@@ -84,30 +84,22 @@ html:has(.cosmic-profile) {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 360px;
+  height: 440px;
   margin-bottom: .2rem;
 }
 
 .cosmic-wheel {
   position: absolute;
-  width: 350px;
-  height: 350px;
-  filter: drop-shadow(0 0 24px rgba(229, 192, 123, .18));
-}
-
-.cosmic-wheel-aura {
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(229, 192, 123, .12), rgba(79, 91, 176, .07) 44%, transparent 72%);
-  box-shadow: 0 0 70px rgba(229, 192, 123, .09);
+  width: min(430px, calc(100vw - 2rem));
+  height: min(430px, calc(100vw - 2rem));
 }
 
 .cosmic-wheel-svg {
-  position: relative;
+  display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  object-fit: contain;
+  object-position: center;
 }
 
 .cosmic-section-heading {
@@ -195,27 +187,38 @@ html:has(.cosmic-profile) {
   grid-column: span 2;
 }
 
-.cosmic-planet-symbol,
-.cosmic-chinese-symbol {
-  flex: 0 0 auto;
+.cosmic-chinese-category-symbol {
   color: var(--cosmic-accent, #e5c07b);
   text-shadow: 0 0 14px color-mix(in srgb, var(--cosmic-accent, #e5c07b) 55%, transparent);
 }
 
-.cosmic-planet-symbol {
-  height: 2.3rem;
+.cosmic-icon-plate {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: 0 0 3.25rem;
+  flex-shrink: 0;
+  place-items: center;
+  align-self: center;
+}
+
+.cosmic-icon-artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.cosmic-placement-icon-plate {
   margin-bottom: .32rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.15rem;
-  line-height: 1;
 }
 
 .cosmic-placement-copy {
   min-width: 0;
 }
 
-.cosmic-placement-card h3,
-.cosmic-chinese-card h3 {
+.cosmic-placement-card h3 {
   margin: 0;
   color: rgba(255, 255, 255, .72);
   font-size: .57rem;
@@ -225,8 +228,7 @@ html:has(.cosmic-profile) {
   text-transform: uppercase;
 }
 
-.cosmic-placement-card p,
-.cosmic-chinese-card p {
+.cosmic-placement-card p {
   display: flex;
   justify-content: center;
   gap: .38rem;
@@ -240,12 +242,6 @@ html:has(.cosmic-profile) {
 
 .cosmic-card-chevron {
   display: none;
-}
-
-.cosmic-placement-card p span {
-  color: var(--cosmic-accent, #e5c07b);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1rem;
 }
 
 .cosmic-accent-gold { --cosmic-accent: #e8c273; }
@@ -277,33 +273,146 @@ html:has(.cosmic-profile) {
 }
 
 .cosmic-chinese-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: .65rem;
 }
 
 .cosmic-chinese-card {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 4.25rem) minmax(0, 1.15fr) minmax(0, 1.1fr) auto;
   align-items: center;
-  justify-content: center;
-  min-height: 152px;
-  padding: .85rem .5rem;
+  gap: clamp(.6rem, 1.5vw, 1.15rem);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 104px;
+  padding: .75rem 1rem;
+  box-sizing: border-box;
   border-color: rgba(235, 220, 190, .34);
-  border-radius: 13px;
-  text-align: center;
+  border-radius: 18px;
+  text-align: left;
 }
 
-.cosmic-chinese-symbol {
-  min-height: 2.2rem;
-  margin-bottom: .3rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.15rem;
+.cosmic-chinese-visual {
+  display: grid;
+  width: 100%;
+  max-width: 4rem;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+}
+
+.cosmic-chinese-category-symbol {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(8, 19, 61, .98), rgba(20, 20, 70, .98)) padding-box,
+    linear-gradient(135deg, #66eaff, #4a8cff 38%, #906cff 70%, #f08ddb) border-box;
+  font-family: "PingFang TC", "Songti TC", "Noto Serif TC", "Microsoft JhengHei", serif;
+  font-size: 2.35rem;
   line-height: 1;
+  box-shadow:
+    inset 0 0 12px rgba(255, 255, 255, .1),
+    0 0 10px rgba(83, 169, 255, .14),
+    0 0 14px rgba(151, 104, 255, .08);
 }
 
-.cosmic-chinese-card p {
-  font-size: 1.25rem;
+.cosmic-chinese-card h3 {
+  min-width: 0;
+  margin: 0;
+  color: rgba(255, 255, 255, .82);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .15em;
+  line-height: 1.5;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-transform: uppercase;
+  white-space: normal;
+}
+
+.cosmic-chinese-character {
+  display: grid;
+  width: 100%;
+  max-width: 4rem;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, #fff, #f5f3fb) padding-box,
+    linear-gradient(135deg, #66eaff, #4a8cff 38%, #906cff 70%, #f08ddb) border-box;
+  color: #213982;
+  font-family: "PingFang TC", "Songti TC", "Noto Serif TC", "Microsoft JhengHei", serif;
+  font-size: 2.2rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 0 13px rgba(139, 206, 255, .12),
+    0 0 10px rgba(83, 169, 255, .14),
+    0 0 14px rgba(151, 104, 255, .08);
+}
+
+.cosmic-chinese-result-artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.cosmic-chinese-outcome {
+  display: grid;
+  grid-template-columns: minmax(0, 4.25rem) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(.55rem, 1.15vw, .85rem);
+  min-width: 0;
+}
+
+.cosmic-chinese-result {
+  min-width: 5.4rem;
+}
+
+.cosmic-chinese-value {
+  min-width: 0;
+  margin: 0;
+  color: #f5ead1;
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  line-height: 1.05;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+}
+
+.cosmic-chinese-explanation {
+  min-width: 0;
+  margin: .34rem 0 0;
+  color: rgba(255, 255, 255, .66);
+  font-size: .78rem;
+  line-height: 1.35;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+}
+
+.cosmic-chinese-card .cosmic-card-chevron {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  justify-self: end;
+  flex-shrink: 0;
+  color: rgba(246, 220, 164, .7);
 }
 
 .cosmic-profile-note {
@@ -412,13 +521,13 @@ html:has(.cosmic-profile) {
 
   .cosmic-wheel-column {
     width: 100%;
-    height: 250px;
+    height: min(300px, calc(100vw - 1rem));
     margin-bottom: .25rem;
   }
 
   .cosmic-wheel {
-    width: 235px;
-    height: 235px;
+    width: min(288px, calc(100vw - 2rem));
+    height: min(288px, calc(100vw - 2rem));
   }
 
   .cosmic-section-heading {
@@ -437,10 +546,9 @@ html:has(.cosmic-profile) {
     gap: .35rem;
   }
 
-  .cosmic-placement-card,
-  .cosmic-chinese-card {
+  .cosmic-placement-card {
     display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr) auto 1rem;
+    grid-template-columns: 2.875rem minmax(0, 1fr) auto 1rem;
     align-items: center;
     min-height: 54px;
     padding: .42rem .65rem;
@@ -448,33 +556,33 @@ html:has(.cosmic-profile) {
     text-align: left;
   }
 
-  .cosmic-planet-symbol,
-  .cosmic-chinese-symbol {
+  .cosmic-placement-icon-plate {
     grid-column: 1;
     grid-row: 1;
-    width: 2rem;
-    height: auto;
     min-height: 0;
     margin: 0;
     font-size: 1.45rem;
     text-align: center;
   }
 
-  .cosmic-placement-copy,
-  .cosmic-chinese-card > div {
+  .cosmic-icon-plate {
+    width: 2.875rem;
+    height: 2.875rem;
+    flex-basis: 2.875rem;
+  }
+
+  .cosmic-placement-copy {
     display: contents;
   }
 
-  .cosmic-placement-card h3,
-  .cosmic-chinese-card h3 {
+  .cosmic-placement-card h3 {
     grid-column: 2;
     grid-row: 1;
     align-self: center;
     font-size: .55rem;
   }
 
-  .cosmic-placement-card p,
-  .cosmic-chinese-card p {
+  .cosmic-placement-card p {
     grid-column: 3;
     grid-row: 1;
     justify-content: flex-end;
@@ -501,6 +609,58 @@ html:has(.cosmic-profile) {
     margin-top: 1.55rem;
   }
 
+  .cosmic-chinese-card {
+    grid-template-columns: 3.15rem minmax(4.5rem, .8fr) minmax(8.9rem, 1.7fr) .8rem;
+    gap: .4rem;
+    min-height: 84px;
+    height: auto;
+    padding: .5rem .55rem;
+    border-radius: 12px;
+  }
+
+  .cosmic-chinese-visual {
+    max-width: 3.15rem;
+  }
+
+  .cosmic-chinese-category-symbol {
+    border-radius: 11px;
+    font-size: 1.75rem;
+  }
+
+  .cosmic-chinese-card h3 {
+    font-size: .52rem;
+    letter-spacing: .1em;
+    line-height: 1.4;
+  }
+
+  .cosmic-chinese-character {
+    max-width: 3.15rem;
+    border-radius: 10px;
+    font-size: 1.8rem;
+  }
+
+  .cosmic-chinese-outcome {
+    grid-template-columns: 3.15rem minmax(5.4rem, 1fr);
+    gap: .4rem;
+    min-width: 8.95rem;
+  }
+
+  .cosmic-chinese-value {
+    font-size: 1.05rem;
+  }
+
+  .cosmic-chinese-explanation {
+    margin-top: .22rem;
+    font-size: .6rem;
+    line-height: 1.25;
+  }
+
+  .cosmic-chinese-card .cosmic-card-chevron {
+    width: .8rem;
+    height: .8rem;
+    margin-left: 0;
+  }
+
   .cosmic-profile-note {
     margin-top: .85rem;
     max-width: 305px;
@@ -516,15 +676,46 @@ html:has(.cosmic-profile) {
 }
 
 @media (max-width: 340px) {
-  .cosmic-placement-card,
-  .cosmic-chinese-card {
+  .cosmic-placement-card {
     grid-template-columns: 1.9rem minmax(0, 1fr) auto .85rem;
     padding-inline: .48rem;
   }
 
-  .cosmic-placement-card p,
-  .cosmic-chinese-card p {
+  .cosmic-placement-card p {
     font-size: .9rem;
+  }
+
+  .cosmic-chinese-card {
+    grid-template-columns: 2.7rem minmax(3.75rem, .7fr) minmax(7.95rem, 1.5fr) .8rem;
+    gap: .28rem;
+    padding-inline: .42rem;
+  }
+
+  .cosmic-chinese-visual {
+    max-width: 2.7rem;
+  }
+
+  .cosmic-chinese-character {
+    max-width: 2.7rem;
+    font-size: 1.55rem;
+  }
+
+  .cosmic-chinese-outcome {
+    grid-template-columns: 2.7rem minmax(4.7rem, 1fr);
+    gap: .28rem;
+    min-width: 7.95rem;
+  }
+
+  .cosmic-chinese-result {
+    min-width: 4.7rem;
+  }
+
+  .cosmic-chinese-value {
+    font-size: .94rem;
+  }
+
+  .cosmic-chinese-explanation {
+    font-size: .54rem;
   }
 }
 

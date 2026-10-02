@@ -1,54 +1,32 @@
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { LandingCelestialBackground } from '@/components/shared/AtmosphericBackground'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
-import { useApp } from '@/context/AppContext'
-
-const RESUMABLE_ONBOARDING_PATHS = new Set([
-  '/verify',
-  '/birth-details',
-  '/preferences',
-  '/relationship-goals',
-  '/interests',
-  '/about-you',
-  '/profile-photo',
-  '/your-story',
-  '/cosmic-profile',
-])
+import { getOnboardingStepByRoute, ONBOARDING_STEPS, ONBOARDING_TOTAL_STEPS } from '@/lib/onboardingFlow'
 
 export function OnboardingShell({
   children,
-  step,
-  totalSteps,
   headerMark,
   progressVariant = 'bars',
   className = '',
 }: {
   children: ReactNode
-  step?: number
-  totalSteps?: number
   headerMark?: ReactNode
   progressVariant?: 'bars' | 'nodes'
   className?: string
 }) {
+  const shouldReduceMotion = useReducedMotion()
   const location = useLocation()
-  const { onboarding, onboardingComplete, profileLoaded, updateOnboarding } = useApp()
-
-  // Store the actual screen being viewed. This makes a later sign-in resume
-  // optional steps exactly, rather than guessing solely from required fields.
-  useEffect(() => {
-    if (
-      profileLoaded &&
-      !onboardingComplete &&
-      RESUMABLE_ONBOARDING_PATHS.has(location.pathname) &&
-      onboarding.onboardingResumePath !== location.pathname
-    ) {
-      void updateOnboarding({ onboardingResumePath: location.pathname }).catch((error) => {
-        console.warn('[Perennia] Failed to save onboarding position:', error)
-      })
-    }
-  }, [location.pathname, onboarding.onboardingResumePath, onboardingComplete, profileLoaded, updateOnboarding])
+  const previewScreenId = location.pathname === '/dev/design-preview'
+    ? new URLSearchParams(location.search).get('screen')
+    : null
+  const previewStep = previewScreenId
+    ? ONBOARDING_STEPS.find((step) => step.id === previewScreenId)
+    : undefined
+  const currentStep = previewStep ?? getOnboardingStepByRoute(location.pathname)
+  const displayedStep = currentStep ? ONBOARDING_STEPS.indexOf(currentStep) + 1 : undefined
+  const displayedTotalSteps = currentStep ? ONBOARDING_TOTAL_STEPS : undefined
 
   return (
     <div className={`relative flex min-h-screen flex-col items-center bg-midnight text-white ${className}`}>
@@ -67,16 +45,16 @@ export function OnboardingShell({
             regular app chrome once a member is through it. */}
         {headerMark ?? <CelestialHeart className="mb-5 h-16 w-16 sm:h-20 sm:w-20" />}
 
-        {step !== undefined && totalSteps !== undefined && (
+        {displayedStep !== undefined && displayedTotalSteps !== undefined && (
           <div className={`relative mb-8 flex w-full max-w-sm items-center sm:mb-10 ${progressVariant === 'nodes' ? 'gap-0' : 'gap-1.5'}`}>
-            {Array.from({ length: totalSteps }).map((_, i) => {
-              const isCurrent = i === step - 1
-              const isCompleted = i < step - 1
+            {Array.from({ length: displayedTotalSteps }).map((_, i) => {
+              const isCurrent = i === displayedStep - 1
+              const isCompleted = i < displayedStep - 1
               if (progressVariant === 'nodes') {
                 return (
                   <div key={i} className="relative flex flex-1 items-center last:flex-none">
                     {i > 0 && (
-                      <span className={`absolute right-1/2 top-1/2 h-px w-full -translate-y-1/2 ${i <= step - 1 ? 'bg-gold/80' : 'bg-white/20'}`} />
+                      <span className={`absolute right-1/2 top-1/2 h-px w-full -translate-y-1/2 ${i <= displayedStep - 1 ? 'bg-gold/80' : 'bg-white/20'}`} />
                     )}
                     <span
                       className={`relative z-10 block rounded-full border ${isCurrent
@@ -98,12 +76,12 @@ export function OnboardingShell({
                     />
                   )}
                   <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
-                    {i < step && (
+                    {i < displayedStep && (
                       <motion.div
                         className="h-full rounded-full bg-gradient-to-r from-gold to-champagne"
-                        initial={{ width: 0 }}
+                        initial={shouldReduceMotion ? false : { width: 0 }}
                         animate={{ width: '100%' }}
-                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.5, ease: 'easeOut' }}
                       />
                     )}
                   </div>

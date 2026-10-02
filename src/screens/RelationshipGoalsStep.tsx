@@ -2,33 +2,26 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft,
-  ArrowRight,
   Baby,
   Brain,
   Check,
   Cigarette,
-  CircleHelp,
   Clock3,
   Heart,
   HeartCrack,
-  HeartHandshake,
   Info,
-  Link2,
   Loader2,
   LockKeyhole,
   MessageCircle,
   ShieldCheck,
   Smile,
-  Sparkles,
-  Sprout,
   Star,
   Trophy,
   Users,
   type LucideIcon,
 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
+import { OnboardingBackButton, OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Switch } from '@/components/ui/switch'
 import { useApp } from '@/context/AppContext'
 import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
@@ -39,15 +32,18 @@ import {
   PARTNER_VALUE_OPTIONS,
   RELATIONSHIP_GOALS,
 } from '@/data/relationshipGoals'
+import { getOnboardingStep } from '@/lib/onboardingFlow'
 
 const MAX_DEAL_BREAKERS = 3
 const MAX_PARTNER_VALUES = 4
 
-const GOAL_ICONS: Record<string, { icon: LucideIcon; colour: string }> = {
-  'Long-term Relationship / Marriage': { icon: HeartHandshake, colour: 'text-violet-300' },
-  'Something Serious': { icon: Link2, colour: 'text-amber-200' },
-  'Open to Exploring': { icon: Sprout, colour: 'text-cyan-300' },
-  [NOT_SURE_GOAL]: { icon: CircleHelp, colour: 'text-fuchsia-300' },
+const GOAL_ICON_ROOT = '/relationship-goal-icons'
+
+const GOAL_ICONS: Record<string, string> = {
+  'Long-term Relationship / Marriage': `${GOAL_ICON_ROOT}/marriage-rings.svg`,
+  'Something Serious': `${GOAL_ICON_ROOT}/serious-heart-shield.svg`,
+  'Open to Exploring': `${GOAL_ICON_ROOT}/exploring-compass.svg`,
+  [NOT_SURE_GOAL]: `${GOAL_ICON_ROOT}/not-sure-question.svg`,
 }
 
 const CHIP_ICONS: Record<string, { icon: LucideIcon; colour: string }> = {
@@ -71,7 +67,7 @@ export function RelationshipGoalsStep() {
   const canRenderLocalPreview = hasDevelopmentVerificationBypass()
 
   return (
-    <OnboardingShell step={6} totalSteps={12}>
+    <OnboardingShell>
       {!profileLoaded && !canRenderLocalPreview ? <Loader2 className="h-6 w-6 animate-spin text-gold" /> : <RelationshipGoalsForm />}
     </OnboardingShell>
   )
@@ -79,16 +75,28 @@ export function RelationshipGoalsStep() {
 
 function RelationshipGoalsForm() {
   const navigate = useNavigate()
-  const { onboarding, updateOnboarding } = useApp()
-  const temporaryGoalExpired = onboarding.relationshipGoalSelectedAt
+  const { onboarding, saveOnboarding } = useApp()
+  const temporaryGoalExpired = onboarding.relationshipGoal === NOT_SURE_GOAL && onboarding.relationshipGoalSelectedAt
     ? isNotSureGoalExpired(onboarding.relationshipGoalSelectedAt)
     : false
+  const savedGoalRecognised = RELATIONSHIP_GOALS.some((option) => option.value === onboarding.relationshipGoal)
   const [goal, setGoal] = useState(
-    onboarding.relationshipGoal === NOT_SURE_GOAL && temporaryGoalExpired ? '' : onboarding.relationshipGoal
+    !savedGoalRecognised || (onboarding.relationshipGoal === NOT_SURE_GOAL && temporaryGoalExpired)
+      ? ''
+      : onboarding.relationshipGoal
   )
-  const [dealBreakers, setDealBreakers] = useState(onboarding.relationshipDealBreakers)
-  const [partnerValues, setPartnerValues] = useState(onboarding.partnerValues)
+  const [dealBreakers, setDealBreakers] = useState(
+    [...new Set(onboarding.relationshipDealBreakers.filter((value) => DEAL_BREAKER_OPTIONS.some((option) => option === value)))]
+      .slice(0, MAX_DEAL_BREAKERS)
+  )
+  const [partnerValues, setPartnerValues] = useState(
+    [...new Set(onboarding.partnerValues.filter((value) => PARTNER_VALUE_OPTIONS.some((option) => option === value)))]
+      .slice(0, MAX_PARTNER_VALUES)
+  )
   const [prioritiseSameGoal, setPrioritiseSameGoal] = useState(onboarding.prioritiseSameRelationshipGoal)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const canContinue = !!goal && partnerValues.length >= 1 && partnerValues.length <= MAX_PARTNER_VALUES
 
   const toggle = (value: string, values: string[], limit: number, setValues: (next: string[]) => void) => {
     if (values.includes(value)) {
@@ -98,18 +106,28 @@ function RelationshipGoalsForm() {
     }
   }
 
-  const handleContinue = () => {
-    if (!goal) return
-    updateOnboarding({
-      relationshipGoal: goal,
-      relationshipGoalSelectedAt: goal === NOT_SURE_GOAL
-        ? onboarding.relationshipGoalSelectedAt || new Date().toISOString()
-        : onboarding.relationshipGoalSelectedAt,
-      relationshipDealBreakers: dealBreakers,
-      partnerValues,
-      prioritiseSameRelationshipGoal: prioritiseSameGoal,
-    })
-    navigate('/interests')
+  const handleContinue = async () => {
+    if (!canContinue) return
+    setSaving(true)
+    setError('')
+    try {
+      await saveOnboarding({
+        relationshipGoal: goal,
+        relationshipGoalSelectedAt: goal === NOT_SURE_GOAL
+          ? onboarding.relationshipGoal === NOT_SURE_GOAL && !temporaryGoalExpired
+            ? onboarding.relationshipGoalSelectedAt
+            : new Date().toISOString()
+          : onboarding.relationshipGoalSelectedAt,
+        relationshipDealBreakers: dealBreakers,
+        partnerValues,
+        prioritiseSameRelationshipGoal: prioritiseSameGoal,
+      })
+      navigate(getOnboardingStep('relationshipGoals').nextRoute!)
+    } catch {
+      setError('Could not save your relationship preferences. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -119,29 +137,23 @@ function RelationshipGoalsForm() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-3xl pb-4"
     >
-      <button onClick={() => navigate('/preferences')} className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-navy/25 px-3.5 text-sm text-white/65 transition hover:border-gold/30 hover:text-champagne focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
+      <OnboardingBackButton to={getOnboardingStep('relationshipGoals').previousRoute!} className="mb-5" />
 
       <div className="relationship-interest-panel rounded-[2rem] p-5 sm:p-9">
         <header className="mx-auto mb-8 max-w-xl text-center">
           <p className="mb-2 text-xs uppercase tracking-[0.26em] text-gold/75">Your intentions</p>
-          <h1 className="font-serif-display text-4xl text-gradient-gold sm:text-5xl">Relationship Interest</h1>
+          <h1 className="font-serif-display text-4xl text-gradient-gold sm:text-5xl">Relationship Goals</h1>
           <p className="mt-3 text-sm leading-6 text-white/68 sm:text-base">
             Help us understand what you’re looking for so we can introduce you to people with compatible intentions.
           </p>
         </header>
 
-        <section aria-labelledby="relationship-goal-heading">
-          <h2 id="relationship-goal-heading" className="mb-3 flex items-center gap-2 font-serif-display text-xl text-champagne">
-            <Sparkles className="h-4 w-4 text-gold" /> Relationship Goal
-          </h2>
+        <section aria-label="Relationship goals">
           <div className="flex flex-col gap-3" role="radiogroup">
             {RELATIONSHIP_GOALS.map((option) => {
               const selected = goal === option.value
               const expired = option.value === NOT_SURE_GOAL && temporaryGoalExpired
-              const goalVisual = GOAL_ICONS[option.value]
-              const GoalIcon = goalVisual.icon
+              const goalIconSrc = GOAL_ICONS[option.value]
               return (
                 <button
                   key={option.value}
@@ -149,10 +161,10 @@ function RelationshipGoalsForm() {
                   aria-checked={selected}
                   onClick={() => setGoal(option.value)}
                   disabled={expired}
-                  className={`group flex min-h-20 items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition-all active:scale-[.99] sm:px-5 ${selected ? 'border-gold/65 bg-gold/[.09] shadow-[0_0_30px_-17px_rgba(229,192,123,.9)]' : 'border-white/12 bg-navy/30 hover:border-blue-200/35 hover:bg-blue-950/30 hover:shadow-[0_0_28px_-20px_rgba(133,156,255,.8)]'} disabled:cursor-not-allowed disabled:opacity-45`}
+                  className={`group flex min-h-20 items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition-all motion-reduce:transform-none motion-reduce:transition-none active:scale-[.99] sm:px-5 ${selected ? 'border-gold/65 bg-gold/[.09] shadow-[0_0_30px_-17px_rgba(229,192,123,.9)]' : 'border-white/12 bg-navy/30 hover:border-blue-200/35 hover:bg-blue-950/30 hover:shadow-[0_0_28px_-20px_rgba(133,156,255,.8)]'} disabled:cursor-not-allowed disabled:opacity-45`}
                 >
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[.035] ${goalVisual.colour} shadow-[0_0_18px_-8px_currentColor]`}>
-                    <GoalIcon className="h-6 w-6" strokeWidth={1.45} />
+                  <span className="relationship-goal-icon-tile" aria-hidden="true">
+                    <img className="relationship-goal-icon-artwork" src={goalIconSrc} alt="" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className={`block text-sm font-medium sm:text-base ${selected ? 'text-champagne' : 'text-white/90'}`}>{option.value}</span>
@@ -188,7 +200,7 @@ function RelationshipGoalsForm() {
 
         <section className="mt-8" aria-labelledby="values-heading">
           <h2 id="values-heading" className="font-serif-display text-xl text-champagne">Important to Me</h2>
-          <p id="values-help" className="mb-3 mt-1 text-xs text-white/55">Choose up to 4 qualities you value most in a partner.</p>
+          <p id="values-help" className="mb-3 mt-1 text-xs text-white/55">Choose 1–4 qualities you value most in a partner.</p>
           <div className="flex flex-wrap gap-2">
             {PARTNER_VALUE_OPTIONS.map((item) => <ChoiceChip key={item} label={item} selected={partnerValues.includes(item)} disabled={!partnerValues.includes(item) && partnerValues.length >= MAX_PARTNER_VALUES} onClick={() => toggle(item, partnerValues, MAX_PARTNER_VALUES, setPartnerValues)} />)}
           </div>
@@ -204,9 +216,18 @@ function RelationshipGoalsForm() {
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs leading-5 text-white/48"><Info className="h-3.5 w-3.5 shrink-0 text-gold/65" /> Your astrological compatibility score is calculated separately from these preferences.</p>
 
-        <Button size="lg" className="relationship-interest-continue mt-7 w-full" disabled={!goal} onClick={handleContinue}>
-          Continue <ArrowRight className="h-4 w-4" />
-        </Button>
+        {error && <p role="alert" className="mt-5 text-center text-sm text-rose-300">{error}</p>}
+
+        <OnboardingPrimaryButton
+          className="mt-7 w-full"
+          disabled={!canContinue || saving}
+          loading={saving}
+          loadingLabel="Saving…"
+          showArrow={canContinue}
+          onClick={handleContinue}
+        >
+          Continue
+        </OnboardingPrimaryButton>
       </div>
     </motion.main>
   )
@@ -221,7 +242,7 @@ function ChoiceChip({ label, selected, disabled, onClick }: { label: string; sel
       aria-pressed={selected}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-2 text-xs transition active:scale-[.98] sm:text-sm ${selected ? 'border-gold/60 bg-gold/10 text-champagne shadow-[0_0_18px_-12px_rgba(229,192,123,.9)]' : 'border-white/12 bg-navy/30 text-white/65 hover:border-white/30 hover:text-white/90'} disabled:cursor-not-allowed disabled:opacity-35`}
+      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-2 text-xs transition motion-reduce:transform-none motion-reduce:transition-none active:scale-[.98] sm:text-sm ${selected ? 'border-gold/60 bg-gold/10 text-champagne shadow-[0_0_18px_-12px_rgba(229,192,123,.9)]' : 'border-white/12 bg-navy/30 text-white/65 hover:border-white/30 hover:text-white/90'} disabled:cursor-not-allowed disabled:opacity-35`}
     >
       <ChipIcon className={`h-3.5 w-3.5 ${chipVisual.colour}`} strokeWidth={1.7} />
       {label}{selected && <Check className="h-3.5 w-3.5 text-gold" strokeWidth={3} />}

@@ -19,7 +19,9 @@ export const AVAILABLE_INTERESTS = [
   'Pets & Animals',
   'Sports',
   'Writing',
-]
+] as const
+
+export type AvailableInterest = (typeof AVAILABLE_INTERESTS)[number]
 
 export const MIN_ONBOARDING_INTERESTS = 5
 export const MAX_ONBOARDING_INTERESTS = 8

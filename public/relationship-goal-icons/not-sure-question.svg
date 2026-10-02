@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Not sure yet</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="18" stroke="#69D5FF" stroke-width="2.3"/>
+    <path d="M18.8 18.7a5.5 5.5 0 0 1 10.7 1.8c0 4.4-5.5 4.7-5.5 8.5" stroke="#EAF3FF" stroke-width="2.5"/>
+    <circle cx="24" cy="35" r="1.7" fill="#E5B85C" stroke="none"/>
+  </g>
+</svg>

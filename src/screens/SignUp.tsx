@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Wand2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Wand2 } from 'lucide-react'
 import { OnboardingShell } from '@/components/layout/OnboardingShell'
-import { Button } from '@/components/ui/button'
+import { OnboardingPrimaryButton } from '@/components/ui/onboarding-buttons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext'
 import { firebaseConfigured } from '@/lib/firebase'
 import { scorePasswordStrength } from '@/lib/passwordStrength'
 import { generatePassphrase } from '@/lib/generatePassphrase'
+import { getOnboardingStep } from '@/lib/onboardingFlow'
 
 const MIN_PASSWORD_LENGTH = 15
 
@@ -26,10 +27,10 @@ export function SignUp() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const next = searchParams.get('next')
-  const { updateOnboarding } = useApp()
+  const { isDesignPreview, onboarding, updateOnboarding } = useApp()
   const { signUp } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(isDesignPreview ? onboarding.email : '')
+  const [password, setPassword] = useState(isDesignPreview ? onboarding.password : '')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -37,10 +38,11 @@ export function SignUp() {
   // Payment is the final onboarding handoff. Even when signup originated on
   // the Founding 500 page, a new account begins the normal verified profile
   // journey and cannot deep-link from verification straight to checkout.
-  const destination = '/verify'
+  const destination = getOnboardingStep('signup').nextRoute!
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isValid || loading) return
     setError('')
     setLoading(true)
     if (firebaseConfigured) {
@@ -67,7 +69,7 @@ export function SignUp() {
   const isValid = email.includes('@') && password.length >= MIN_PASSWORD_LENGTH
 
   return (
-    <OnboardingShell step={1} totalSteps={12} className="signup-onboarding-shell">
+    <OnboardingShell className="signup-onboarding-shell">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -163,13 +165,16 @@ export function SignUp() {
             </motion.p>
           )}
 
-          <Button type="submit" size="lg" className="signup-continue-button mt-1 h-[4rem] w-full rounded-full" disabled={!isValid || loading}>
-            {loading ? 'Creating Your Account…' : (
-              <>
-                Continue <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </Button>
+          <OnboardingPrimaryButton
+            type="submit"
+            className="mt-1 w-full"
+            disabled={!isValid || loading}
+            loading={loading}
+            loadingLabel="Creating Your Account…"
+            showArrow
+          >
+            Continue
+          </OnboardingPrimaryButton>
         </form>
 
         <p className="mt-5 text-center text-xs text-white/90">

@@ -1,5 +1,4 @@
-/** Configurable lifestyle categories + option sets, collected during
- *  onboarding and stored as SelfProfile.lifestyle ({label, value}[]). */
+/** Shared option sets used by profile and lifestyle forms. */
 export interface LifestyleCategory {
   label: string
   options: string[]
@@ -15,3 +14,5 @@ export const LIFESTYLE_CATEGORIES: LifestyleCategory[] = [
   { label: 'Wants Children', options: ['Wants children', 'Open to it', 'Not sure', "Doesn't want children"] },
   { label: 'Living Situation', options: ['Lives alone', 'With roommates', 'With family', 'Other'] },
 ]
+
+export const MARITAL_BACKGROUND_OPTIONS = ['Never married', 'Divorced', 'Widowed'] as const

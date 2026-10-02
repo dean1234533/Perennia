@@ -14,10 +14,14 @@ export function subscribeFounding500Config(cb: (config: Founding500Config | null
 /** Live membership record for the signed-in member — the only source of
  *  truth for "are they really a Founding 500 member." Absent until the
  *  real Stripe webhook confirms payment. */
-export function subscribeFoundingMembership(uid: string, cb: (record: FoundingMemberRecord | null) => void) {
+export function subscribeFoundingMembership(
+  uid: string,
+  cb: (record: FoundingMemberRecord | null) => void,
+  onError?: (error: Error) => void,
+) {
   return onSnapshot(doc(db, 'foundingMembers', uid), (snap) => {
     cb(snap.exists() ? (snap.data() as FoundingMemberRecord) : null)
-  })
+  }, onError)
 }
 
 const publicFoundingStatusCallable = httpsCallable<{ targetUid: string }, { isFoundingMember: boolean }>(functions, 'getPublicFoundingStatus')
