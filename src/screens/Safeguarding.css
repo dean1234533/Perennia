@@ -118,10 +118,11 @@
 .safeguarding-toggle-wrap { display: flex; min-width: 8.3rem; flex-direction: column; align-items: center; gap: .45rem; color: #312d60; text-align: center; }
 .safeguarding-toggle-wrap strong { font-size: .76rem; }
 .safeguarding-toggle-wrap small { color: #79778c; font-size: .65rem; }
-.safeguarding-switch { height: 2.75rem!important; width: 4.5rem!important; border-color: #c9c8d5!important; background: #d8d8df!important; }
+.safeguarding-switch { position: relative; padding: .25rem; height: 2.75rem!important; width: 4.5rem!important; border-color: #c9c8d5!important; background: #d8d8df!important; }
 .safeguarding-switch[data-state="checked"] { border-color: transparent!important; background: linear-gradient(90deg, #648fe4, #8d68ce)!important; }
-.safeguarding-switch > span { width: 2.15rem!important; height: 2.15rem!important; transform: translateX(.2rem)!important; }
-.safeguarding-switch[data-state="checked"] > span { transform: translateX(2.15rem)!important; background: #fff!important; }
+/* Reset the shared Tailwind translate so it cannot add to this larger switch’s transform. */
+.safeguarding-switch > span { flex-shrink: 0; width: 2.15rem!important; height: 2.15rem!important; translate: none!important; transform: translateX(0)!important; }
+.safeguarding-switch[data-state="checked"] > span { transform: translateX(calc(4.5rem - 2px - .5rem - 2.15rem))!important; background: #fff!important; }
 
 .safeguarding-section { margin-top: 1.55rem; }
 .safeguarding-section-title { margin-bottom: .7rem; font-size: 1.08rem; font-weight: 750; letter-spacing: -.01em; }
