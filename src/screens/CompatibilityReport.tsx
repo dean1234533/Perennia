@@ -179,7 +179,9 @@ export function CompatibilityReport({ previewData }: { previewData?: Compatibili
         <button type="button" className="compatibility-back" onClick={() => navigate(-1)} aria-label="Go back">
           <ArrowLeft />
         </button>
-        {access === 'full' ? <FullCompatibility experience={experience} /> : <CompatibilityTeaser experience={experience} />}
+        {access === 'full'
+          ? <FullCompatibility experience={experience} />
+          : <CompatibilityTeaser experience={experience} onUnlock={() => navigate(id ? `/founding-500?next=${encodeURIComponent(`/compatibility/${id}`)}` : '/founding-500')} />}
       </div>
     </main>
   )
@@ -299,7 +301,7 @@ function CompatibilityValue({ person, dimension }: { person: CompatibilityPerson
   )
 }
 
-function CompatibilityTeaser({ experience }: { experience: CompatibilityExperienceData }) {
+function CompatibilityTeaser({ experience, onUnlock }: { experience: CompatibilityExperienceData; onUnlock: () => void }) {
   return (
     <section className="compatibility-teaser">
       <header className="compatibility-header">
@@ -326,9 +328,9 @@ function CompatibilityTeaser({ experience }: { experience: CompatibilityExperien
         <LockKeyhole />
         <h2>See your complete cosmic connection</h2>
         <p>Unlock all six compatibility dimensions, detailed guidance and your complete overview.</p>
-        <button type="button">Unlock Compatibility <ArrowRight /></button>
+        <button type="button" onClick={onUnlock}>Unlock Compatibility <ArrowRight /></button>
         <strong>Unlock this report for {COMPATIBILITY_REPORT_PRICE.display}</strong>
-        <a href="/founding-500">Included with Perennia Match</a>
+        <Link to="/founding-500">Included with Perennia Match</Link>
       </div>
 
       <p className="compatibility-guidance-note">Compatibility guidance offers insight, not a guarantee of relationship success.</p>

@@ -10,6 +10,36 @@ interface ThreadLocationState {
   otherUid?: string
 }
 
+interface SpeechRecognitionResultLike {
+  readonly length: number
+  readonly 0: { readonly transcript: string }
+}
+
+interface SpeechRecognitionEventLike {
+  readonly results: { readonly length: number; readonly 0: SpeechRecognitionResultLike }
+}
+
+interface SpeechRecognitionLike {
+  lang: string
+  interimResults: boolean
+  maxAlternatives: number
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null
+  onerror: (() => void) | null
+  onend: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
+
+function speechRecognitionConstructor() {
+  const browserWindow = window as typeof window & {
+    SpeechRecognition?: SpeechRecognitionConstructor
+    webkitSpeechRecognition?: SpeechRecognitionConstructor
+  }
+  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition
+}
+
 export function MessageThread() {
   const shouldReduceMotion = useReducedMotion()
   const { id: matchId } = useParams<{ id: string }>()
@@ -21,6 +51,9 @@ export function MessageThread() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const [isListening, setIsListening] = useState(false)
 
   useEffect(() => {
     if (!matchId || !user) return
@@ -58,6 +91,8 @@ export function MessageThread() {
     bottomRef.current?.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth' })
   }, [messages, shouldReduceMotion])
 
+  useEffect(() => () => recognitionRef.current?.stop(), [])
+
   if (!matchId) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
@@ -89,6 +124,55 @@ export function MessageThread() {
     const text = input.trim()
     setInput('')
     sendMessageRemote(matchId, user.uid, text).catch((err) => console.warn('[Perennia] Failed to send message:', err))
+  }
+
+  const addSmile = () => {
+    const field = inputRef.current
+    const cursor = field?.selectionStart ?? input.length
+    const selectionEnd = field?.selectionEnd ?? cursor
+    const next = `${input.slice(0, cursor)}😊${input.slice(selectionEnd)}`
+    setInput(next)
+    requestAnimationFrame(() => {
+      field?.focus()
+      field?.setSelectionRange(cursor + 2, cursor + 2)
+    })
+  }
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const Recognition = speechRecognitionConstructor()
+    if (!Recognition) {
+      inputRef.current?.focus()
+      return
+    }
+
+    const recognition = new Recognition()
+    recognition.lang = navigator.language || 'en-GB'
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim()
+      if (transcript) setInput((current) => `${current}${current.trim() ? ' ' : ''}${transcript}`)
+    }
+    recognition.onerror = () => setIsListening(false)
+    recognition.onend = () => {
+      recognitionRef.current = null
+      setIsListening(false)
+      inputRef.current?.focus()
+    }
+    recognitionRef.current = recognition
+    setIsListening(true)
+    try {
+      recognition.start()
+    } catch {
+      recognitionRef.current = null
+      setIsListening(false)
+      inputRef.current?.focus()
+    }
   }
 
   return (
@@ -150,10 +234,11 @@ export function MessageThread() {
       {/* Composer */}
       <div className="glass-strong sticky bottom-0 z-20 px-4 py-4 md:px-8">
         <div className="mx-auto flex max-w-2xl items-center gap-2">
-          <button className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/50 hover:text-gold cursor-pointer">
+          <button type="button" onClick={addSmile} aria-label="Add smiling emoji" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/50 hover:text-gold cursor-pointer">
             <Smile className="h-5 w-5" />
           </button>
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
@@ -169,7 +254,13 @@ export function MessageThread() {
               <Send className="h-4 w-4" />
             </motion.button>
           ) : (
-            <button className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/50 hover:text-gold cursor-pointer">
+            <button
+              type="button"
+              onClick={toggleVoiceInput}
+              aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+              aria-pressed={isListening}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:text-gold cursor-pointer ${isListening ? 'text-gold' : 'text-white/50'}`}
+            >
               <Mic className="h-5 w-5" />
             </button>
           )}
