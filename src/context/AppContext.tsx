@@ -433,8 +433,8 @@ export function AppProvider({
   }, [user])
 
   const updateSafeMode = useCallback(async (enabled: boolean) => {
-    setSafeMode(enabled)
     if (firebaseConfigured && user) await updateSafetySettingsRemote(user.uid, { safeMode: enabled })
+    setSafeMode(enabled)
   }, [user])
 
   const clearLastMatch = useCallback(() => setLastMatchId(null), [])

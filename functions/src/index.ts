@@ -54,7 +54,7 @@ import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as up
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { deleteAccount as deleteAccountService } from './services/account.service'
 import { pauseAccount as pauseAccountService, resumeAccount as resumeAccountService, type AccountPauseDuration } from './services/accountPause.service'
-import { blockUser as blockUserService, unblockUser as unblockUserService, migratePrivateSafety as migratePrivateSafetyService, reportUser as reportUserService } from './services/privacy.service'
+import { blockUser as blockUserService, endConnection as endConnectionService, unblockUser as unblockUserService, migratePrivateSafety as migratePrivateSafetyService, reportUser as reportUserService } from './services/privacy.service'
 import { sendFriendRequest as sendFriendRequestService, respondToFriendRequest as respondToFriendRequestService, unfriend as unfriendService } from './services/friends.service'
 import { computeFullNatalChart, geocodePlace, searchCityMatches, AstrologyError } from './services/astrology.service'
 import { invalidArgument, unauthenticated, permissionDenied, internal } from './utils/errors'
@@ -494,6 +494,14 @@ export const blockUser = onCall({ cors: true }, async (request) => {
   if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
   await blockUserService(request.auth.uid, parsed.data.targetUid)
   return { blocked: true as const }
+})
+
+export const endConnection = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in required.')
+  const parsed = likeUserInputSchema.safeParse(request.data)
+  if (!parsed.success || parsed.data.targetUid === request.auth.uid) throw invalidArgument('Choose another member.')
+  await endConnectionService(request.auth.uid, parsed.data.targetUid)
+  return { ended: true as const }
 })
 
 export const unblockUser = onCall({ cors: true }, async (request) => {

@@ -23,7 +23,12 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { getLocalAccountPause, pauseAccount, resumeAccount, type AccountPauseDuration } from '@/lib/accountPause'
+import { createBillingPortalSession } from '@/lib/founding500'
+import { firebaseConfigured } from '@/lib/firebase'
+import { getPublicProfile, subscribeMyConnections, type DiscoveryCandidate } from '@/lib/firestore'
+import { endConnectionRemote, reportProfileRemote } from '@/lib/privacyApi'
 import './Safeguarding.css'
 
 type SafeguardingProps = {
@@ -39,6 +44,8 @@ type ActionCardProps = {
   onClick: () => void
   title: string
 }
+
+type MemberSafetyAction = 'end' | 'block' | 'report'
 
 function ActionCard({ accent, buttonLabel, children, description, icon: Icon, onClick, title }: ActionCardProps) {
   return (
@@ -58,13 +65,21 @@ function ActionCard({ accent, buttonLabel, children, description, icon: Icon, on
 
 export function Safeguarding({ preview = false }: SafeguardingProps) {
   const navigate = useNavigate()
-  const { onboarding } = useApp()
-  const [safeMode, setSafeMode] = useState(false)
+  const { user } = useAuth()
+  const { onboarding, safeMode, updateSafeMode, blockProfile } = useApp()
   const [notice, setNotice] = useState<string | null>(null)
+  const [safeModeBusy, setSafeModeBusy] = useState(false)
+  const [billingBusy, setBillingBusy] = useState(false)
   const [pauseDialogOpen, setPauseDialogOpen] = useState(false)
   const [pauseDuration, setPauseDuration] = useState<AccountPauseDuration>('14-days')
   const [pauseBusy, setPauseBusy] = useState(false)
   const [pauseUntil, setPauseUntil] = useState<string | null>(() => getLocalAccountPause())
+  const [memberAction, setMemberAction] = useState<MemberSafetyAction | null>(null)
+  const [connections, setConnections] = useState<Array<{ uid: string; profile: DiscoveryCandidate }>>([])
+  const [connectionsLoading, setConnectionsLoading] = useState(false)
+  const [memberActionBusy, setMemberActionBusy] = useState<string | null>(null)
+  const [emergencyOpen, setEmergencyOpen] = useState(false)
+  const [guidelinesOpen, setGuidelinesOpen] = useState(false)
 
   useEffect(() => {
     const remotePause = onboarding.accountPausedUntil
@@ -76,20 +91,41 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
     ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pauseUntil))
     : ''
 
-  const showPreviewNotice = (label: string) => {
-    setNotice(`${label} is a preview-only control. No account, connection, report or subscription change was made.`)
+  const handleSafeModeChange = async (enabled: boolean) => {
+    setSafeModeBusy(true)
+    setNotice(null)
+    try {
+      await updateSafeMode(enabled)
+      setNotice(`Safe Mode is ${enabled ? 'on' : 'off'} and has been saved.`)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Safe Mode could not be updated. Please try again.')
+    } finally {
+      setSafeModeBusy(false)
+    }
   }
 
-  const handleSafeModeChange = (enabled: boolean) => {
-    setSafeMode(enabled)
-    setNotice(`Safe Mode is ${enabled ? 'on' : 'off'} for this page preview only. This setting has not been saved.`)
-  }
-
-  const handlePauseAccount = async () => {
-    if (preview) {
-      showPreviewNotice('Pause Account')
+  useEffect(() => {
+    if (!memberAction) return
+    if (!firebaseConfigured || !user) {
+      setConnections([])
+      setConnectionsLoading(false)
       return
     }
+    setConnectionsLoading(true)
+    return subscribeMyConnections(user.uid, (items) => {
+      Promise.all(items.map(async (connection) => {
+        const otherUid = connection.users.find((uid) => uid !== user.uid)
+        if (!otherUid) return null
+        const profile = await getPublicProfile(otherUid)
+        return profile ? { uid: otherUid, profile } : null
+      })).then((profiles) => {
+        setConnections(profiles.filter((item): item is { uid: string; profile: DiscoveryCandidate } => item !== null))
+        setConnectionsLoading(false)
+      }).catch(() => setConnectionsLoading(false))
+    })
+  }, [memberAction, user])
+
+  const handlePauseAccount = async () => {
     setPauseBusy(true)
     setNotice(null)
     try {
@@ -106,11 +142,51 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
     }
   }
 
-  const handleResumeAccount = async () => {
-    if (preview) {
-      showPreviewNotice('Resume Account')
+  const handleBilling = async () => {
+    if (billingBusy) return
+    if (!firebaseConfigured || preview) {
+      navigate('/settings#membership')
       return
     }
+    setBillingBusy(true)
+    setNotice(null)
+    try {
+      const { url } = await createBillingPortalSession(`${window.location.origin}/safeguarding`)
+      window.location.assign(url)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Billing could not be opened. Please try again.')
+      setBillingBusy(false)
+    }
+  }
+
+  const handleMemberAction = async (targetUid: string, name: string) => {
+    if (!memberAction || memberActionBusy) return
+    setMemberActionBusy(targetUid)
+    setNotice(null)
+    try {
+      if (firebaseConfigured) {
+        if (memberAction === 'end') await endConnectionRemote(targetUid)
+        if (memberAction === 'block') await blockProfile(targetUid)
+        if (memberAction === 'report') await reportProfileRemote(targetUid)
+      }
+      const firstName = name.split(' ')[0]
+      const message = memberAction === 'end'
+        ? `Your connection with ${firstName} has ended.`
+        : memberAction === 'block'
+          ? `${firstName} has been blocked and can no longer contact or find you.`
+          : `Your report about ${firstName} has been submitted for review.`
+      setConnections((current) => memberAction === 'report' ? current : current.filter((item) => item.uid !== targetUid))
+      setMemberAction(null)
+      setNotice(message)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'That action could not be completed. Please try again.')
+      setMemberAction(null)
+    } finally {
+      setMemberActionBusy(null)
+    }
+  }
+
+  const handleResumeAccount = async () => {
     setPauseBusy(true)
     setNotice(null)
     try {
@@ -170,12 +246,13 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
           <div className="safeguarding-toggle-wrap">
             <Switch
               checked={safeMode}
-              onCheckedChange={handleSafeModeChange}
+              disabled={safeModeBusy}
+              onCheckedChange={(enabled) => void handleSafeModeChange(enabled)}
               aria-label="Safe Mode"
               className="safeguarding-switch"
             />
             <strong>Safe Mode is {safeMode ? 'on' : 'off'}</strong>
-            <small>Not saved</small>
+            <small>{safeModeBusy ? 'Saving…' : 'Saved'}</small>
           </div>
         </section>
 
@@ -200,14 +277,14 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               <Button
                 type="button"
                 disabled={pauseBusy}
-                onClick={pauseIsActive ? handleResumeAccount : () => preview ? showPreviewNotice('Pause Account') : setPauseDialogOpen(true)}
+                onClick={pauseIsActive ? handleResumeAccount : () => setPauseDialogOpen(true)}
                 className="safeguarding-primary-button"
               >
                 {pauseBusy && <Loader2 className="animate-spin" aria-hidden="true" />}
                 {pauseBusy ? 'Updating…' : pauseIsActive ? 'Resume Account' : 'Pause Account'}
               </Button>
-              <button type="button" onClick={() => showPreviewNotice('Manage Subscription')} className="safeguarding-link-button">
-                Manage Subscription <ArrowRight aria-hidden="true" />
+              <button type="button" disabled={billingBusy} onClick={() => void handleBilling()} className="safeguarding-link-button">
+                {billingBusy ? 'Opening Billing…' : 'Manage Subscription'} <ArrowRight aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -225,17 +302,17 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               buttonLabel="Use this option"
               description="End a connection respectfully."
               icon={HeartOff}
-              onClick={() => showPreviewNotice('No Longer Interested')}
+              onClick={() => setMemberAction('end')}
               title="No Longer Interested"
             >
-              The other member will be informed and the conversation will close.
+              The connection will be removed and the conversation will close.
             </ActionCard>
             <ActionCard
               accent="blue"
               buttonLabel="Block Someone"
               description="Prevent unwanted contact."
               icon={Ban}
-              onClick={() => showPreviewNotice('Block Someone')}
+              onClick={() => setMemberAction('block')}
               title="Block Someone"
             >
               They will not be able to contact you or view or find your profile.
@@ -245,10 +322,10 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               buttonLabel="Report Someone"
               description="Report inappropriate or unsafe behaviour."
               icon={Flag}
-              onClick={() => showPreviewNotice('Report Someone')}
+              onClick={() => setMemberAction('report')}
               title="Report Someone"
             >
-              Reports can be reviewed and investigated when backend support is connected.
+              Your report will be submitted privately to the Perennia safety team for review.
             </ActionCard>
           </div>
         </section>
@@ -261,7 +338,7 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               <div>
                 <h3>You’re not alone</h3>
                 <p>If you are experiencing abuse, harassment or feeling unsafe, support is available.</p>
-                <button type="button" onClick={() => showPreviewNotice('Safety Centre')} className="safeguarding-link-button">
+                <button type="button" onClick={() => navigate('/settings#safety')} className="safeguarding-link-button">
                   Safety Centre <ArrowRight aria-hidden="true" />
                 </button>
               </div>
@@ -271,11 +348,11 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               <div>
                 <h3>In immediate danger?</h3>
                 <p>Contact your local emergency services. Perennia is not an emergency service.</p>
-                <button type="button" onClick={() => showPreviewNotice('Emergency Contacts')}>Emergency Contacts</button>
+                <button type="button" onClick={() => setEmergencyOpen(true)}>Emergency Contacts</button>
               </div>
             </div>
           </div>
-          <button type="button" onClick={() => showPreviewNotice('Community Guidelines')} className="safeguarding-guidelines-card">
+          <button type="button" onClick={() => setGuidelinesOpen(true)} className="safeguarding-guidelines-card">
             <LockKeyhole aria-hidden="true" />
             <span>
               <strong>Community Guidelines</strong>
@@ -321,6 +398,81 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               {pauseBusy ? 'Pausing…' : 'Confirm Pause'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={memberAction !== null} onOpenChange={(open) => !open && !memberActionBusy && setMemberAction(null)}>
+        <DialogContent className="safeguarding-pause-dialog safeguarding-member-dialog">
+          <DialogHeader>
+            <DialogTitle>
+              {memberAction === 'end' ? 'End a connection' : memberAction === 'block' ? 'Block someone' : 'Report someone'}
+            </DialogTitle>
+            <DialogDescription className="!text-[#68637b] leading-relaxed">
+              {memberAction === 'end'
+                ? 'Choose the connection you no longer wish to continue. Your conversation will close.'
+                : memberAction === 'block'
+                  ? 'Choose a member to prevent them from contacting you or finding your profile.'
+                  : 'Choose the member whose behaviour you want Perennia to review.'}
+            </DialogDescription>
+          </DialogHeader>
+          {connectionsLoading ? (
+            <div className="safeguarding-dialog-loading" role="status"><Loader2 className="animate-spin" /> Loading your connections…</div>
+          ) : connections.length ? (
+            <div className="safeguarding-member-list">
+              {connections.map(({ uid, profile }) => (
+                <button
+                  type="button"
+                  key={uid}
+                  disabled={memberActionBusy !== null}
+                  onClick={() => void handleMemberAction(uid, profile.name)}
+                >
+                  <img src={profile.profilePhotoThumbUrl || profile.profilePhotoUrl} alt="" />
+                  <span><strong>{profile.name}</strong><small>{profile.city || profile.country || 'Perennia member'}</small></span>
+                  {memberActionBusy === uid ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="safeguarding-dialog-empty">
+              <p>You do not have any current connections to choose from.</p>
+              <Button type="button" onClick={() => { setMemberAction(null); navigate('/messages') }} className="safeguarding-primary-button">
+                Open Messages
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
+        <DialogContent className="safeguarding-pause-dialog safeguarding-information-dialog">
+          <DialogHeader>
+            <DialogTitle>Emergency contacts</DialogTitle>
+            <DialogDescription className="!text-[#68637b] leading-relaxed">
+              If you or someone else is in immediate danger, contact your local emergency service now. Perennia cannot provide emergency assistance.
+            </DialogDescription>
+          </DialogHeader>
+          <a className="safeguarding-dialog-primary-link" href="tel:112"><Phone aria-hidden="true" /> Call 112</a>
+          <p>If 112 is not the emergency number where you are, call the appropriate local emergency number instead.</p>
+          <a className="safeguarding-dialog-secondary-link" href="mailto:safety@perennia.com?subject=Safety%20Support">Contact Perennia Safety Support</a>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={guidelinesOpen} onOpenChange={setGuidelinesOpen}>
+        <DialogContent className="safeguarding-pause-dialog safeguarding-information-dialog">
+          <DialogHeader>
+            <DialogTitle>Community Guidelines</DialogTitle>
+            <DialogDescription className="!text-[#68637b] leading-relaxed">
+              Everyone on Perennia is expected to help keep the community respectful and safe.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="safeguarding-guidelines-list">
+            <li>Be honest about who you are and what you are looking for.</li>
+            <li>Treat every member with dignity; harassment and discrimination are not tolerated.</li>
+            <li>Respect consent, privacy, personal boundaries and a member’s decision to end contact.</li>
+            <li>Never request money, financial details, passwords or identity documents.</li>
+            <li>Report suspicious, abusive or unsafe behaviour so it can be reviewed.</li>
+          </ul>
+          <a className="safeguarding-dialog-secondary-link" href="mailto:safety@perennia.com?subject=Community%20Guidelines">Ask the Safety Team a Question</a>
         </DialogContent>
       </Dialog>
     </div>
