@@ -10,6 +10,7 @@ export const DESIGN_PREVIEW_VISITOR_PROFILE: DiscoveryCandidate = {
   name: 'Amara Bennett',
   verified: true,
   onboardingComplete: true,
+  accountPausedUntil: null,
   age: 34,
   sunSign: 'Cancer',
   moonSign: 'Libra',

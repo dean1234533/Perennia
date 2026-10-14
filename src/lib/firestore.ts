@@ -103,6 +103,10 @@ export interface UserDoc {
   incognito: boolean
   showDistance: boolean
   pushNotificationsEnabled: boolean
+  /** While in the future, this member is hidden from discovery and new matches. */
+  accountPausedUntil: string | null
+  /** Server-owned pause start timestamps used to enforce the rolling allowance. */
+  accountPauseHistory: string[]
   /** Real FCM registration tokens for this member's browsers/devices —
    *  written only by the client's own opt-in flow (src/lib/pushNotifications.ts)
    *  after the browser actually grants Notification permission. */
@@ -176,6 +180,8 @@ const defaultUserDoc: Omit<UserDoc, 'name' | 'email'> = {
   incognito: false,
   showDistance: true,
   pushNotificationsEnabled: true,
+  accountPausedUntil: null,
+  accountPauseHistory: [],
   pushTokens: [],
   likedIds: [],
   passedIds: [],
@@ -214,6 +220,7 @@ export type PublicProfileDoc = Pick<
   | 'country' | 'city' | 'religion' | 'relationshipGoal' | 'storyPrompts'
   | 'incognito' | 'showDistance' | 'profilePhotoUrl' | 'profilePhotoThumbUrl'
   | 'categories' | 'profileExtras'
+  | 'accountPausedUntil'
 > & {
   /** Whole years, computed server-side from the private birth date. */
   age: number | null
@@ -259,6 +266,7 @@ function publicProfileFromUserDoc(d: Partial<UserDoc>): PublicProfileDoc {
     incognito: d.incognito ?? false, showDistance: d.showDistance ?? true,
     profilePhotoUrl: d.profilePhotoUrl ?? '', profilePhotoThumbUrl: d.profilePhotoThumbUrl ?? '',
     categories: d.categories ?? [], profileExtras: d.profileExtras ?? null,
+    accountPausedUntil: d.accountPausedUntil ?? null,
     age: ageOf(d.birthDate), verified: d.verification?.status === 'verified',
     currentLocationLat: coarse(d.currentLocationLat), currentLocationLon: coarse(d.currentLocationLon),
   }
@@ -363,6 +371,7 @@ export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCa
     return publicSnap.docs
       .filter((d) => d.id !== uid)
       .map((d) => ({ uid: d.id, ...(d.data() as PublicProfileDoc) }))
+      .filter((candidate) => !candidate.accountPausedUntil || new Date(candidate.accountPausedUntil).getTime() <= Date.now())
   }
   // No public profiles exist yet (backfill hasn't run): old behaviour,
   // reduced to the public shape so nothing private reaches the screens.
@@ -375,6 +384,7 @@ export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCa
   return (legacySnap?.docs ?? [])
     .filter((d) => d.id !== uid)
     .map((d) => ({ uid: d.id, ...publicProfileFromUserDoc(d.data() as UserDoc) }))
+    .filter((candidate) => !candidate.accountPausedUntil || new Date(candidate.accountPausedUntil).getTime() <= Date.now())
 }
 
 export interface MatchDoc {

@@ -54,7 +54,10 @@ service cloud.firestore {
         && request.resource.data.get('blockedIds', []).size() == 0
         && request.resource.data.get('mutedIds', []).size() == 0;
       allow update: if request.auth != null && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification', 'likedIds', 'matchedIds', 'blockedIds', 'mutedIds', 'safeMode'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'verification', 'likedIds', 'matchedIds', 'blockedIds', 'mutedIds', 'safeMode',
+          'accountPausedUntil', 'accountPauseHistory'
+        ])
         && (
           !request.resource.data.diff(resource.data).affectedKeys().hasAny([
             'birthDate', 'birthTime', 'birthTimeUnknown', 'birthPlace',

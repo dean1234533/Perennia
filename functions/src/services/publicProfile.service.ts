@@ -36,6 +36,7 @@ const PUBLIC_FIELDS = [
   'profilePhotoThumbUrl',
   'categories',
   'profileExtras',
+  'accountPausedUntil',
 ] as const
 
 type RawUser = Record<string, unknown>

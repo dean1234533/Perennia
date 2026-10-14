@@ -67,6 +67,7 @@ export interface OnboardingData {
   incognito: boolean
   showDistance: boolean
   pushNotificationsEnabled: boolean
+  accountPausedUntil: string | null
 }
 
 interface AppContextValue {
@@ -157,6 +158,7 @@ const defaultOnboarding: OnboardingData = {
   incognito: false,
   showDistance: true,
   pushNotificationsEnabled: true,
+  accountPausedUntil: null,
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -263,6 +265,7 @@ export function AppProvider({
         incognito: data.incognito ?? false,
         showDistance: data.showDistance ?? true,
         pushNotificationsEnabled: data.pushNotificationsEnabled ?? true,
+        accountPausedUntil: data.accountPausedUntil ?? null,
       }))
       setLikedIds(data.likedIds ?? [])
       setPassedIds(data.passedIds ?? [])

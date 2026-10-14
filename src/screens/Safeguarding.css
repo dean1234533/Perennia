@@ -142,6 +142,31 @@
 .safeguarding-subscription-note svg { width: 1rem; flex: none; }
 .safeguarding-subscription-note strong { margin-right: .25rem; }
 
+.safeguarding-pause-dialog {
+  border: 1px solid rgba(117, 87, 181, .22)!important;
+  background: linear-gradient(145deg, #fffdfa, #f8f5ff)!important;
+  color: var(--safeguarding-ink)!important;
+  box-shadow: 0 24px 70px rgba(41, 33, 78, .22)!important;
+}
+.safeguarding-pause-dialog h2 { color: #302b50; }
+.safeguarding-pause-dialog > button { color: #625d78; }
+.safeguarding-pause-dialog > label { display: block; margin-top: .35rem; color: #302b50; font-size: .76rem; font-weight: 700; }
+.safeguarding-pause-dialog select {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: .4rem;
+  border: 1px solid #d7cce9;
+  border-radius: .75rem;
+  padding: 0 .9rem;
+  background: #fff;
+  color: #302b50;
+  font-size: .85rem;
+}
+.safeguarding-pause-dialog select:focus-visible { outline: 3px solid rgba(74, 132, 238, .42); outline-offset: 2px; }
+.safeguarding-pause-dialog > p { margin-top: .7rem; color: #777087; font-size: .72rem; line-height: 1.5; }
+.safeguarding-pause-dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.25rem; }
+.safeguarding-pause-dialog-actions > button:first-child { min-height: 2.75rem; padding: .45rem 1rem; color: #625d78; font-size: .77rem; font-weight: 650; }
+
 .safeguarding-action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
 .safeguarding-action-card { display: flex; min-width: 0; min-height: 15.75rem; flex-direction: column; padding: 1.15rem; border: 1px solid; border-radius: 1.15rem; background: rgba(255, 255, 255, .82); box-shadow: 0 10px 30px rgba(54, 56, 100, .055); }
 .safeguarding-action-card--rose { border-color: #f1c5cf; --action-accent: #c94b70; --action-soft: #f8dce4; }

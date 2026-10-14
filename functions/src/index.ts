@@ -53,6 +53,7 @@ import { createFoundingCheckoutSession as createFoundingCheckoutSessionService, 
 import { ensureConfigSeeded as ensureFounding500ConfigSeeded, updateConfig as updateFounding500ConfigDoc, getMemberRecord } from './repositories/founding500.repository'
 import { processUploadedVideo } from './services/videoProcessing.service'
 import { deleteAccount as deleteAccountService } from './services/account.service'
+import { pauseAccount as pauseAccountService, resumeAccount as resumeAccountService, type AccountPauseDuration } from './services/accountPause.service'
 import { blockUser as blockUserService, unblockUser as unblockUserService, migratePrivateSafety as migratePrivateSafetyService, reportUser as reportUserService } from './services/privacy.service'
 import { sendFriendRequest as sendFriendRequestService, respondToFriendRequest as respondToFriendRequestService, unfriend as unfriendService } from './services/friends.service'
 import { computeFullNatalChart, geocodePlace, searchCityMatches, AstrologyError } from './services/astrology.service'
@@ -466,6 +467,20 @@ export const likeUser = onCall({ cors: true }, async (request) => {
     if (err instanceof HttpsError) throw err
     throw internal('likeUser failed', err)
   }
+})
+
+const ACCOUNT_PAUSE_DURATIONS = new Set<AccountPauseDuration>(['14-days', '1-month', '2-months', '3-months', '4-months'])
+
+export const pauseAccount = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in to pause your account.')
+  const duration = request.data?.duration as AccountPauseDuration | undefined
+  if (!duration || !ACCOUNT_PAUSE_DURATIONS.has(duration)) throw invalidArgument('Choose a valid pause duration.')
+  return pauseAccountService(request.auth.uid, duration)
+})
+
+export const resumeAccount = onCall({ cors: true }, async (request) => {
+  if (!request.auth) throw unauthenticated('Sign in to resume your account.')
+  return resumeAccountService(request.auth.uid)
 })
 
 export const migratePrivateSafety = onCall({ cors: true }, async (request) => {

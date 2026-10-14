@@ -44,6 +44,11 @@ export async function recordLike(likerUid: string, likedUid: string): Promise<Li
       throw notFound('That profile is no longer available.')
     }
 
+    const likedPausedUntil = likedSnap.get('accountPausedUntil')
+    if (typeof likedPausedUntil === 'string' && new Date(likedPausedUntil).getTime() > Date.now()) {
+      throw permissionDenied('That profile is not available.')
+    }
+
     const likerBlockedIds = (likerSafetySnap.get('blockedIds') ?? likerSnap.get('blockedIds')) as unknown
     const likedBlockedIds = (likedSafetySnap.get('blockedIds') ?? likedSnap.get('blockedIds')) as unknown
     const blockedEitherWay =

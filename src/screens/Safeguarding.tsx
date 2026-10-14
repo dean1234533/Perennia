@@ -1,4 +1,4 @@
-import { useState, type ElementType, type ReactNode } from 'react'
+import { useEffect, useState, type ElementType, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
   HandHeart,
   HeartOff,
   Leaf,
+  Loader2,
   LockKeyhole,
   Pause,
   Phone,
@@ -19,7 +20,10 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
+import { useApp } from '@/context/AppContext'
+import { getLocalAccountPause, pauseAccount, resumeAccount, type AccountPauseDuration } from '@/lib/accountPause'
 import './Safeguarding.css'
 
 type SafeguardingProps = {
@@ -54,8 +58,23 @@ function ActionCard({ accent, buttonLabel, children, description, icon: Icon, on
 
 export function Safeguarding({ preview = false }: SafeguardingProps) {
   const navigate = useNavigate()
+  const { onboarding } = useApp()
   const [safeMode, setSafeMode] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [pauseDialogOpen, setPauseDialogOpen] = useState(false)
+  const [pauseDuration, setPauseDuration] = useState<AccountPauseDuration>('14-days')
+  const [pauseBusy, setPauseBusy] = useState(false)
+  const [pauseUntil, setPauseUntil] = useState<string | null>(() => getLocalAccountPause())
+
+  useEffect(() => {
+    const remotePause = onboarding.accountPausedUntil
+    setPauseUntil(remotePause && new Date(remotePause).getTime() > Date.now() ? remotePause : getLocalAccountPause())
+  }, [onboarding.accountPausedUntil])
+
+  const pauseIsActive = Boolean(pauseUntil && new Date(pauseUntil).getTime() > Date.now())
+  const pauseEndLabel = pauseUntil
+    ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pauseUntil))
+    : ''
 
   const showPreviewNotice = (label: string) => {
     setNotice(`${label} is a preview-only control. No account, connection, report or subscription change was made.`)
@@ -64,6 +83,45 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
   const handleSafeModeChange = (enabled: boolean) => {
     setSafeMode(enabled)
     setNotice(`Safe Mode is ${enabled ? 'on' : 'off'} for this page preview only. This setting has not been saved.`)
+  }
+
+  const handlePauseAccount = async () => {
+    if (preview) {
+      showPreviewNotice('Pause Account')
+      return
+    }
+    setPauseBusy(true)
+    setNotice(null)
+    try {
+      const result = await pauseAccount(pauseDuration)
+      setPauseUntil(result.pausedUntil)
+      setPauseDialogOpen(false)
+      const label = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(result.pausedUntil))
+      setNotice(`Your account is paused until ${label}. Your profile is now hidden from Explore and new compatibility matches.`)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Your account could not be paused. Please try again.')
+      setPauseDialogOpen(false)
+    } finally {
+      setPauseBusy(false)
+    }
+  }
+
+  const handleResumeAccount = async () => {
+    if (preview) {
+      showPreviewNotice('Resume Account')
+      return
+    }
+    setPauseBusy(true)
+    setNotice(null)
+    try {
+      await resumeAccount()
+      setPauseUntil(null)
+      setNotice('Your account is active again. Your profile can now appear in Explore and compatibility matches.')
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Your account could not be resumed. Please try again.')
+    } finally {
+      setPauseBusy(false)
+    }
   }
 
   return (
@@ -91,7 +149,7 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
           <div className="safeguarding-notice" role="status">
             <BadgeHelp aria-hidden="true" />
             <span>{notice}</span>
-            <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss preview notice">Dismiss</button>
+            <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notice">Dismiss</button>
           </div>
         )}
 
@@ -128,7 +186,7 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
             <div className="safeguarding-feature-content">
               <div className="safeguarding-feature-heading">
                 <h3>Pause Account</h3>
-                <span className="safeguarding-pill safeguarding-pill--gold">Paid feature</span>
+                <span className="safeguarding-pill safeguarding-pill--gold">{pauseIsActive ? `Paused until ${pauseEndLabel}` : 'Paid feature'}</span>
               </div>
               <p className="safeguarding-feature-lead">Take a complete break from Perennia while keeping your account in place.</p>
               <p className="safeguarding-feature-copy">Your profile will be hidden from Explore and compatibility matches for the pause period.</p>
@@ -139,8 +197,14 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
               <div><Pause aria-hidden="true" /><span><small>Pause allowance</small><strong>3 in any rolling 12 months</strong></span></div>
             </div>
             <div className="safeguarding-pause-actions">
-              <Button type="button" onClick={() => showPreviewNotice('Pause Account')} className="safeguarding-primary-button">
-                Pause Account
+              <Button
+                type="button"
+                disabled={pauseBusy}
+                onClick={pauseIsActive ? handleResumeAccount : () => preview ? showPreviewNotice('Pause Account') : setPauseDialogOpen(true)}
+                className="safeguarding-primary-button"
+              >
+                {pauseBusy && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {pauseBusy ? 'Updating…' : pauseIsActive ? 'Resume Account' : 'Pause Account'}
               </Button>
               <button type="button" onClick={() => showPreviewNotice('Manage Subscription')} className="safeguarding-link-button">
                 Manage Subscription <ArrowRight aria-hidden="true" />
@@ -227,6 +291,38 @@ export function Safeguarding({ preview = false }: SafeguardingProps) {
           {preview && <span>Local design preview</span>}
         </footer>
       </div>
+
+      <Dialog open={pauseDialogOpen} onOpenChange={(open) => !pauseBusy && setPauseDialogOpen(open)}>
+        <DialogContent className="safeguarding-pause-dialog">
+          <DialogHeader>
+            <DialogTitle>Pause your account</DialogTitle>
+            <DialogDescription className="!text-[#68637b] leading-relaxed">
+              Your profile will be hidden from Explore and new compatibility matches. Your subscription and existing conversations will continue.
+            </DialogDescription>
+          </DialogHeader>
+          <label htmlFor="pause-duration">Pause for</label>
+          <select
+            id="pause-duration"
+            value={pauseDuration}
+            onChange={(event) => setPauseDuration(event.target.value as AccountPauseDuration)}
+            disabled={pauseBusy}
+          >
+            <option value="14-days">14 days</option>
+            <option value="1-month">1 month</option>
+            <option value="2-months">2 months</option>
+            <option value="3-months">3 months</option>
+            <option value="4-months">4 months</option>
+          </select>
+          <p>You can pause your account up to three times in any rolling 12-month period.</p>
+          <div className="safeguarding-pause-dialog-actions">
+            <button type="button" onClick={() => setPauseDialogOpen(false)} disabled={pauseBusy}>Cancel</button>
+            <Button type="button" onClick={handlePauseAccount} disabled={pauseBusy} className="safeguarding-primary-button">
+              {pauseBusy && <Loader2 className="animate-spin" aria-hidden="true" />}
+              {pauseBusy ? 'Pausing…' : 'Confirm Pause'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
