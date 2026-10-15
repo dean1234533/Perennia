@@ -347,7 +347,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
                   <strong>Perennia</strong>
                   <span>For Love That Fits, Naturally.</span>
                   <p>Perennia combines Western and Chinese astrology with compatibility insights designed around meaningful, lasting relationships.</p>
-                  <button type="button" onClick={() => navigate('/')}>About Perennia <ArrowRight /></button>
+                  <button type="button" onClick={() => navigate('/about-perennia')}>About Perennia <ArrowRight /></button>
                 </motion.div>
               )}
             </AnimatePresence>

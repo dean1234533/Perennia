@@ -84,7 +84,7 @@ export function AppShell({
             <p className="text-sm font-medium text-[#5B9DFF]">Perennia</p>
             <p className="mt-1 text-xs text-white/85">For Love That Fits, Naturally.</p>
             <p className="mt-3 text-[11px] leading-relaxed text-white/55">We combine Western and Chinese astrology with compatibility insights designed around meaningful, lasting relationships.</p>
-            <button onClick={() => navigate('/')} className="mt-3 flex items-center gap-1 text-xs text-[#5B9DFF]">About Perennia <ArrowRight className="h-3.5 w-3.5" /></button>
+            <button onClick={() => navigate('/about-perennia')} className="mt-3 flex items-center gap-1 text-xs text-[#5B9DFF]">About Perennia <ArrowRight className="h-3.5 w-3.5" /></button>
           </motion.div>
         )}
 

@@ -33,6 +33,7 @@ const CompatibilityReport = lazy(() => import('@/screens/CompatibilityReport').t
 const Settings = lazy(() => import('@/screens/Settings').then((module) => ({ default: module.Settings })))
 const MatchingPreferences = lazy(() => import('@/screens/MatchingPreferences').then((module) => ({ default: module.MatchingPreferences })))
 const Safeguarding = lazy(() => import('@/screens/Safeguarding').then((module) => ({ default: module.Safeguarding })))
+const AboutPerennia = lazy(() => import('@/screens/AboutPerennia').then((module) => ({ default: module.AboutPerennia })))
 const Founding500 = lazy(() => import('@/screens/Founding500').then((module) => ({ default: module.Founding500 })))
 const Founding500Checkout = lazy(() => import('@/screens/Founding500Checkout').then((module) => ({ default: module.Founding500Checkout })))
 const Founding500Success = lazy(() => import('@/screens/Founding500Success').then((module) => ({ default: module.Founding500Success })))
@@ -91,6 +92,7 @@ function App() {
             <Route path="/settings" element={<RequireFoundingMembership><AppShell><Settings /></AppShell></RequireFoundingMembership>} />
             <Route path="/matching-preferences" element={<RequireFoundingMembership><AppShell><MatchingPreferences /></AppShell></RequireFoundingMembership>} />
             <Route path="/safeguarding" element={<RequireFoundingMembership><AppShell><Safeguarding /></AppShell></RequireFoundingMembership>} />
+            <Route path="/about-perennia" element={<RequireFoundingMembership><AppShell><AboutPerennia /></AppShell></RequireFoundingMembership>} />
 
             {import.meta.env.DEV && (
               <Route path="/dev/profile-preview" element={<AppShell><MyProfile preview /></AppShell>} />
