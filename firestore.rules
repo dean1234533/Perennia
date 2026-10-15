@@ -35,14 +35,8 @@ service cloud.firestore {
     match /users/{uid} {
       // Another member's full doc is private (email, phone, exact location,
       // birth data, push tokens, like/block lists). Members see each other
-      // through publicProfiles/{uid} below. TRANSITIONAL: until a member's
-      // public profile has been created (the one-off backfill), their doc
-      // stays readable so the app keeps working mid-rollout. Once every
-      // member has a public profile, this clause never matches; delete it
-      // (leaving only the owner check) to remove the fallback.
-      allow read: if request.auth != null
-        && (request.auth.uid == uid
-            || !exists(/databases/$(database)/documents/publicProfiles/$(uid)));
+      // through publicProfiles/{uid} below — only the owner reads this doc.
+      allow read: if request.auth != null && request.auth.uid == uid;
       // A new account doc can only be created in its pristine state: not
       // onboarded, not verified, and with no likes/matches/blocks. Without
       // this a member could create their own doc pre-marked as verified.

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Secure backend for the Perennia Compatibility Fusion System — Google Sheets sync, Firestore repository, and the callable compatibility API.",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "lib/index.js",
   "scripts": {

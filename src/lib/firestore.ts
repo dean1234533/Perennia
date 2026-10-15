@@ -235,54 +235,9 @@ export type PublicProfileDoc = Pick<
  *  Matches, ProfileDetail, compatibility). Never fabricated client-side. */
 export type DiscoveryCandidate = PublicProfileDoc & { uid: string }
 
-function coarse(value: number | null | undefined): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value * 10) / 10 : null
-}
-
-function ageOf(birthDate: string | undefined): number | null {
-  if (!birthDate) return null
-  const dob = new Date(birthDate)
-  if (Number.isNaN(dob.getTime())) return null
-  const now = new Date()
-  let age = now.getUTCFullYear() - dob.getUTCFullYear()
-  const monthDiff = now.getUTCMonth() - dob.getUTCMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && now.getUTCDate() < dob.getUTCDate())) age--
-  return age
-}
-
-/** Transitional fallback for members whose `publicProfiles` doc hasn't been
- *  created yet (before the one-off backfill has run). Builds the same shape
- *  from a full `users` doc, dropping everything private. Once every member
- *  has a public doc and the rules lock `users`, this is never reached. */
-function publicProfileFromUserDoc(d: Partial<UserDoc>): PublicProfileDoc {
-  return {
-    name: d.name ?? '',
-    onboardingComplete: d.onboardingComplete ?? false,
-    sunSign: d.sunSign ?? '', moonSign: d.moonSign ?? '', risingSign: d.risingSign ?? '',
-    chineseAnimal: d.chineseAnimal ?? '', chineseElement: d.chineseElement ?? '', yinYang: d.yinYang ?? '',
-    gender: d.gender ?? '', heightCm: d.heightCm ?? null,
-    country: d.country ?? '', city: d.city ?? '', religion: d.religion ?? '',
-    relationshipGoal: d.relationshipGoal ?? '', storyPrompts: d.storyPrompts ?? [],
-    incognito: d.incognito ?? false, showDistance: d.showDistance ?? true,
-    profilePhotoUrl: d.profilePhotoUrl ?? '', profilePhotoThumbUrl: d.profilePhotoThumbUrl ?? '',
-    categories: d.categories ?? [], profileExtras: d.profileExtras ?? null,
-    accountPausedUntil: d.accountPausedUntil ?? null,
-    age: ageOf(d.birthDate), verified: d.verification?.status === 'verified',
-    currentLocationLat: coarse(d.currentLocationLat), currentLocationLon: coarse(d.currentLocationLon),
-  }
-}
-
 export async function getPublicProfile(uid: string): Promise<DiscoveryCandidate | null> {
   const snap = await getDoc(doc(db, 'publicProfiles', uid))
-  if (snap.exists()) return { uid, ...(snap.data() as PublicProfileDoc) }
-  // Not backfilled yet — fall back to the old document (readable only until
-  // the rules lock it), reduced to the public shape.
-  try {
-    const legacy = await getDoc(doc(db, 'users', uid))
-    return legacy.exists() ? { uid, ...publicProfileFromUserDoc(legacy.data() as UserDoc) } : null
-  } catch {
-    return null
-  }
+  return snap.exists() ? { uid, ...(snap.data() as PublicProfileDoc) } : null
 }
 
 export function subscribeUserDoc(uid: string, cb: (data: UserDoc | null) => void) {
@@ -361,29 +316,15 @@ export async function savePushTokenRemote(uid: string, token: string) {
  *  that client-side against its own state, since Firestore can't
  *  express "not in this array" as a query. */
 export async function fetchDiscoveryCandidates(uid: string): Promise<DiscoveryCandidate[]> {
-  const publicSnap = await getDocs(query(
+  const snap = await getDocs(query(
     collection(db, 'publicProfiles'),
     where('onboardingComplete', '==', true),
     where('profilePhotoUrl', '!=', ''),
     limit(50)
   ))
-  if (!publicSnap.empty) {
-    return publicSnap.docs
-      .filter((d) => d.id !== uid)
-      .map((d) => ({ uid: d.id, ...(d.data() as PublicProfileDoc) }))
-      .filter((candidate) => !candidate.accountPausedUntil || new Date(candidate.accountPausedUntil).getTime() <= Date.now())
-  }
-  // No public profiles exist yet (backfill hasn't run): old behaviour,
-  // reduced to the public shape so nothing private reaches the screens.
-  const legacySnap = await getDocs(query(
-    collection(db, 'users'),
-    where('onboardingComplete', '==', true),
-    where('profilePhotoUrl', '!=', ''),
-    limit(50)
-  )).catch(() => null)
-  return (legacySnap?.docs ?? [])
+  return snap.docs
     .filter((d) => d.id !== uid)
-    .map((d) => ({ uid: d.id, ...publicProfileFromUserDoc(d.data() as UserDoc) }))
+    .map((d) => ({ uid: d.id, ...(d.data() as PublicProfileDoc) }))
     .filter((candidate) => !candidate.accountPausedUntil || new Date(candidate.accountPausedUntil).getTime() <= Date.now())
 }
 

@@ -56,7 +56,7 @@ await env.withSecurityRulesDisabled(async (ctx) => {
 })
 await t('read own private doc', assertSucceeds(getDoc(doc(as('migrated'), 'users/migrated'))))
 await t('others cannot read migrated private doc', assertFails(getDoc(doc(as('a'), 'users/migrated'))))
-await t('others can read unmigrated doc (transitional)', assertSucceeds(getDoc(doc(as('a'), 'users/legacy'))))
+await t('others cannot read any other member private doc', assertFails(getDoc(doc(as('a'), 'users/legacy'))))
 await t('others can read public profile', assertSucceeds(getDoc(doc(as('a'), 'publicProfiles/migrated'))))
 await t('client cannot write public profile', assertFails(setDoc(doc(as('migrated'), 'publicProfiles/migrated'), { name: 'Hacked' })))
 await t('signed-out cannot read public profile', assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'publicProfiles/migrated'))))
