@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { ProfileOrbit } from '@/components/shared/ProfileOrbit'
 import { CelestialHeart } from '@/components/shared/CelestialHeart'
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer'
@@ -113,23 +114,23 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [membership, setMembership] = useState<FoundingMemberRecord | null>(null)
   const [heroExpanded, setHeroExpanded] = useState(false)
   const [brandPanelOpen, setBrandPanelOpen] = useState(false)
-  const [premiumPanel, setPremiumPanel] = useState<'viewers' | null>(null)
+  const [premiumPanel, setPremiumPanel] = useState<'privacy' | 'viewers' | 'gifts' | null>(null)
   const [openInfoSection, setOpenInfoSection] = useState<'bio' | 'interests' | 'lifestyle' | 'travel' | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
-  const viewersDialogRef = useRef<HTMLDivElement>(null)
+  const premiumDialogRef = useRef<HTMLDivElement>(null)
   const uploadDialogRef = useRef<HTMLDivElement>(null)
 
-  const closeViewers = useCallback(() => setPremiumPanel(null), [])
+  const closePremiumPanel = useCallback(() => setPremiumPanel(null), [])
   const closeUpload = useCallback(() => {
     if (!uploadBusy) setUploadOpen(false)
   }, [uploadBusy])
 
   useModalAccessibility({
-    open: premiumPanel === 'viewers',
-    dialogRef: viewersDialogRef,
-    onClose: closeViewers,
+    open: premiumPanel !== null,
+    dialogRef: premiumDialogRef,
+    onClose: closePremiumPanel,
   })
   useModalAccessibility({
     open: uploadOpen,
@@ -431,9 +432,9 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
 
           <section className={`profile-premium-strip ${isPremium ? 'is-member' : ''}`} aria-label="Premium features">
             <div className="profile-premium-title"><Crown /><span>Premium<br />Features</span></div>
-            <button type="button" onClick={() => navigate('/settings#privacy')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
-            <button type="button" aria-haspopup="dialog" onClick={() => isPremium ? setPremiumPanel('viewers') : navigate('/founding-500')}><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
-            <button type="button" onClick={() => navigate(isPremium ? '/discovery' : '/founding-500')}><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
+            <button type="button" aria-haspopup="dialog" onClick={() => setPremiumPanel('privacy')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
+            <button type="button" aria-haspopup="dialog" onClick={() => setPremiumPanel('viewers')}><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
+            <button type="button" aria-haspopup="dialog" onClick={() => setPremiumPanel('gifts')}><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
             {!isPremium && <button type="button" className="profile-premium-cta" onClick={() => navigate('/founding-500')}><span>Discover<br />Premium</span><ArrowRight /></button>}
           </section>
 
@@ -707,19 +708,19 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
       </div>
 
       <AnimatePresence>
-        {premiumPanel === 'viewers' && (
+        {premiumPanel !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md"
-            onClick={(event) => event.target === event.currentTarget && closeViewers()}
+            onClick={(event) => event.target === event.currentTarget && closePremiumPanel()}
           >
             <motion.div
-              ref={viewersDialogRef}
+              ref={premiumDialogRef}
               role="dialog"
               aria-modal="true"
-              aria-labelledby="profile-viewers-title"
+              aria-labelledby="profile-premium-panel-title"
               data-modal-surface
               tabIndex={-1}
               initial={{ scale: .95, opacity: 0 }}
@@ -727,17 +728,42 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
               className="glass-strong w-full max-w-sm rounded-2xl p-6"
             >
               <div className="mb-5 flex items-center justify-between">
-                <h3 id="profile-viewers-title" className="font-serif-display text-xl text-champagne">Profile Viewers</h3>
-                <button type="button" data-modal-initial-focus onClick={closeViewers} aria-label="Close profile viewers" className="cursor-pointer text-white/45 hover:text-white">
+                <h3 id="profile-premium-panel-title" className="font-serif-display text-xl text-champagne">
+                  {premiumPanel === 'privacy' ? 'Private Mode' : premiumPanel === 'viewers' ? 'Profile Viewers' : 'Gift to Me'}
+                </h3>
+                <button type="button" data-modal-initial-focus onClick={closePremiumPanel} aria-label={`Close ${premiumPanel === 'privacy' ? 'Private Mode' : premiumPanel === 'viewers' ? 'profile viewers' : 'Gift to Me'}`} className="cursor-pointer text-white/45 hover:text-white">
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex flex-col items-center rounded-2xl border border-white/10 bg-white/[.025] px-6 py-9 text-center">
-                <Eye className="h-7 w-7 text-blue-200/70" strokeWidth={1.6} />
-                <p className="mt-3 text-sm text-white/80">No viewer activity to show yet</p>
-                <p className="mt-1 text-xs leading-relaxed text-white/45">Profile viewer activity will appear here when it becomes available.</p>
+                {premiumPanel === 'privacy' ? (
+                  <>
+                    <LockKeyhole className="h-7 w-7 text-blue-200/70" strokeWidth={1.6} />
+                    <p className="mt-3 text-sm text-white/80">Control your profile visibility</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/45">When Private Mode is on, your profile is hidden from Discovery.</p>
+                    <div className="mt-5 flex w-full items-center justify-between rounded-xl border border-white/10 bg-black/15 px-4 py-3 text-left">
+                      <span>
+                        <strong className="block text-sm font-medium text-white">Private Mode</strong>
+                        <small className="mt-0.5 block text-xs text-white/45">{onboarding.incognito ? 'Your profile is hidden' : 'Your profile is visible'}</small>
+                      </span>
+                      <Switch checked={onboarding.incognito} onCheckedChange={(value) => updateOnboarding({ incognito: value })} aria-label="Private Mode" />
+                    </div>
+                  </>
+                ) : premiumPanel === 'viewers' ? (
+                  <>
+                    <Eye className="h-7 w-7 text-blue-200/70" strokeWidth={1.6} />
+                    <p className="mt-3 text-sm text-white/80">No viewer activity to show yet</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/45">Profile viewer activity will appear here when it becomes available.</p>
+                  </>
+                ) : (
+                  <>
+                    <Gift className="h-7 w-7 text-violet-200/70" strokeWidth={1.6} />
+                    <p className="mt-3 text-sm text-white/80">No gifts to show yet</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/45">Gift invitations sent to you will appear here.</p>
+                  </>
+                )}
               </div>
-              <Button variant="glass" className="mt-4 w-full" onClick={closeViewers}>Done</Button>
+              <Button variant="glass" className="mt-4 w-full" onClick={closePremiumPanel}>Done</Button>
             </motion.div>
           </motion.div>
         )}
