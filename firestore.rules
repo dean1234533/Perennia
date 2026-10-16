@@ -114,6 +114,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Gift requests are created and updated only by the server (Admin SDK)
+    // once the gifting service exists. The sender and recipient can read
+    // their own; nobody can write from a client.
+    match /giftRequests/{giftId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.recipientUid || request.auth.uid == resource.data.senderUid);
+      allow write: if false;
+    }
+
     // Friendship is mutual and private. Only the two participants can read
     // their request/friendship; all writes are validated by Cloud Functions.
     match /friendRequests/{requestId} {

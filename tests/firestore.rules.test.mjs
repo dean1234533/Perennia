@@ -61,6 +61,16 @@ await t('others can read public profile', assertSucceeds(getDoc(doc(as('a'), 'pu
 await t('client cannot write public profile', assertFails(setDoc(doc(as('migrated'), 'publicProfiles/migrated'), { name: 'Hacked' })))
 await t('signed-out cannot read public profile', assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'publicProfiles/migrated'))))
 
+// --- gift requests ---
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'giftRequests/g1'), { senderUid: 's', recipientUid: 'r', status: 'pending', offeringTitle: 'Tea' })
+})
+await t('recipient can read their gift request', assertSucceeds(getDoc(doc(as('r'), 'giftRequests/g1'))))
+await t('sender can read their gift request', assertSucceeds(getDoc(doc(as('s'), 'giftRequests/g1'))))
+await t('other member cannot read gift request', assertFails(getDoc(doc(as('x'), 'giftRequests/g1'))))
+await t('recipient cannot edit gift request', assertFails(updateDoc(doc(as('r'), 'giftRequests/g1'), { status: 'accepted' })))
+await t('member cannot create gift request', assertFails(setDoc(doc(as('s'), 'giftRequests/g2'), { senderUid: 's', recipientUid: 'r', status: 'pending', offeringTitle: 'x' })))
+
 // --- messages ---
 const msg = { id: 'x1', senderId: 'a', text: 'hi', createdAt: new Date(), read: false }
 await t('send valid message', assertSucceeds(setDoc(doc(a, 'conversations/m1/messages/x1'), msg)))

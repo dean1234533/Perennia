@@ -114,7 +114,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
   const [membership, setMembership] = useState<FoundingMemberRecord | null>(null)
   const [heroExpanded, setHeroExpanded] = useState(false)
   const [brandPanelOpen, setBrandPanelOpen] = useState(false)
-  const [premiumPanel, setPremiumPanel] = useState<'privacy' | 'viewers' | 'gifts' | null>(null)
+  const [premiumPanel, setPremiumPanel] = useState<'privacy' | 'viewers' | null>(null)
   const [openInfoSection, setOpenInfoSection] = useState<'bio' | 'interests' | 'lifestyle' | 'travel' | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -434,7 +434,7 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
             <div className="profile-premium-title"><Crown /><span>Premium<br />Features</span></div>
             <button type="button" aria-haspopup="dialog" onClick={() => setPremiumPanel('privacy')}><LockKeyhole /><span><strong>Private Mode</strong><small>Your profile visibility</small></span></button>
             <button type="button" aria-haspopup="dialog" onClick={() => setPremiumPanel('viewers')}><Eye /><span><strong>Viewers</strong><small>See who viewed you</small></span></button>
-            <button type="button" aria-haspopup="dialog" onClick={() => setPremiumPanel('gifts')}><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
+            <button type="button" onClick={() => navigate('/gifts')}><Gift /><span><strong>Gift to Me</strong><small>Surprise me</small></span></button>
             {!isPremium && <button type="button" className="profile-premium-cta" onClick={() => navigate('/founding-500')}><span>Discover<br />Premium</span><ArrowRight /></button>}
           </section>
 
@@ -729,9 +729,9 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
             >
               <div className="mb-5 flex items-center justify-between">
                 <h3 id="profile-premium-panel-title" className="font-serif-display text-xl text-champagne">
-                  {premiumPanel === 'privacy' ? 'Private Mode' : premiumPanel === 'viewers' ? 'Profile Viewers' : 'Gift to Me'}
+                  {premiumPanel === 'privacy' ? 'Private Mode' : 'Profile Viewers'}
                 </h3>
-                <button type="button" data-modal-initial-focus onClick={closePremiumPanel} aria-label={`Close ${premiumPanel === 'privacy' ? 'Private Mode' : premiumPanel === 'viewers' ? 'profile viewers' : 'Gift to Me'}`} className="cursor-pointer text-white/45 hover:text-white">
+                <button type="button" data-modal-initial-focus onClick={closePremiumPanel} aria-label={`Close ${premiumPanel === 'privacy' ? 'Private Mode' : 'profile viewers'}`} className="cursor-pointer text-white/45 hover:text-white">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -749,17 +749,11 @@ export function MyProfile({ preview = false }: { preview?: boolean }) {
                       <Switch checked={onboarding.incognito} onCheckedChange={(value) => updateOnboarding({ incognito: value })} aria-label="Private Mode" />
                     </div>
                   </>
-                ) : premiumPanel === 'viewers' ? (
+                ) : (
                   <>
                     <Eye className="h-7 w-7 text-blue-200/70" strokeWidth={1.6} />
                     <p className="mt-3 text-sm text-white/80">No viewer activity to show yet</p>
                     <p className="mt-1 text-xs leading-relaxed text-white/45">Profile viewer activity will appear here when it becomes available.</p>
-                  </>
-                ) : (
-                  <>
-                    <Gift className="h-7 w-7 text-violet-200/70" strokeWidth={1.6} />
-                    <p className="mt-3 text-sm text-white/80">No gifts to show yet</p>
-                    <p className="mt-1 text-xs leading-relaxed text-white/45">Gift invitations sent to you will appear here.</p>
                   </>
                 )}
               </div>
