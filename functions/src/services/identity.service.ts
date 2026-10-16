@@ -16,6 +16,7 @@ let stripeClient: Stripe | null = null
 
 const UNSET_SENTINEL = 'not_configured'
 const STRIPE_TEST_MODE_BIRTH_DATE = '1995-06-15'
+const STRIPE_TEST_MODE_LEGAL_NAME = 'Jenny Rosen'
 
 function getStripe(secretKey: string): Stripe {
   if (!secretKey || secretKey === UNSET_SENTINEL) {
@@ -100,15 +101,18 @@ async function persistVerificationResult(params: {
     const existing = await userRef.get()
     const hasBirthDate = !!existing.get('birthDate')
     const hasDisplayName = !!existing.get('name')
+    const hasLegalName = !!existing.get('legalName')
 
-    // Stripe test mode does not perform a real document verification, so a
-    // successful simulated session may have no verified_outputs.dob. Use the
-    // designated test DOB on the trusted backend in that one case. The
-    // session's `livemode` flag comes directly from Stripe and cannot be
-    // supplied by the browser, so this fallback is impossible in live mode.
-    if (!session.livemode && !hasBirthDate) {
-      update.birthDate = STRIPE_TEST_MODE_BIRTH_DATE
-      log.info('identity_test_birth_date_applied', { uid, sessionId: session.id })
+    // Stripe test mode validates the integration but commonly returns no
+    // verified_outputs. Seed the approved non-sensitive test identity so the
+    // rest of Perennia can exercise the same verified-status, confirmation,
+    // age and astrology paths as a live member. `livemode` is trusted Stripe
+    // data, so these fixtures can never be selected by the browser or used for
+    // a live verification.
+    if (!session.livemode) {
+      if (!hasBirthDate) update.birthDate = STRIPE_TEST_MODE_BIRTH_DATE
+      if (!hasLegalName) update.legalName = STRIPE_TEST_MODE_LEGAL_NAME
+      log.info('identity_test_fixture_applied', { uid, sessionId: session.id })
     }
 
     try {
@@ -119,8 +123,8 @@ async function persistVerificationResult(params: {
       const outputs = full.verified_outputs
       const dob = outputs?.dob
 
-      // Prefer an actual Stripe-provided DOB whenever the simulated or live
-      // session contains one; it safely replaces the test fallback above.
+      // Prefer actual Stripe-provided identity fields whenever the simulated
+      // or live session contains them; they safely replace the test fallback.
       if (dob?.year && dob.month && dob.day && !hasBirthDate) {
         const mm = String(dob.month).padStart(2, '0')
         const dd = String(dob.day).padStart(2, '0')

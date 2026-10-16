@@ -12,7 +12,7 @@ import { EditBirthDetailsModal } from '@/components/shared/EditBirthDetailsModal
 import { useApp } from '@/context/AppContext'
 import { computeNatalChart } from '@/lib/natalChart'
 import { firebaseConfigured } from '@/lib/firebase'
-import { hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
+import { DEVELOPMENT_VERIFICATION_FIXTURE, hasDevelopmentVerificationBypass } from '@/lib/developmentVerification'
 import { getOnboardingStep } from '@/lib/onboardingFlow'
 import { refreshIdentityVerificationStatus } from '@/lib/identityVerification'
 import { COUNTRIES, countryName } from '@/data/countries'
@@ -47,7 +47,7 @@ export function BirthDetails() {
     if (hasDevelopmentVerificationBypass()) {
       recoveryAttempted.current = true
       setRecoveringBirthDate(true)
-      void updateOnboarding({ birthDate: '1995-06-15' })
+      void updateOnboarding({ birthDate: DEVELOPMENT_VERIFICATION_FIXTURE.birthDate })
         .catch(() => undefined)
         .finally(() => setRecoveringBirthDate(false))
       return

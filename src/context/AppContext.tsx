@@ -22,6 +22,7 @@ import {
   type StoryPrompt,
 } from '@/lib/firestore'
 import { blockProfileRemote, unblockProfileRemote, migratePrivateSafetyRemote } from '@/lib/privacyApi'
+import { getDevelopmentVerificationData } from '@/lib/developmentVerification'
 
 export interface OnboardingData {
   name: string
@@ -177,6 +178,7 @@ export function AppProvider({
   const { user } = useAuth()
   const [onboarding, setOnboarding] = useState<OnboardingData>(() => ({
     ...defaultOnboarding,
+    ...(getDevelopmentVerificationData() ?? {}),
     ...initialOnboarding,
   }))
   const [likedIds, setLikedIds] = useState<string[]>([])

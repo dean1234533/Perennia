@@ -18,7 +18,9 @@ import {
   VerificationNotConfiguredError,
 } from '@/lib/identityVerification'
 import {
+  DEVELOPMENT_VERIFICATION_FIXTURE,
   enableDevelopmentVerificationBypass,
+  getDevelopmentVerificationData,
   isDevelopmentVerificationBypassAvailable,
 } from '@/lib/developmentVerification'
 import { getOnboardingStep, resolveOnboardingDestination } from '@/lib/onboardingFlow'
@@ -173,9 +175,17 @@ export function Verify() {
     // backend using Stripe's trusted `livemode` flag.
     if (!developmentBypassAvailable) return
     enableDevelopmentVerificationBypass()
-    // Availability requires a backend-free localhost preview, so this date
-    // can exist only in the disposable browser session and never in Firebase.
-    if (!onboarding.birthDate) await updateOnboarding({ birthDate: '1995-06-15' })
+    // Availability requires a backend-free localhost preview, so the complete
+    // simulated result exists only in this disposable browser session. Keep it
+    // shaped like the trusted server result so every downstream feature sees
+    // the same data contract as it does after a real verification.
+    const developmentResult = getDevelopmentVerificationData()
+    if (!developmentResult) return
+    await updateOnboarding({
+      legalName: onboarding.legalName || DEVELOPMENT_VERIFICATION_FIXTURE.legalName,
+      birthDate: onboarding.birthDate || DEVELOPMENT_VERIFICATION_FIXTURE.birthDate,
+      verification: developmentResult.verification,
+    })
     navigate(continueDestination)
   }
 
